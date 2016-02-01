@@ -80,6 +80,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Arc.cs" />
+    <Compile Include="CubicBezierCurve.cs" />
+    <Compile Include="Edge.cs" />
+    <Compile Include="EdgePart.cs" />
+    <Compile Include="EdgePartAdjacency.cs" />
+    <Compile Include="EdgePartShape.cs" />
+    <Compile Include="EdgePattern.cs" />
     <Compile Include="Expressions\AggregateExpression.cs" />
     <Compile Include="Expressions\ArithmeticExpression.cs" />
     <Compile Include="Expressions\ArithmeticOperation.cs" />
@@ -90,8 +97,15 @@
     <Compile Include="Expressions\NumberExpression.cs" />
     <Compile Include="Expressions\VertexExpression.cs" />
     <Compile Include="Graphics\IGraphicsPath.cs" />
+    <Compile Include="ILine.cs" />
+    <Compile Include="ITile.cs" />
+    <Compile Include="Line.cs" />
     <Compile Include="Numerics\Rectangle.cs" />
+    <Compile Include="PartDirection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QuadraticBezierCurve.cs" />
+    <Compile Include="Shape.cs" />
+    <Compile Include="ShapeTemplate.cs" />
     <Compile Include="Styles\Colour.cs" />
     <Compile Include="Styles\GradientStop.cs" />
     <Compile Include="Styles\GradientStyle.cs" />
@@ -107,7 +121,12 @@
     <Compile Include="Styles\SolidColourStyle.cs" />
     <Compile Include="Styles\StyleManager.cs" />
     <Compile Include="Styles\TileStyle.cs" />
+    <Compile Include="Template.cs" />
+    <Compile Include="Tile.cs" />
+    <Compile Include="TileInstance.cs" />
+    <Compile Include="Tiling.cs" />
     <Compile Include="TilingDefinition.cs" />
+    <Compile Include="Vertex.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
