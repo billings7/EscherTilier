@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using EscherTilier.Expressions;
+using EscherTilier.Utilities;
 using JetBrains.Annotations;
 
 namespace EscherTilier
@@ -18,7 +20,7 @@ namespace EscherTilier
         /// <param name="shapeConstraints">The shape constraints.</param>
         /// <param name="tilings">The tilings.</param>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="shapeTemplates"/>, <paramref name="shapeConstraints"/> or <paramref name="tilings"/> is null.
+        ///     <paramref name="shapeTemplates" />, <paramref name="shapeConstraints" /> or <paramref name="tilings" /> is null.
         /// </exception>
         /// TODO Exceptions
         public Template(
@@ -39,7 +41,7 @@ namespace EscherTilier
             if (!shapeTemplates.AreDistinct(t => t.Name, StringComparer.InvariantCulture))
                 throw new ArgumentException(Strings.Template_Template_ShapeNamesUnique);
             if (!shapeTemplates.SelectMany(t => t.EdgeNames.Concat(t.VertexNames))
-                    .AreDistinct(StringComparer.InvariantCulture))
+                .AreDistinct(StringComparer.InvariantCulture))
                 throw new ArgumentException(Strings.Template_Template_EdgeVertexNamesUnique);
             if (!tilings.AreDistinct(t => t.ID))
                 throw new ArgumentException(Strings.Template_Template_TilingIDsUnique);
@@ -51,8 +53,16 @@ namespace EscherTilier
             if (tilings.Any(t => !allEdges.SetEquals(t.EdgePatterns.Select(p => p.EdgeName))))
                 throw new ArgumentException(Strings.Template_Template_UnknownEdges, nameof(tilings));
 
+            ShapeSet shapes = CreateShapes();
+            foreach (IExpression<bool> constaint in shapeConstraints)
+            {
+                Debug.Assert(constaint != null, "constaint != null");
+                if (!constaint.Evaluate(shapes))
+                    throw new InvalidOperationException(Strings.Template_Template_InitialVertsInvalid);
+            }
+
             ShapeTemplates = shapeTemplates;
-            ShapeConstraints = shapeConstraints;
+            ShapeConstraints = shapeConstraints.Select(e => e.Compile()).ToArray();
             Tilings = tilings;
         }
 
@@ -86,11 +96,12 @@ namespace EscherTilier
         [ItemNotNull]
         public IReadOnlyList<TilingDefinition> Tilings { get; }
 
+        /// <summary>
+        ///     Creates shapes from the <see cref="ShapeTemplates" />.
+        /// </summary>
+        /// <returns></returns>
         [NotNull]
-        public IEnumerable<Shape> CreateShapes()
-        {
-            throw new NotImplementedException();
-        }
+        public ShapeSet CreateShapes() => new ShapeSet(ShapeTemplates.Select(s => new Shape(s)).ToArray());
 
         [NotNull]
         public Tiling CreateTiling(IEnumerable<Shape> shapes)

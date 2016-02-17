@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using EscherTilier.Expressions;
+using EscherTilier.Utilities;
 using JetBrains.Annotations;
 
 namespace EscherTilier
@@ -47,7 +48,7 @@ namespace EscherTilier
                     nameof(adjacentParts));
 
             ID = id;
-            Condition = condition;
+            Condition = condition?.Compile();
             EdgePatterns = edgePatterns;
             AdjacentParts = adjacentParts;
         }

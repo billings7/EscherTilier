@@ -90,14 +90,16 @@
     <Compile Include="EdgePattern.cs" />
     <Compile Include="Expressions\AggregateExpression.cs" />
     <Compile Include="Expressions\ArithmeticExpression.cs" />
-    <Compile Include="Expressions\ArithmeticOperation.cs" />
     <Compile Include="Expressions\ComparisonExpression.cs" />
-    <Compile Include="Expressions\ComparisonOperation.cs" />
+    <Compile Include="Expressions\CompiledExpression.cs" />
     <Compile Include="Expressions\EdgeExpression.cs" />
+    <Compile Include="Expressions\ExpressionType.cs" />
     <Compile Include="Expressions\IExpression.cs" />
+    <Compile Include="Expressions\LogicalExpression.cs" />
     <Compile Include="Expressions\NumberExpression.cs" />
     <Compile Include="Expressions\VertexExpression.cs" />
-    <Compile Include="Extensions.cs" />
+    <Compile Include="ShapeSet.cs" />
+    <Compile Include="Utilities\Extensions.cs" />
     <Compile Include="Graphics\IGraphicsPath.cs" />
     <Compile Include="ILine.cs" />
     <Compile Include="ITile.cs" />
@@ -135,6 +137,11 @@
     <Compile Include="TileInstance.cs" />
     <Compile Include="Tiling.cs" />
     <Compile Include="TilingDefinition.cs" />
+    <Compile Include="Utilities\Stacks.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Stacks.tt</DependentUpon>
+    </Compile>
     <Compile Include="Vertex.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -146,6 +153,15 @@
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Utilities\Stacks.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Stacks.cs</LastGenOutput>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

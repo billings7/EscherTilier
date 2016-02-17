@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using EscherTilier.Expressions;
 using JetBrains.Annotations;
 
-namespace EscherTilier
+namespace EscherTilier.Utilities
 {
     public static class Extensions
     {
@@ -26,9 +27,12 @@ namespace EscherTilier
         /// <typeparam name="T">The type of the elements of the enumerable.</typeparam>
         /// <param name="enumerable">The enumerable.</param>
         /// <param name="value">The value to find the index of.</param>
-        /// <param name="comparer">The comparer to used to check for equality.</param>
+        /// <param name="comparer">
+        ///     The comparer used to check for equality, or <see langword="null" /> to use the default comparer
+        ///     for the type.
+        /// </param>
         /// <returns>The index of the value if found, otherwise <c>-1</c>.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="enumerable"/> was <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="enumerable" /> was <see langword="null" />.</exception>
         /// <exception cref="ArgumentException">
         ///     The the value was not in the first <see cref="int.MaxValue" /> elements of the
         ///     enumerable.
@@ -56,9 +60,12 @@ namespace EscherTilier
         /// </summary>
         /// <typeparam name="T">The type of the elements of the enumerable.</typeparam>
         /// <param name="enumerable">The enumerable.</param>
-        /// <param name="comparer">The comparer to used to check for equality.</param>
+        /// <param name="comparer">
+        ///     The comparer used to check for equality, or <see langword="null" /> to use the default comparer
+        ///     for the type.
+        /// </param>
         /// <returns><see langword="true" /> if all the elements are distinct; otherwise <see langword="false" />.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="enumerable"/> was <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="enumerable" /> was <see langword="null" />.</exception>
         public static bool AreDistinct<T>(
             [NotNull] this IEnumerable<T> enumerable,
             [CanBeNull] IEqualityComparer<T> comparer = null)
@@ -72,18 +79,21 @@ namespace EscherTilier
         }
 
         /// <summary>
-        /// Determines whether the value returned by the specified selector function for all the elements in an enumerable are distinct.
+        ///     Determines whether the value returned by the specified selector function for all the elements in an enumerable are
+        ///     distinct.
         /// </summary>
         /// <typeparam name="TSource">The type of the elements of the enumerable.</typeparam>
         /// <typeparam name="TResult">The type of the values that must be distinct.</typeparam>
         /// <param name="enumerable">The enumerable.</param>
         /// <param name="selector">The selector.</param>
-        /// <param name="comparer">The comparer to used to check for equality.</param>
+        /// <param name="comparer">
+        ///     The comparer used to check for equality, or <see langword="null" /> to use the default comparer
+        ///     for the type.
+        /// </param>
         /// <returns>
-        ///   <see langword="true" /> if all the elements are distinct; otherwise <see langword="false" />.
+        ///     <see langword="true" /> if all the elements are distinct; otherwise <see langword="false" />.
         /// </returns>
-        /// <exception cref="System.ArgumentNullException"></exception>
-        /// <exception cref="ArgumentNullException"><paramref name="enumerable" /> was <see langword="null" />.</exception>
+        /// <exception cref="System.ArgumentNullException"><paramref name="enumerable" /> was <see langword="null" />.</exception>
         public static bool AreDistinct<TSource, TResult>(
             [NotNull] this IEnumerable<TSource> enumerable,
             [NotNull] Func<TSource, TResult> selector,
@@ -96,6 +106,52 @@ namespace EscherTilier
                 if (!set.Add(selector(val))) return false;
             return true;
         }
+
+        /// <summary>
+        ///     Determines if all the elements in an enumerable are equal to each other.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements of the enumerable.</typeparam>
+        /// <param name="enumerable">The enumerable.</param>
+        /// <param name="comparer">
+        ///     The comparer used to check for equality, or <see langword="null" /> to use the default comparer
+        ///     for the type.
+        /// </param>
+        /// <returns>
+        ///     <see langword="true" /> if all the elements are equal; otherwise <see langword="false" />.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException"><paramref name="enumerable" /> was <see langword="null" />.</exception>
+        public static bool AreEqual<T>([NotNull] this IEnumerable<T> enumerable, IEqualityComparer<T> comparer = null)
+        {
+            if (enumerable == null) throw new ArgumentNullException(nameof(enumerable));
+            comparer = comparer ?? EqualityComparer<T>.Default;
+
+            using (IEnumerator<T> enumerator = enumerable.GetEnumerator())
+            {
+                if (!enumerator.MoveNext()) return true;
+
+                T first = enumerator.Current;
+
+                while (enumerator.MoveNext())
+                {
+                    if (!comparer.Equals(first, enumerator.Current))
+                        return false;
+                }
+
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Compiles the specified expression.
+        /// </summary>
+        /// <typeparam name="T">The type of the value of the expression.</typeparam>
+        /// <param name="expression">The expression to compile.</param>
+        /// <returns>
+        /// The compiled expression.
+        /// </returns>
+        [NotNull]
+        public static CompiledExpression<T> Compile<T>([NotNull] this IExpression<T> expression)
+                    => CompiledExpression<T>.Compile(expression);
     }
 
     /// <summary>

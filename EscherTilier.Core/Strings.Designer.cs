@@ -70,6 +70,60 @@ namespace EscherTilier {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to All of the expressions must be non-null..
+        /// </summary>
+        internal static string AggregateExpression_AggregateExpression_ExpressionsNull {
+            get {
+                return ResourceManager.GetString("AggregateExpression_AggregateExpression_ExpressionsNull", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to There must be at least one expression..
+        /// </summary>
+        internal static string AggregateExpression_AggregateExpression_NoExpressions {
+            get {
+                return ResourceManager.GetString("AggregateExpression_AggregateExpression_NoExpressions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid arithmetic expression type..
+        /// </summary>
+        internal static string ArithmeticExpression_ArithmeticExpression_InvalidType {
+            get {
+                return ResourceManager.GetString("ArithmeticExpression_ArithmeticExpression_InvalidType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to At least two expressions are required..
+        /// </summary>
+        internal static string ArithmeticExpression_ArithmeticExpression_NotEnoughExpressions {
+            get {
+                return ResourceManager.GetString("ArithmeticExpression_ArithmeticExpression_NotEnoughExpressions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid comparison expression type..
+        /// </summary>
+        internal static string ComparisonExpression_ComparisonExpression_InvalidType {
+            get {
+                return ResourceManager.GetString("ComparisonExpression_ComparisonExpression_InvalidType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The edge name cannot be null, empty or whitespace..
+        /// </summary>
+        internal static string EdgeExpression_EdgeExpression_NameNullOrWhitespace {
+            get {
+                return ResourceManager.GetString("EdgeExpression_EdgeExpression_NameNullOrWhitespace", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to At least one part is required..
         /// </summary>
         internal static string EdgePattern_EdgePattern_OnePartRequired {
@@ -93,6 +147,42 @@ namespace EscherTilier {
         internal static string Extensions_IndexOf_TooLarge {
             get {
                 return ResourceManager.GetString("Extensions_IndexOf_TooLarge", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The enumerable is empty..
+        /// </summary>
+        internal static string Extensions_MaxDifference_Empty {
+            get {
+                return ResourceManager.GetString("Extensions_MaxDifference_Empty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid comparison expression type..
+        /// </summary>
+        internal static string LogicalExpression_LogicalExpression_InvalidType {
+            get {
+                return ResourceManager.GetString("LogicalExpression_LogicalExpression_InvalidType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A Not expression can only have a single child..
+        /// </summary>
+        internal static string LogicalExpression_LogicalExpression_NotChildCount {
+            get {
+                return ResourceManager.GetString("LogicalExpression_LogicalExpression_NotChildCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An Xor expression must have two child expressions..
+        /// </summary>
+        internal static string LogicalExpression_LogicalExpression_XorChildCount {
+            get {
+                return ResourceManager.GetString("LogicalExpression_LogicalExpression_XorChildCount", resourceCulture);
             }
         }
         
@@ -156,6 +246,15 @@ namespace EscherTilier {
         internal static string Template_Template_EdgeVertexNamesUnique {
             get {
                 return ResourceManager.GetString("Template_Template_EdgeVertexNamesUnique", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The initial vertex positions for the shapes in this template are not valid for the constaints on the shapes..
+        /// </summary>
+        internal static string Template_Template_InitialVertsInvalid {
+            get {
+                return ResourceManager.GetString("Template_Template_InitialVertsInvalid", resourceCulture);
             }
         }
         
@@ -228,6 +327,15 @@ namespace EscherTilier {
         internal static string TilingDefinition_TilingDefinition_ThreePatternsRequired {
             get {
                 return ResourceManager.GetString("TilingDefinition_TilingDefinition_ThreePatternsRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The vertex name cannot be null, empty or whitespace..
+        /// </summary>
+        internal static string VertexExpression_VertexExpression_NameNullOrWhitespace {
+            get {
+                return ResourceManager.GetString("VertexExpression_VertexExpression_NameNullOrWhitespace", resourceCulture);
             }
         }
     }

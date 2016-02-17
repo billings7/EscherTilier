@@ -1,17 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Numerics;
 using System.Xml.Linq;
 using EscherTilier.Expressions;
+using EscherTilier.Utilities;
 using JetBrains.Annotations;
 
 namespace EscherTilier.Storage
 {
     public static class FileStorage
     {
+        private const NumberStyles FloatNumberStyle = NumberStyles.Float | NumberStyles.AllowThousands;
+
         /// <summary>
         ///     The file storage version.
         /// </summary>
@@ -23,6 +28,8 @@ namespace EscherTilier.Storage
         /// </summary>
         [NotNull]
         private static readonly string _versionString = _version.ToString();
+
+        private static readonly CultureInfo _culture = CultureInfo.InvariantCulture;
 
         /// <summary>
         ///     Saves the given <see cref="Template" /> to a file.
@@ -205,12 +212,10 @@ namespace EscherTilier.Storage
             XElement consElm = element.Element("ShapeConstraints");
             if (consElm == null || consElm.IsEmpty)
                 return new Template(templates, Array<IExpression<bool>>.Empty, tilings);
-
-            Func<XElement, IExpression<bool>> selector = DeserializeExpression<bool>;
-
+            
             IExpression<bool>[] constraints = consElm
                 .Elements()
-                .Select(selector)
+                .Select(DeserializeExpressionBool)
                 .ToArray();
 
             return new Template(templates, constraints, tilings);
@@ -233,7 +238,9 @@ namespace EscherTilier.Storage
                 Debug.Assert(pattern != null, "pattern != null");
                 for (int j = 0; j < pattern.Parts.Count; j++)
                 {
-                    partIds.Add(pattern.Parts[j], i + ":" + j);
+                    partIds.Add(
+                        pattern.Parts[j],
+                        i.ToString(_culture) + ":" + j.ToString(_culture));
                 }
             }
 
@@ -289,7 +296,7 @@ namespace EscherTilier.Storage
 
             IExpression<bool> condition = condElm == null || condElm.IsEmpty
                 ? null
-                : DeserializeExpression<bool>(condElm);
+                : DeserializeExpressionBool(condElm);
 
             XElement patternElm = element.Element("EdgePatterns");
 
@@ -310,7 +317,9 @@ namespace EscherTilier.Storage
                 Debug.Assert(pattern != null, "pattern != null");
                 for (int j = 0; j < pattern.Parts.Count; j++)
                 {
-                    partIds.Add(i + ":" + j, pattern.Parts[j]);
+                    partIds.Add(
+                        i.ToString(_culture) + ":" + j.ToString(_culture),
+                        pattern.Parts[j]);
                 }
             }
 
@@ -413,9 +422,9 @@ namespace EscherTilier.Storage
         {
             return new XElement(
                 "Part",
-                new XAttribute("id", edgePart.ID),
+                new XAttribute("id", edgePart.ID.ToString(_culture)),
                 new XAttribute("direction", edgePart.Direction),
-                new XAttribute("amount", edgePart.Amount.ToString("R")));
+                new XAttribute("amount", edgePart.Amount.ToString("R", _culture)));
         }
 
         /// <summary>
@@ -423,18 +432,17 @@ namespace EscherTilier.Storage
         /// </summary>
         /// <param name="element">The element.</param>
         /// <returns></returns>
-        [NotNull]
         private static EdgePart DeserializeEdgePart([NotNull] XElement element)
         {
             int id;
             PartDirection dir;
             float amount;
 
-            if (!int.TryParse(element.Attribute("id")?.Value, out id))
+            if (!int.TryParse(element.Attribute("id")?.Value, NumberStyles.Integer, _culture, out id))
                 throw new InvalidDataException("Edge part ID missing or invalid.");
             if (!Enum.TryParse(element.Attribute("direction")?.Value, out dir))
                 throw new InvalidDataException("Edge part direction missing or invalid.");
-            if (!float.TryParse(element.Attribute("amount")?.Value, out amount))
+            if (!float.TryParse(element.Attribute("amount")?.Value, FloatNumberStyle, _culture, out amount))
                 throw new InvalidDataException("Edge part amount missing or invalid.");
 
             return new EdgePart(id, dir, amount);
@@ -456,7 +464,14 @@ namespace EscherTilier.Storage
                     shapeTemplate.EdgeNames.Select(n => new XElement("Edge", n))),
                 new XElement(
                     "Vertices",
-                    shapeTemplate.VertexNames.Select(n => new XElement("Vertex", n))));
+                    shapeTemplate.VertexNames
+                        .Zip(
+                            shapeTemplate.InitialVertices,
+                            (name, loc) => new XElement(
+                                "Vertex",
+                                new XAttribute("x", loc.X.ToString("R", _culture)),
+                                new XAttribute("y", loc.Y.ToString("R", _culture)),
+                                name))));
         }
 
         /// <summary>
@@ -479,20 +494,192 @@ namespace EscherTilier.Storage
 
             if (edges == null) throw new InvalidDataException("Shape edges missing.");
 
-            string[] vertices = element.Element("Vertices")
-                ?.Elements("Vertex")
-                .Select(e => e.Value)
-                .ToArray();
+            XElement vertsElm = element.Element("Vertices");
 
-            if (vertices == null) throw new InvalidDataException("Shape vertices missing.");
+            if (vertsElm == null) throw new InvalidDataException("Shape vertices missing.");
 
-            return new ShapeTemplate(name, edges, vertices);
+            List<string> vertNames = new List<string>();
+            List<Vector2> vertLocs = new List<Vector2>();
+
+            foreach (XElement e in vertsElm.Elements("Vertex"))
+            {
+                float x, y;
+
+                if (!float.TryParse(e.Attribute("x")?.Value, FloatNumberStyle, _culture, out x))
+                    throw new InvalidDataException("Vertex X coordinate missing or invalid.");
+                if (!float.TryParse(e.Attribute("y")?.Value, FloatNumberStyle, _culture, out y))
+                    throw new InvalidDataException("Vertex Y coordinate missing or invalid.");
+
+                vertNames.Add(e.Value);
+                vertLocs.Add(new Vector2(x, y));
+            }
+
+            return new ShapeTemplate(name, edges, vertNames.ToArray(), vertLocs.ToArray());
         }
 
+        /// <summary>
+        ///     Serializes the specified expression to an XML element.
+        /// </summary>
+        /// <param name="expression">The expression.</param>
+        /// <returns></returns>
         [NotNull]
-        private static XElement Serialize<T>([NotNull] IExpression<T> expression) { }
+        private static XElement Serialize([NotNull] IExpression expression)
+        {
+            Stack<IExpression, XElement> stack = new Stack<IExpression, XElement>();
+            XElement rootElement = new XElement(expression.ExpressionType.ToString());
+            stack.Push(expression, rootElement);
 
+            XElement element;
+            while (stack.TryPop(out expression, out element))
+            {
+                Debug.Assert(expression != null, "expression != null");
+                Debug.Assert(element != null, "element != null");
+
+                switch (expression.ExpressionType)
+                {
+                    case ExpressionType.Compiled:
+                        ICompiledExpression compiledExpression = (ICompiledExpression) expression;
+                        stack.Push(compiledExpression.RawExpression, element);
+                        break;
+                    case ExpressionType.Number:
+                        NumberExpression numberExpression = (NumberExpression) expression;
+                        element.Value = numberExpression.Value.ToString("R", _culture);
+                        break;
+                    case ExpressionType.Edge:
+                        EdgeExpression edgeExpression = (EdgeExpression) expression;
+                        element.Value = edgeExpression.EdgeName;
+                        break;
+                    case ExpressionType.Vertex:
+                        VertexExpression vertexExpression = (VertexExpression) expression;
+                        element.Value = vertexExpression.VertexName;
+                        break;
+                    case ExpressionType.Add:
+                    case ExpressionType.Subtract:
+                    case ExpressionType.Multiply:
+                    case ExpressionType.Divide:
+                        ArithmeticExpression arithmeticExpression = (ArithmeticExpression) expression;
+                        foreach (IExpression<float> exp in arithmeticExpression.Expressions)
+                        {
+                            XElement elm = new XElement(exp.ExpressionType.ToString());
+                            stack.Push(expression, elm);
+                            element.Add(elm);
+                        }
+                        break;
+                    case ExpressionType.Equal:
+                    case ExpressionType.NotEqual:
+                    case ExpressionType.GreaterThan:
+                    case ExpressionType.LessThan:
+                    case ExpressionType.GreaterThanOrEqual:
+                    case ExpressionType.LessThanOrEqual:
+                        ComparisonExpression comparisonExpression = (ComparisonExpression) expression;
+                        foreach (IExpression<float> exp in comparisonExpression.Expressions)
+                        {
+                            XElement elm = new XElement(exp.ExpressionType.ToString());
+                            stack.Push(expression, elm);
+                            element.Add(elm);
+                        }
+                        break;
+                    case ExpressionType.And:
+                    case ExpressionType.Or:
+                    case ExpressionType.BoolEqual:
+                    case ExpressionType.Xor:
+                    case ExpressionType.Not:
+                        LogicalExpression logicalExpression = (LogicalExpression)expression;
+                        foreach (IExpression<bool> exp in logicalExpression.Expressions)
+                        {
+                            XElement elm = new XElement(exp.ExpressionType.ToString());
+                            stack.Push(expression, elm);
+                            element.Add(elm);
+                        }
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+
+            return rootElement;
+        }
+
+        /// <summary>
+        ///     Deserializes an expression from an XML element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns></returns>
         [NotNull]
-        private static IExpression<T> DeserializeExpression<T>([NotNull] XElement element) { }
+        private static IExpression<float> DeserializeExpressionFloat([NotNull] XElement element)
+        {
+            IExpression<float> result = DeserializeExpression(element) as IExpression<float>;
+            if (result == null) throw new InvalidDataException("Expression was of an unexpected type.");
+            return result;
+        }
+
+        /// <summary>
+        ///     Deserializes an expression from an XML element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns></returns>
+        [NotNull]
+        private static IExpression<bool> DeserializeExpressionBool([NotNull] XElement element)
+        {
+            IExpression<bool> result = DeserializeExpression(element) as IExpression<bool>;
+            if (result == null) throw new InvalidDataException("Expression was of an unexpected type.");
+            return result;
+        }
+
+        /// <summary>
+        ///     Deserializes an expression from an XML element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns></returns>
+        [NotNull]
+        private static IExpression DeserializeExpression([NotNull] XElement element)
+        {
+            ExpressionType type;
+            if (!Enum.TryParse(element.Name.LocalName, out type))
+                throw new InvalidDataException("Invalid expression type.");
+            
+            switch (type)
+            {
+                case ExpressionType.Number:
+                    float number;
+
+                    if (!float.TryParse(element.Value, FloatNumberStyle, _culture, out number))
+                        throw new InvalidDataException("Invalid number.");
+
+                    return new NumberExpression(number);
+                case ExpressionType.Edge:
+                    return new EdgeExpression(element.Value);
+                case ExpressionType.Vertex:
+                    return new VertexExpression(element.Value);
+                case ExpressionType.Add:
+                    return ArithmeticExpression.Add(element.Elements().Select(DeserializeExpressionFloat).ToArray());
+                case ExpressionType.Subtract:
+                    return ArithmeticExpression.Subtract(element.Elements().Select(DeserializeExpressionFloat).ToArray());
+                case ExpressionType.Multiply:
+                    return ArithmeticExpression.Multiply(element.Elements().Select(DeserializeExpressionFloat).ToArray());
+                case ExpressionType.Divide:
+                    return ArithmeticExpression.Divide(element.Elements().Select(DeserializeExpressionFloat).ToArray());
+                case ExpressionType.Equal:
+                case ExpressionType.NotEqual:
+                case ExpressionType.GreaterThan:
+                case ExpressionType.LessThan:
+                case ExpressionType.GreaterThanOrEqual:
+                case ExpressionType.LessThanOrEqual:
+                    return new ComparisonExpression(
+                        type,
+                        element.Elements().Select(DeserializeExpressionFloat).ToArray());
+                case ExpressionType.And:
+                case ExpressionType.Or:
+                case ExpressionType.BoolEqual:
+                case ExpressionType.Xor:
+                case ExpressionType.Not:
+                    return new LogicalExpression(
+                        type,
+                        element.Elements().Select(DeserializeExpressionBool).ToArray());
+                default:
+                    Debug.Assert(false);
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
     }
 }

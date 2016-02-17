@@ -174,4 +174,40 @@
   <data name="EdgePattern_EdgePattern_PartAmountEqual1" xml:space="preserve">
     <value>The sum of the Amount for the parts must equal 1.</value>
   </data>
+  <data name="VertexExpression_VertexExpression_NameNullOrWhitespace" xml:space="preserve">
+    <value>The vertex name cannot be null, empty or whitespace.</value>
+  </data>
+  <data name="EdgeExpression_EdgeExpression_NameNullOrWhitespace" xml:space="preserve">
+    <value>The edge name cannot be null, empty or whitespace.</value>
+  </data>
+  <data name="AggregateExpression_AggregateExpression_ExpressionsNull" xml:space="preserve">
+    <value>All of the expressions must be non-null.</value>
+  </data>
+  <data name="ArithmeticExpression_ArithmeticExpression_InvalidType" xml:space="preserve">
+    <value>Invalid arithmetic expression type.</value>
+  </data>
+  <data name="ComparisonExpression_ComparisonExpression_InvalidType" xml:space="preserve">
+    <value>Invalid comparison expression type.</value>
+  </data>
+  <data name="AggregateExpression_AggregateExpression_NoExpressions" xml:space="preserve">
+    <value>There must be at least one expression.</value>
+  </data>
+  <data name="ArithmeticExpression_ArithmeticExpression_NotEnoughExpressions" xml:space="preserve">
+    <value>At least two expressions are required.</value>
+  </data>
+  <data name="Template_Template_InitialVertsInvalid" xml:space="preserve">
+    <value>The initial vertex positions for the shapes in this template are not valid for the constaints on the shapes.</value>
+  </data>
+  <data name="LogicalExpression_LogicalExpression_InvalidType" xml:space="preserve">
+    <value>Invalid comparison expression type.</value>
+  </data>
+  <data name="LogicalExpression_LogicalExpression_NotChildCount" xml:space="preserve">
+    <value>A Not expression can only have a single child.</value>
+  </data>
+  <data name="Extensions_MaxDifference_Empty" xml:space="preserve">
+    <value>The enumerable is empty.</value>
+  </data>
+  <data name="LogicalExpression_LogicalExpression_XorChildCount" xml:space="preserve">
+    <value>An Xor expression must have two child expressions.</value>
+  </data>
 </root>

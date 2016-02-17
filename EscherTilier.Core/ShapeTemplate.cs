@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
+using EscherTilier.Utilities;
 using JetBrains.Annotations;
 
 namespace EscherTilier
@@ -20,15 +22,17 @@ namespace EscherTilier
         public ShapeTemplate(
             string name,
             [NotNull] IReadOnlyList<string> edgeNames,
-            [NotNull] IReadOnlyList<string> vertexNames)
+            [NotNull] IReadOnlyList<string> vertexNames,
+            [NotNull] IReadOnlyList<Vector2> initialVertices)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentNullException(nameof(name), Strings.ShapeTemplate_ShapeTemplate_NameNullOrWhitespace);
             if (edgeNames == null) throw new ArgumentNullException(nameof(edgeNames));
             if (vertexNames == null) throw new ArgumentNullException(nameof(vertexNames));
-            if (edgeNames.Count < 3 || vertexNames.Count < 3)
+            if (initialVertices == null) throw new ArgumentNullException(nameof(initialVertices));
+            if (edgeNames.Count < 3 || vertexNames.Count < 3 || initialVertices.Count < 3)
                 throw new ArgumentException(Strings.ShapeTemplate_ShapeTemplate_NotEnoughEdgesOrVerts);
-            if (edgeNames.Count != vertexNames.Count)
+            if (edgeNames.Count != vertexNames.Count || vertexNames.Count != initialVertices.Count)
                 throw new ArgumentException(Strings.ShapeTemplate_ShapeTemplate_EdgeVertexCountNotSame);
             if (edgeNames.Any(string.IsNullOrWhiteSpace))
                 throw new ArgumentException(Strings.ShapeTemplate_ShapeTemplate_EdgeNamesNullOrWhitespace);
@@ -40,6 +44,7 @@ namespace EscherTilier
             Name = name;
             EdgeNames = edgeNames;
             VertexNames = vertexNames;
+            InitialVertices = initialVertices;
         }
 
         /// <summary>
@@ -71,5 +76,14 @@ namespace EscherTilier
         [NotNull]
         [ItemNotNull]
         public IReadOnlyList<string> VertexNames { get; }
+
+        /// <summary>
+        ///     Gets the initial locaiton of each of the verticies.
+        /// </summary>
+        /// <value>
+        ///     The initial vertices.
+        /// </value>
+        [NotNull]
+        public IReadOnlyList<Vector2> InitialVertices { get; }
     }
 }
