@@ -65,6 +65,7 @@
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.statusInfoLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.contextToolStrip = new System.Windows.Forms.ToolStrip();
+            this.renderControl = new EscherTilier.RenderControl();
             sep1 = new System.Windows.Forms.ToolStripSeparator();
             sep2 = new System.Windows.Forms.ToolStripSeparator();
             sep3 = new System.Windows.Forms.ToolStripSeparator();
@@ -226,7 +227,7 @@
             this.customizeMenuItem,
             this.optionsMenuItem});
             this.toolsMenuItem.Name = "toolsMenuItem";
-            this.toolsMenuItem.Size = new System.Drawing.Size(48, 20);
+            this.toolsMenuItem.Size = new System.Drawing.Size(47, 20);
             this.toolsMenuItem.Text = "&Tools";
             // 
             // customizeMenuItem
@@ -401,11 +402,21 @@
             this.contextToolStrip.TabIndex = 4;
             this.contextToolStrip.Text = "Context Tools";
             // 
+            // renderControl
+            // 
+            this.renderControl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.renderControl.Location = new System.Drawing.Point(41, 49);
+            this.renderControl.Name = "renderControl";
+            this.renderControl.Size = new System.Drawing.Size(743, 466);
+            this.renderControl.TabIndex = 5;
+            this.renderControl.Render += new EscherTilier.RenderDelegate(this.renderControl_Render);
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 562);
+            this.Controls.Add(this.renderControl);
             this.Controls.Add(this.contextToolStrip);
             this.Controls.Add(this.operationToolStrip);
             this.Controls.Add(this.toolStrip);
@@ -462,6 +473,7 @@
         private System.Windows.Forms.StatusStrip statusStrip;
         private System.Windows.Forms.ToolStripStatusLabel statusInfoLabel;
         private System.Windows.Forms.ToolStrip contextToolStrip;
+        private EscherTilier.RenderControl renderControl;
     }
 }
 

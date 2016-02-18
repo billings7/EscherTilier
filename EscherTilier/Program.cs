@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Threading;
 using System.Windows.Forms;
+using SharpDX.Windows;
 
 namespace EscherTilier
 {
@@ -13,7 +15,10 @@ namespace EscherTilier
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Main());
+            
+            Main form = new Main();
+            form.Show();
+            form.RenderLoop();
         }
     }
 }
