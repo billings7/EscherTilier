@@ -152,6 +152,32 @@ namespace EscherTilier.Utilities
         [NotNull]
         public static CompiledExpression<T> Compile<T>([NotNull] this IExpression<T> expression)
                     => CompiledExpression<T>.Compile(expression);
+
+        /// <summary>
+        /// Gets the value for the key given, adding it if it doesnt exist.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="dictionary">The dictionary.</param>
+        /// <param name="key">The key.</param>
+        /// <param name="factory">The factory.</param>
+        /// <returns></returns>
+        public static TValue GetOrAdd<TKey, TValue>(
+                    [NotNull] this Dictionary<TKey, TValue> dictionary,
+                    [NotNull] TKey key,
+                    [NotNull] Func<TKey, TValue> factory)
+        {
+            if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
+            if (factory == null) throw new ArgumentNullException(nameof(factory));
+
+            TValue value;
+            if (dictionary.TryGetValue(key, out value))
+                return value;
+
+            value = factory(key);
+            dictionary.Add(key, value);
+            return value;
+        }
     }
 
     /// <summary>

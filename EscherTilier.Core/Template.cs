@@ -53,6 +53,9 @@ namespace EscherTilier
             if (tilings.Any(t => !allEdges.SetEquals(t.EdgePatterns.Select(p => p.EdgeName))))
                 throw new ArgumentException(Strings.Template_Template_UnknownEdges, nameof(tilings));
 
+            ShapeTemplates = shapeTemplates;
+            Tilings = tilings;
+
             ShapeSet shapes = CreateShapes();
             foreach (IExpression<bool> constaint in shapeConstraints)
             {
@@ -61,9 +64,7 @@ namespace EscherTilier
                     throw new InvalidOperationException(Strings.Template_Template_InitialVertsInvalid);
             }
 
-            ShapeTemplates = shapeTemplates;
             ShapeConstraints = shapeConstraints.Select(e => e.Compile()).ToArray();
-            Tilings = tilings;
         }
 
         /// <summary>

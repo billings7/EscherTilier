@@ -125,11 +125,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Graphics\DirectX\Direct2DGraphics.cs" />
+    <Compile Include="Graphics\DirectX\DirectXExtensions.cs" />
+    <Compile Include="Graphics\DirectX\DirectXResourceManager.cs" />
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Main.Designer.cs">
       <DependentUpon>Main.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Main.Drawing.cs">
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

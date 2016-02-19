@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Windows.Forms;
+using EscherTilier.Graphics.DirectX;
 using JetBrains.Annotations;
 using SharpDX;
 using SharpDX.Direct2D1;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
-using SharpDX.Windows;
 using AlphaMode = SharpDX.Direct2D1.AlphaMode;
 using Device = SharpDX.Direct3D11.Device;
 using FactoryD2D = SharpDX.Direct2D1.Factory;
@@ -20,11 +21,16 @@ namespace EscherTilier
     /// </summary>
     public sealed class RenderControl : SharpDX.Windows.RenderControl
     {
-        [NotNull]
-        private readonly Device _device;
+        private bool _disposed;
 
         [NotNull]
-        private readonly SwapChain _swapChain;
+        private readonly object _lock = new object();
+
+        [NotNull]
+        private Device _device;
+
+        [NotNull]
+        private SwapChain _swapChain;
 
         [NotNull]
         private RenderTarget _renderTarget;
@@ -67,23 +73,21 @@ namespace EscherTilier
             _backBuffer = Surface.FromSwapChain(_swapChain, 0);
             Debug.Assert(_backBuffer != null, "_backBuffer != null");
 
-            using (FactoryD2D factory = new FactoryD2D())
-            {
-                Size2F dpi = factory.DesktopDpi;
+            Size2F dpi = DirectXResourceManager.FactoryD2D.DesktopDpi;
 
-                _renderTarget = new RenderTarget(
-                    factory,
-                    _backBuffer,
-                    new RenderTargetProperties
-                    {
-                        DpiX = dpi.Width,
-                        DpiY = dpi.Height,
-                        MinLevel = SharpDX.Direct2D1.FeatureLevel.Level_DEFAULT,
-                        PixelFormat = new PixelFormat(Format.Unknown, AlphaMode.Ignore),
-                        Type = RenderTargetType.Default,
-                        Usage = RenderTargetUsage.None
-                    });
-            }
+            _renderTarget = new RenderTarget(
+                DirectXResourceManager.FactoryD2D,
+                _backBuffer,
+                new RenderTargetProperties
+                {
+                    DpiX = dpi.Width,
+                    DpiY = dpi.Height,
+                    MinLevel = SharpDX.Direct2D1.FeatureLevel.Level_DEFAULT,
+                    PixelFormat = new PixelFormat(Format.Unknown, AlphaMode.Ignore),
+                    Type = RenderTargetType.Default,
+                    Usage = RenderTargetUsage.None
+                });
+
             using (FactoryDXGI factory = _swapChain.GetParent<FactoryDXGI>())
             {
                 Debug.Assert(factory != null, "factory != null");
@@ -98,7 +102,18 @@ namespace EscherTilier
         ///     The render target.
         /// </value>
         [NotNull]
-        public RenderTarget RenderTarget => _renderTarget;
+        public RenderTarget RenderTarget
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return _renderTarget;
+                }
+            }
+        }
+
+        public event Action<RenderTarget> RenderTargetChanged;
 
         /// <summary>
         ///     Gets the swap chain.
@@ -132,33 +147,35 @@ namespace EscherTilier
         public bool NeedsRender { get; private set; }
 
         /// <summary>
-        ///     Raises the <see cref="E:System.Windows.Forms.Control.SizeChanged" /> event.
+        ///     Raises the <see cref="E:System.Windows.Forms.Control.Layout" /> event.
         /// </summary>
-        /// <param name="e">An <see cref="T:System.EventArgs" /> that contains the event data. </param>
-        protected override void OnSizeChanged(EventArgs e)
+        /// <param name="e">A <see cref="T:System.Windows.Forms.LayoutEventArgs" /> that contains the event data. </param>
+        protected override void OnLayout(LayoutEventArgs e)
         {
-            base.OnSizeChanged(e);
+            base.OnLayout(e);
 
-            Interlocked.Exchange(ref _renderTarget, null)?.Dispose();
-            Interlocked.Exchange(ref _backBuffer, null)?.Dispose();
+            if (_disposed) return;
 
-            _swapChain.ResizeBuffers(
-                2,
-                Width,
-                Height,
-                Format.R8G8B8A8_UNorm,
-                SwapChainFlags.AllowModeSwitch);
-
-            // ReSharper disable once AssignNullToNotNullAttribute
-            _backBuffer = Surface.FromSwapChain(_swapChain, 0);
-            Debug.Assert(_backBuffer != null, "_backBuffer != null");
-
-            using (FactoryD2D factory = new FactoryD2D())
+            lock (_lock)
             {
-                Size2F dpi = factory.DesktopDpi;
+                Interlocked.Exchange(ref _renderTarget, null)?.Dispose();
+                Interlocked.Exchange(ref _backBuffer, null)?.Dispose();
+
+                _swapChain.ResizeBuffers(
+                    2,
+                    Width,
+                    Height,
+                    Format.R8G8B8A8_UNorm,
+                    SwapChainFlags.AllowModeSwitch);
+
+                // ReSharper disable once AssignNullToNotNullAttribute
+                _backBuffer = Surface.FromSwapChain(_swapChain, 0);
+                Debug.Assert(_backBuffer != null, "_backBuffer != null");
+
+                Size2F dpi = DirectXResourceManager.FactoryD2D.DesktopDpi;
 
                 _renderTarget = new RenderTarget(
-                    factory,
+                    DirectXResourceManager.FactoryD2D,
                     _backBuffer,
                     new RenderTargetProperties
                     {
@@ -169,9 +186,16 @@ namespace EscherTilier
                         Type = RenderTargetType.Default,
                         Usage = RenderTargetUsage.None
                     });
-            }
 
-            NeedsRender = true;
+                NeedsRender = true;
+                OnRenderTargetChanged(_renderTarget);
+            }
+            Thread.Yield();
+        }
+
+        private void OnRenderTargetChanged(RenderTarget obj)
+        {
+            RenderTargetChanged?.Invoke(obj);
         }
 
         /// <summary>
@@ -185,7 +209,8 @@ namespace EscherTilier
         private void OnRender()
         {
             NeedsRender = false;
-            Render?.Invoke(_renderTarget, _swapChain);
+            lock (_lock)
+                Render?.Invoke(_renderTarget, _swapChain);
         }
 
         /// <summary>
@@ -193,17 +218,34 @@ namespace EscherTilier
         /// </summary>
         public void RenderLoop()
         {
-            using (RenderLoop renderLoop = new RenderLoop(this)
+            while (!_disposed)
             {
-                UseApplicationDoEvents = false
-            })
+                OnRender();
+                Thread.Sleep(1);
+                //if (NeedsRender)
+                //{
+                //    OnRender();
+                //    Thread.Yield();
+                //}
+                //else
+                //    Thread.Sleep(1);
+            }
+        }
+
+        /// <param name="disposing">
+        ///     true to release both managed and unmanaged resources; false to release only unmanaged
+        ///     resources.
+        /// </param>
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            if (disposing)
             {
-                while (renderLoop.NextFrame())
-                {
-                    if (NeedsRender)
-                        OnRender();
-                    Thread.Yield();
-                }
+                _disposed = true;
+                Interlocked.Exchange(ref _renderTarget, null)?.Dispose();
+                Interlocked.Exchange(ref _backBuffer, null)?.Dispose();
+                Interlocked.Exchange(ref _swapChain, null)?.Dispose();
+                Interlocked.Exchange(ref _device, null)?.Dispose();
             }
         }
     }

@@ -6,6 +6,14 @@ namespace EscherTilier.Styles
 {
     public class ImageStyle : IStyle
     {
+        public ImageStyle(Bitmap image, Vector2 location, Vector2 size, float angle)
+        {
+            Image = image;
+            Location = location;
+            Size = size;
+            Angle = angle;
+        }
+
         public Bitmap Image { get; }
 
         public Vector2 Location { get; }

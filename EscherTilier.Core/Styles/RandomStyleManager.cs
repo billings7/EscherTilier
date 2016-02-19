@@ -1,4 +1,6 @@
 using System;
+using EscherTilier.Graphics;
+using JetBrains.Annotations;
 
 namespace EscherTilier.Styles
 {
@@ -6,9 +8,17 @@ namespace EscherTilier.Styles
     {
         public int Seed { get; }
 
-        public override IStyle GetStyle(ITile tile)
+        protected override IStyle GetStyle(ITile tile, IStyle[] styles)
         {
             throw new NotImplementedException();
+        }
+
+        public RandomStyleManager(
+            [CanBeNull] IResourceManager resourceManager,
+            int seed)
+            : base(resourceManager)
+        {
+            Seed = seed;
         }
     }
 }

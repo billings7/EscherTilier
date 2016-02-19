@@ -98,7 +98,10 @@
     <Compile Include="Expressions\LogicalExpression.cs" />
     <Compile Include="Expressions\NumberExpression.cs" />
     <Compile Include="Expressions\VertexExpression.cs" />
+    <Compile Include="Graphics\IGraphics.cs" />
+    <Compile Include="Graphics\IResourceManager.cs" />
     <Compile Include="ShapeSet.cs" />
+    <Compile Include="Styles\SimpleStyleManager.cs" />
     <Compile Include="Utilities\Extensions.cs" />
     <Compile Include="Graphics\IGraphicsPath.cs" />
     <Compile Include="ILine.cs" />

@@ -13,8 +13,6 @@ namespace EscherTilier
 
         public IReadOnlyList<Tile> Tiles { get; }
 
-        public LineStyle LineStyle { get; }
-
         public StyleManager Styles { get; }
 
         public IEnumerable<ITile> GetTiles(

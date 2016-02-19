@@ -351,7 +351,7 @@
             this.operationToolStrip.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Flow;
             this.operationToolStrip.Location = new System.Drawing.Point(0, 49);
             this.operationToolStrip.Name = "operationToolStrip";
-            this.operationToolStrip.Size = new System.Drawing.Size(41, 491);
+            this.operationToolStrip.Size = new System.Drawing.Size(41, 490);
             this.operationToolStrip.TabIndex = 2;
             this.operationToolStrip.Text = "Operations";
             // 
@@ -379,7 +379,7 @@
             // 
             this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.statusInfoLabel});
-            this.statusStrip.Location = new System.Drawing.Point(0, 540);
+            this.statusStrip.Location = new System.Drawing.Point(0, 539);
             this.statusStrip.Name = "statusStrip";
             this.statusStrip.Size = new System.Drawing.Size(784, 22);
             this.statusStrip.TabIndex = 3;
@@ -396,7 +396,7 @@
             // 
             this.contextToolStrip.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.contextToolStrip.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
-            this.contextToolStrip.Location = new System.Drawing.Point(41, 515);
+            this.contextToolStrip.Location = new System.Drawing.Point(41, 514);
             this.contextToolStrip.Name = "contextToolStrip";
             this.contextToolStrip.Size = new System.Drawing.Size(743, 25);
             this.contextToolStrip.TabIndex = 4;
@@ -407,15 +407,17 @@
             this.renderControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.renderControl.Location = new System.Drawing.Point(41, 49);
             this.renderControl.Name = "renderControl";
-            this.renderControl.Size = new System.Drawing.Size(743, 466);
+            this.renderControl.Size = new System.Drawing.Size(743, 465);
             this.renderControl.TabIndex = 5;
+            this.renderControl.RenderTargetChanged += new System.Action<SharpDX.Direct2D1.RenderTarget>(this.renderControl_RenderTargetChanged);
             this.renderControl.Render += new EscherTilier.RenderDelegate(this.renderControl_Render);
+            this.renderControl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.renderControl_MouseMove);
             // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(784, 562);
+            this.ClientSize = new System.Drawing.Size(784, 561);
             this.Controls.Add(this.renderControl);
             this.Controls.Add(this.contextToolStrip);
             this.Controls.Add(this.operationToolStrip);
@@ -423,11 +425,10 @@
             this.Controls.Add(this.menuStrip);
             this.Controls.Add(this.statusStrip);
             this.MainMenuStrip = this.menuStrip;
+            this.MinimumSize = new System.Drawing.Size(600, 450);
             this.Name = "Main";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "Escher Tililer";
-            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
-            this.Load += new System.EventHandler(this.Main_Load);
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
             this.toolStrip.ResumeLayout(false);

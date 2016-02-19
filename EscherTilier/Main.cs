@@ -1,24 +1,38 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
+using EscherTilier.Graphics.DirectX;
 using EscherTilier.Properties;
-using JetBrains.Annotations;
-using SharpDX;
-using SharpDX.Direct2D1;
-using SharpDX.DXGI;
-using FactoryD2D = SharpDX.Direct2D1.Factory;
-using FactoryDXGI = SharpDX.DXGI.Factory1;
+using EscherTilier.Styles;
+using System.Numerics;
+using EscherTilier.Expressions;
 
 namespace EscherTilier
 {
     public partial class Main : Form
     {
-        // private TextFormat _textFormat;
+        private float _zoom = 300f;
+        private Matrix3x2 _scale = Matrix3x2.Identity;
+        private Matrix3x2 _translate = Matrix3x2.Identity;
+
+        private Matrix3x2 ViewMatrix => Matrix3x2.CreateScale(1, -1) * _scale *
+                                        Matrix3x2.CreateTranslation(renderControl.Width / 2f, renderControl.Height / 2f) * _translate;
 
         public Main()
         {
             InitializeComponent();
 
             statusInfoLabel.Text = string.Empty;
+            _miskResourceManager = new DirectXResourceManager(renderControl.RenderTarget);
+            _directXGraphics = new DirectXGraphics(
+                renderControl.RenderTarget,
+                _miskResourceManager,
+                _greyStyle,
+                new LineStyle(2, _blackStyle));
+
+            renderControl.MouseWheel += renderControl_MouseWheel;
 
             //using (Factory factory = new Factory())
             //{
@@ -28,8 +42,26 @@ namespace EscherTilier
 
         public void RenderLoop() => renderControl.RenderLoop();
 
-        private void Main_Load(object sender, EventArgs e)
+        /// <summary>
+        ///     Raises the <see cref="E:System.Windows.Forms.Form.Load" /> event.
+        /// </summary>
+        /// <param name="e">An <see cref="T:System.EventArgs" /> that contains the event data. </param>
+        protected override void OnLoad(EventArgs e)
         {
+            base.OnLoad(e);
+
+            Size = Settings.Default.WindowSize;
+
+            if (Settings.Default.WindowLocation.X == int.MinValue &&
+                Settings.Default.WindowLocation.Y == int.MinValue)
+            {
+                Rectangle rectangle = Screen.PrimaryScreen.Bounds;
+                Settings.Default.WindowLocation = new Point(
+                    rectangle.X + (rectangle.Width - Width) / 2,
+                    rectangle.Y + (rectangle.Height - Height) / 2);
+            }
+
+            Location = Settings.Default.WindowLocation;
             switch (Settings.Default.WindowState)
             {
                 case FormWindowState.Maximized:
@@ -39,18 +71,79 @@ namespace EscherTilier
                     WindowState = FormWindowState.Normal;
                     break;
             }
+
+
+            Template template = new Template(
+                new[]
+                {
+                    new ShapeTemplate(
+                    "Triangle",
+                    new[] { "a", "b", "c" },
+                    new[] { "A", "B", "C" },
+                    new[] { new System.Numerics.Vector2(-100, -86.60254f), new System.Numerics.Vector2(100, -86.60254f), new System.Numerics.Vector2(0, 86.60254f) })
+                },
+                new IExpression<bool>[0],
+                new[]
+                {
+                    new TilingDefinition(
+                    1,
+                    null,
+                    new[]
+                    {
+                        new EdgePattern("a", new[] { new EdgePart(1, PartDirection.ClockwiseIn, 1) }),
+                        new EdgePattern("b", new[] { new EdgePart(2, PartDirection.ClockwiseIn, 1) }),
+                        new EdgePattern("c", new[] { new EdgePart(1, PartDirection.ClockwiseIn, 1) }),
+                    },
+                    new AdjacencyGraph<Labeled<EdgePart>>())
+                });
+
+            shape = template.CreateShapes().First();
         }
 
-        protected override void OnResize(EventArgs e)
+        private Shape shape;
+
+        /// <summary>
+        ///     Raises the <see cref="E:System.Windows.Forms.Form.Closing" /> event.
+        /// </summary>
+        /// <param name="e">A <see cref="T:System.ComponentModel.CancelEventArgs" /> that contains the event data. </param>
+        protected override void OnClosing(CancelEventArgs e)
         {
-            base.OnResize(e);
+            base.OnClosing(e);
 
             Settings.Default.WindowState = WindowState;
-
-            if (WindowState != FormWindowState.Maximized)
-                Settings.Default.WindowSize = Size;
+            Settings.Default.WindowSize = _lastNormalSize;
+            Settings.Default.WindowLocation = _lastNormalLocation;
 
             Settings.Default.Save();
+        }
+
+        private Size _lastNormalSize = Size.Empty;
+        private Point _lastNormalLocation = new Point(0, 0);
+
+        /// <summary>
+        ///     Raises the <see cref="E:System.Windows.Forms.Control.Layout" /> event.
+        /// </summary>
+        /// <param name="levent">The event data.</param>
+        protected override void OnLayout(LayoutEventArgs levent)
+        {
+            base.OnLayout(levent);
+
+            if (WindowState != FormWindowState.Maximized)
+                _lastNormalSize = Size;
+
+            AdjustScale();
+        }
+
+        /// <summary>
+        ///     Raises the <see cref="E:System.Windows.Forms.Control.LocationChanged" /> event.
+        /// </summary>
+        /// <param name="e">An <see cref="T:System.EventArgs" /> that contains the event data. </param>
+        protected override void OnLocationChanged(EventArgs e)
+        {
+            base.OnLocationChanged(e);
+
+            if (WindowState != FormWindowState.Maximized)
+                _lastNormalLocation = Location;
         }
 
         #region File menu
@@ -108,46 +201,53 @@ namespace EscherTilier
 
         #endregion
 
-        private void renderControl_Render([NotNull] RenderTarget renderTarget, [NotNull] SwapChain swapChain)
+
+        private void AdjustScale()
         {
-            renderTarget.BeginDraw();
-            renderTarget.Transform = Matrix3x2.Identity;
-            renderTarget.Clear(Color.White);
+            int minDim = Math.Min(renderControl.Width, renderControl.Height);
 
-            using (SolidColorBrush brush = new SolidColorBrush(renderTarget, Color.LightSlateGray))
+            _scale = Matrix3x2.CreateScale(minDim / _zoom);
+        }
+
+        private void AdjustTranslation(float dx, float dy)
+        {
+            _translate *= Matrix3x2.CreateTranslation(dx, dy);
+        }
+
+        private void renderControl_MouseWheel(object sender, MouseEventArgs e)
+        {
+            _zoom *= 1 - e.Delta / 1200f;
+            AdjustScale();
+        }
+
+        partial void renderControl_RenderTargetChanged(SharpDX.Direct2D1.RenderTarget obj);
+
+        partial void renderControl_Render(SharpDX.Direct2D1.RenderTarget renderTarget, SharpDX.DXGI.SwapChain swapChain);
+
+        private object _selected;
+
+        private void renderControl_MouseMove(object sender, MouseEventArgs e)
+        {
+            Matrix3x2 matrix;
+            if (!Matrix3x2.Invert(ViewMatrix, out matrix))
+                throw new InvalidOperationException();
+
+            Vector2 loc = Vector2.Transform(new Vector2(e.X, e.Y), matrix);
+
+            Vertex vertex = shape.Vertices.OrderBy(v => Vector2.DistanceSquared(v.Location, loc)).First();
+            if (Vector2.DistanceSquared(vertex.Location, loc) < 25)
             {
-                for (int x = 0; x < renderTarget.Size.Width; x += 10)
-                    renderTarget.DrawLine(new Vector2(x, 0), new Vector2(x, renderTarget.Size.Height), brush, 0.5f);
-
-                for (int y = 0; y < renderTarget.Size.Height; y += 10)
-                    renderTarget.DrawLine(new Vector2(0, y), new Vector2(renderTarget.Size.Width, y), brush, 0.5f);
-
-                renderTarget.FillRectangle(
-                    new RectangleF(renderTarget.Size.Width / 2 - 50, renderTarget.Size.Height / 2 - 50, 100, 100),
-                    brush);
+                _selected = vertex;
+                return; ;
             }
 
-            renderTarget.DrawRectangle(
-                new RectangleF(renderTarget.Size.Width / 2 - 100, renderTarget.Size.Height / 2 - 100, 200, 200),
-                new SolidColorBrush(renderTarget, Color.CornflowerBlue));
-
-            //Vector2? mouseLoc = _mouseLoc;
-            //if (mouseLoc.HasValue)
-            //{
-            //    renderTarget.FillEllipse(
-            //        new Ellipse(mouseLoc.Value, 2, 2),
-            //        new SolidColorBrush(renderTarget, Color.Black));
-            //}
-            //
-            //int f = Interlocked.Increment(ref _frame);
-            //renderTarget.DrawText(
-            //    f.ToString(),
-            //    textFormat,
-            //    new RectangleF(10, 10, 400, 100),
-            //    new SolidColorBrush(renderTarget, Color.Black));
-
-            renderTarget.EndDraw();
-            swapChain.Present(0, PresentFlags.None);
+            Edge edge = shape.Edges.OrderBy(d => d.DistanceTo(loc)).First();
+            if (edge.DistanceTo(loc) < 5)
+            {
+                _selected = edge;
+                return; ;
+            }
+            _selected = null;
         }
     }
 }

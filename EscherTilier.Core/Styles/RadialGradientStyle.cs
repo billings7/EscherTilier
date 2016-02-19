@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace EscherTilier.Styles
@@ -16,6 +17,15 @@ namespace EscherTilier.Styles
         public override IStyle Transform(Matrix3x2 matrix)
         {
             throw new NotImplementedException();
+        }
+
+        public RadialGradientStyle(IReadOnlyList<GradientStop> gradientStops, Vector2 center, Vector2 originOffset, Vector2 radius, float angle)
+            : base(gradientStops)
+        {
+            Center = center;
+            OriginOffset = originOffset;
+            Radius = radius;
+            Angle = angle;
         }
     }
 }

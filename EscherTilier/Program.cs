@@ -17,8 +17,13 @@ namespace EscherTilier
             Application.SetCompatibleTextRenderingDefault(false);
             
             Main form = new Main();
-            form.Show();
-            form.RenderLoop();
+            Thread renderThread = new Thread(form.RenderLoop)
+            {
+                Name = "Render Thread",
+                IsBackground = true
+            };
+            renderThread.Start();
+            Application.Run(form);
         }
     }
 }

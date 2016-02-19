@@ -5,6 +5,11 @@ namespace EscherTilier.Styles
 {
     public abstract class GradientStyle : IStyle
     {
+        protected GradientStyle(IReadOnlyList<GradientStop> gradientStops)
+        {
+            GradientStops = gradientStops;
+        }
+
         public IReadOnlyList<GradientStop> GradientStops { get; }
 
         public abstract IStyle Transform(Matrix3x2 matrix);
