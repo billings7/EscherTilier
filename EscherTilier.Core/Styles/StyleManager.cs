@@ -42,7 +42,7 @@ namespace EscherTilier.Styles
         }
 
         [CanBeNull]
-        public T ResourceManager<T>() where T : IResourceManager => (T)_resourceManager;
+        public IResourceManager ResourceManager => _resourceManager;
         
         public IStyle GetStyle(ITile tile)
             => GetStyle(tile, Styles.Where(s => s.Shapes.Contains(tile.Shape)).Select(s => s.Style).ToArray());

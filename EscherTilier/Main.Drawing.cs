@@ -2,10 +2,12 @@
 using EscherTilier.Graphics;
 using EscherTilier.Graphics.DirectX;
 using EscherTilier.Styles;
+using EscherTilier.Utilities;
 using JetBrains.Annotations;
 using SharpDX;
 using SharpDX.Direct2D1;
 using SharpDX.DXGI;
+using GradientStop = EscherTilier.Styles.GradientStop;
 
 namespace EscherTilier
 {
@@ -15,29 +17,41 @@ namespace EscherTilier
             new ConcurrentDictionary<StyleManager, DirectXResourceManager>();
 
         [NotNull]
-        private readonly DirectXResourceManager _miskResourceManager;
+        private DirectXResourceManager _miskResourceManager;
 
         [NotNull]
-        private readonly SolidColourStyle _greyStyle = new SolidColourStyle(new Colour(0.5f, 0.5f, 0.5f));
+        private readonly SolidColourStyle _grayStyle = new SolidColourStyle(Colour.Gray);
 
         [NotNull]
-        private readonly SolidColourStyle _blackStyle = new SolidColourStyle(new Colour(0, 0, 0));
+        private readonly SolidColourStyle _blackStyle = new SolidColourStyle(Colour.Black);
 
         [NotNull]
         private DirectXGraphics _directXGraphics;
 
+        private void InitializeGraphics()
+        {
+            _miskResourceManager = new DirectXResourceManager(renderControl.RenderTarget);
+            _miskResourceManager.Add(_grayStyle);
+            _miskResourceManager.Add(_blackStyle);
+            _directXGraphics = new DirectXGraphics(
+                renderControl.RenderTarget,
+                _miskResourceManager,
+                _grayStyle,
+                new LineStyle(2, _blackStyle));
+        }
+
         partial void renderControl_Render([NotNull] RenderTarget renderTarget, [NotNull] SwapChain swapChain)
         {
             renderTarget.BeginDraw();
-            renderTarget.Transform = ViewMatrix.ToMatrix3x2();
+            renderTarget.Transform = ViewMatrix.ToRawMatrix3x2();
             renderTarget.Clear(Color.White);
 
-            if (shape != null)
+            if (_shape != null)
             {
                 using (IGraphicsPath path = _directXGraphics.CreatePath())
                 {
                     bool first = true;
-                    foreach (Vertex vertex in shape.Vertices)
+                    foreach (Vertex vertex in _shape.Vertices)
                     {
                         if (first) path.Start(vertex.Location);
                         else path.AddLine(vertex.Location);
@@ -52,13 +66,35 @@ namespace EscherTilier
                 Vertex selectedVertex = _selected as Vertex;
                 Edge selectedEdge;
                 if (selectedVertex != null)
-                    _directXGraphics.FillCircle(selectedVertex.Location, 3);
+                {
+                    _directXGraphics.FillCircle(selectedVertex.Location, 1.25f);
+
+                    GradientStop[] gradientStops =
+                    {
+                        new GradientStop(Colour.Gray, 0),
+                        new GradientStop(Colour.Black, 1)
+                    };
+
+                    LinearGradientStyle style = new LinearGradientStyle(
+                        gradientStops,
+                        selectedVertex.Location,
+                        selectedVertex.In.Start.Location);
+
+                    using (_directXGraphics.TempState(lineStyle: style))
+                        _directXGraphics.DrawLine(selectedVertex.Location, selectedVertex.In.Start.Location);
+
+                    style = new LinearGradientStyle(
+                        gradientStops,
+                        selectedVertex.Location,
+                        selectedVertex.Out.End.Location);
+
+                    using (_directXGraphics.TempState(lineStyle: style))
+                        _directXGraphics.DrawLine(selectedVertex.Location, selectedVertex.Out.End.Location);
+                }
                 else if ((selectedEdge = _selected as Edge) != null)
                 {
-                    LineStyle tmp = _directXGraphics.LineStyle;
-                    _directXGraphics.LineStyle = new LineStyle(2, _greyStyle);
-                    _directXGraphics.DrawLine(selectedEdge.Start.Location, selectedEdge.End.Location);
-                    _directXGraphics.LineStyle = tmp;
+                    using (_directXGraphics.TempState(lineStyle: _grayStyle))
+                        _directXGraphics.DrawLine(selectedEdge.Start.Location, selectedEdge.End.Location);
                 }
             }
 
@@ -68,6 +104,7 @@ namespace EscherTilier
 
         partial void renderControl_RenderTargetChanged([NotNull] RenderTarget renderTarget)
         {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (_miskResourceManager == null) return;
 
             _miskResourceManager.RenderTarget = renderTarget;
@@ -76,7 +113,7 @@ namespace EscherTilier
             _directXGraphics = new DirectXGraphics(
                 renderTarget,
                 _miskResourceManager,
-                _greyStyle,
+                _grayStyle,
                 new LineStyle(2, _blackStyle));
         }
     }

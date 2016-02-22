@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
+using EscherTilier.Numerics;
 using JetBrains.Annotations;
 
 namespace EscherTilier
@@ -78,6 +80,8 @@ namespace EscherTilier
 
             Vertices = vertices;
             Edges = edges;
+
+            IsClockwise = Edges.Sum(e => (e.End.Location.X - e.Start.Location.X) * (e.End.Location.Y + e.Start.Location.Y)) > 0;
         }
 
         /// <summary>
@@ -108,6 +112,54 @@ namespace EscherTilier
         [NotNull]
         [ItemNotNull]
         public IReadOnlyList<Edge> Edges { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether the verticies in this shape are defined in a clockwise order.
+        /// </summary>
+        /// <value>
+        /// <see langword="true" /> if the shape is clockwise; otherwise, <see langword="false" />.
+        /// </value>
+        public bool IsClockwise { get; }
+
+        /// <summary>
+        /// Gets the centroid point of the shape.
+        /// </summary>
+        /// <value>
+        /// The centroid point.
+        /// </value>
+        public Vector2 Centroid => Vertices.Aggregate(Vector2.Zero, (sum, vert) => sum + vert.Location) / Vertices.Count;
+
+        /// <summary>
+        /// Gets the bounds of the shape.
+        /// </summary>
+        /// <value>
+        /// The shape bounds.
+        /// </value>
+        public Rectangle Bounds
+        {
+            get
+            {
+                Vector2 min = Vector2.Zero;
+                Vector2 max = Vector2.Zero;
+
+                bool first = true;
+                foreach (Vector2 vertex in Vertices.Select(v => v.Location))
+                {
+                    if (first) min = max = vertex;
+                    else
+                    {
+                        if (vertex.X < min.X) min.X = vertex.X;
+                        else if (vertex.X > max.X) max.X = vertex.X;
+                        if (vertex.Y < min.Y) min.Y = vertex.Y;
+                        else if (vertex.Y > max.Y) max.Y = vertex.Y;
+                    }
+
+                    first = false;
+                }
+
+                return new Rectangle(min, max - min);
+            }
+        }
 
         /// <summary>
         ///     Gets the edge with the specified name.

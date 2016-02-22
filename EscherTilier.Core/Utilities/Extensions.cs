@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
+using System.Threading;
 using EscherTilier.Expressions;
+using EscherTilier.Graphics;
+using EscherTilier.Styles;
 using JetBrains.Annotations;
 
 namespace EscherTilier.Utilities
@@ -142,19 +146,19 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// Compiles the specified expression.
+        ///     Compiles the specified expression.
         /// </summary>
         /// <typeparam name="T">The type of the value of the expression.</typeparam>
         /// <param name="expression">The expression to compile.</param>
         /// <returns>
-        /// The compiled expression.
+        ///     The compiled expression.
         /// </returns>
         [NotNull]
         public static CompiledExpression<T> Compile<T>([NotNull] this IExpression<T> expression)
-                    => CompiledExpression<T>.Compile(expression);
+            => CompiledExpression<T>.Compile(expression);
 
         /// <summary>
-        /// Gets the value for the key given, adding it if it doesnt exist.
+        ///     Gets the value for the key given, adding it if it doesnt exist.
         /// </summary>
         /// <typeparam name="TKey">The type of the key.</typeparam>
         /// <typeparam name="TValue">The type of the value.</typeparam>
@@ -163,9 +167,9 @@ namespace EscherTilier.Utilities
         /// <param name="factory">The factory.</param>
         /// <returns></returns>
         public static TValue GetOrAdd<TKey, TValue>(
-                    [NotNull] this Dictionary<TKey, TValue> dictionary,
-                    [NotNull] TKey key,
-                    [NotNull] Func<TKey, TValue> factory)
+            [NotNull] this Dictionary<TKey, TValue> dictionary,
+            [NotNull] TKey key,
+            [NotNull] Func<TKey, TValue> factory)
         {
             if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
             if (factory == null) throw new ArgumentNullException(nameof(factory));
@@ -177,6 +181,110 @@ namespace EscherTilier.Utilities
             value = factory(key);
             dictionary.Add(key, value);
             return value;
+        }
+
+        /// <summary>
+        ///     Attempts to remove the object at the top of the <see cref="Stack{T}" />, returning it if successful.
+        /// </summary>
+        /// <typeparam name="T">The type of the items in the stack.</typeparam>
+        /// <param name="stack">The stack to pop.</param>
+        /// <param name="value">The value at the top of the stack, or <see langword="default{T}" /> if the stack is empty.</param>
+        /// <returns><see langword="true" /> if the stack was not empty; otherwise <see langword="false" />.</returns>
+        public static bool TryPop<T>([NotNull] this Stack<T> stack, out T value)
+        {
+            if (stack == null) throw new ArgumentNullException(nameof(stack));
+            if (stack.Count < 1)
+            {
+                value = default(T);
+                return false;
+            }
+
+            value = stack.Pop();
+            return true;
+        }
+
+        /// <summary>
+        ///     Attempts to return the object at the top of the <see cref="Stack{T}" />.
+        /// </summary>
+        /// <typeparam name="T">The type of the items in the stack.</typeparam>
+        /// <param name="stack">The stack to peek.</param>
+        /// <param name="value">The value at the top of the stack, or <see langword="default{T}" /> if the stack is empty.</param>
+        /// <returns><see langword="true" /> if the stack was not empty; otherwise <see langword="false" />.</returns>
+        public static bool TryPeek<T>([NotNull] this Stack<T> stack, out T value)
+        {
+            if (stack == null) throw new ArgumentNullException(nameof(stack));
+            if (stack.Count < 1)
+            {
+                value = default(T);
+                return false;
+            }
+
+            value = stack.Peek();
+            return true;
+        }
+
+        /// <summary>
+        /// Saves the current state of the graphics, sets the state using the given action,
+        /// and reutrns an <see cref="IDisposable" /> that can can be disposed to restore the saved state.
+        /// </summary>
+        /// <param name="graphics">The graphics.</param>
+        /// <param name="fillStyle">The fill style, or <see langword="null"/> to leave unchanged.</param>
+        /// <param name="lineStyle">The line style, or <see langword="null"/> to leave unchanged.</param>
+        /// <param name="lineWidth">The line width, or <see langword="null"/> to leave unchanged.</param>
+        /// <param name="transform">The transform, or <see langword="null"/> to leave unchanged.</param>
+        /// <param name="resourceManager">The resource manager, or <see langword="null"/> to leave unchanged.</param>
+        /// <param name="setState">An action which can be used to change any values that are needed.</param>
+        /// <returns>
+        /// An <see cref="IDisposable" /> that can can be disposed to restore the saved state.
+        /// </returns>
+        public static IDisposable TempState(
+            [NotNull] this IGraphics graphics,
+            [CanBeNull] IStyle fillStyle = null,
+            [CanBeNull] IStyle lineStyle = null,
+            [CanBeNull] float? lineWidth = null,
+            [CanBeNull] Matrix3x2? transform = null,
+            [CanBeNull] IResourceManager resourceManager = null,
+            [CanBeNull] Action<IGraphics> setState = null)
+        {
+            if (graphics == null) throw new ArgumentNullException(nameof(graphics));
+            graphics.SaveState();
+            try
+            {
+                if (fillStyle != null) graphics.FillStyle = fillStyle;
+                if (lineStyle != null) graphics.LineStyle = lineStyle;
+                if (lineWidth != null) graphics.LineWidth = lineWidth.Value;
+                if (transform != null) graphics.Transform = transform.Value;
+                if (resourceManager != null) graphics.ResourceManager = resourceManager;
+                setState?.Invoke(graphics);
+                return new TempStateRestorer(graphics);
+            }
+            catch
+            {
+                graphics.RestoreState();
+                throw;
+            }
+        }
+
+        /// <summary>
+        ///     Object for restoring a state saved in an <see cref="IGraphics" /> instance.
+        /// </summary>
+        private struct TempStateRestorer : IDisposable
+        {
+            private IGraphics _graphics;
+
+            /// <summary>
+            ///     Initializes a new instance of the <see cref="TempStateRestorer" /> struct.
+            /// </summary>
+            /// <param name="graphics">The graphics.</param>
+            public TempStateRestorer(IGraphics graphics)
+            {
+                _graphics = graphics;
+            }
+
+            /// <summary>
+            ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+            /// </summary>
+            public void Dispose() => Interlocked.Exchange(ref _graphics, null)?.RestoreState();
         }
     }
 

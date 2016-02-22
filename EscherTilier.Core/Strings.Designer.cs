@@ -106,6 +106,15 @@ namespace EscherTilier {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The value of the component must be in the range 0-1.
+        /// </summary>
+        internal static string Colour_CheckRange_NotInRange {
+            get {
+                return ResourceManager.GetString("Colour_CheckRange_NotInRange", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid comparison expression type..
         /// </summary>
         internal static string ComparisonExpression_ComparisonExpression_InvalidType {
@@ -183,6 +192,15 @@ namespace EscherTilier {
         internal static string LogicalExpression_LogicalExpression_XorChildCount {
             get {
                 return ResourceManager.GetString("LogicalExpression_LogicalExpression_XorChildCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This resource manager does not support the types specified..
+        /// </summary>
+        internal static string ResourceManager_TypesNotSupported {
+            get {
+                return ResourceManager.GetString("ResourceManager_TypesNotSupported", resourceCulture);
             }
         }
         

@@ -1,0 +1,55 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Drawing" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Drawing" #>
+<#@ import namespace="System.Reflection" #>
+<#@ output extension=".cs" #>
+using System;
+using System.Collections.Generic;
+using JetBrains.Annotations;
+
+namespace EscherTilier.Styles
+{
+    public partial struct Colour
+    {
+<# foreach (Color col in typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Where(p => p.PropertyType == typeof(Color)).Select(p => (Color)p.GetValue(null)))
+{
+    var name = col.Name;
+    var r = (col.R / 255f).ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "f";
+    var g = (col.G / 255f).ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "f";
+    var b = (col.B / 255f).ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "f";
+    var a = (col.A / 255f).ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "f";
+    var hex = col.ToArgb().ToString("X8", System.Globalization.CultureInfo.InvariantCulture);
+#>
+        /// <summary>
+        ///     The system-defined color <#= name #> that has an ARGB value of #<#= hex #>.
+        /// </summary>
+        [PublicAPI]
+        public static readonly Colour <#= col.Name #> = new Colour(<#= r #>, <#= g #>, <#= b #><#= a == "1f" ? "" : ", " + a #>);
+
+<#}#>
+        [NotNull]
+        private static readonly Dictionary<string, Colour> _knownColours = new Dictionary<string, Colour>(StringComparer.InvariantCultureIgnoreCase)
+        {
+<# foreach (Color col in typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Where(p => p.PropertyType == typeof(Color)).Select(p => (Color)p.GetValue(null)))
+{
+    var name = col.Name;
+#>
+            { "<#= name #>", <#= name #> },
+<#}#>
+        };
+
+        /// <summary>
+        /// Gets the known colours.
+        /// </summary>
+        /// <value>
+        /// The known colours.
+        /// </value> 
+        [NotNull]
+        public static IReadOnlyDictionary<string, Colour> KnownColours => _knownColours;
+    }
+}

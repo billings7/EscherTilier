@@ -411,6 +411,7 @@
             this.renderControl.TabIndex = 5;
             this.renderControl.RenderTargetChanged += new System.Action<SharpDX.Direct2D1.RenderTarget>(this.renderControl_RenderTargetChanged);
             this.renderControl.Render += new EscherTilier.RenderDelegate(this.renderControl_Render);
+            this.renderControl.Layout += new System.Windows.Forms.LayoutEventHandler(this.renderControl_Layout);
             this.renderControl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.renderControl_MouseMove);
             // 
             // Main

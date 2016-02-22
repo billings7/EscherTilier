@@ -105,6 +105,25 @@ namespace EscherTilier
         ///     The vertex angle.
         /// </value>
         public float Angle
-            => (float) (RadToDeg * Math.Acos(Vector2.Dot(In.Vector, Out.Vector) / (In.Length * Out.Length)));
+        {
+            get
+            {
+                Vector2 a = In.Start.Location;
+                Vector2 b = Location;
+                Vector2 c = Out.End.Location;
+
+                float angle =
+                    (float)
+                        (RadToDeg *
+                         Math.Acos(Vector2.Dot(b - a, b - c) / (Vector2.Distance(a, b) * Vector2.Distance(b, c))));
+
+                float dir = (b.X - a.X) * (b.Y + a.Y) + (c.X - b.X) * (c.Y + b.Y);
+
+                if (dir > 0 != Shape.IsClockwise)
+                    angle = 360 - angle;
+
+                return angle;
+            }
+        }
     }
 }

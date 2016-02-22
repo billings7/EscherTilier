@@ -210,4 +210,10 @@
   <data name="LogicalExpression_LogicalExpression_XorChildCount" xml:space="preserve">
     <value>An Xor expression must have two child expressions.</value>
   </data>
+  <data name="ResourceManager_TypesNotSupported" xml:space="preserve">
+    <value>This resource manager does not support the types specified.</value>
+  </data>
+  <data name="Colour_CheckRange_NotInRange" xml:space="preserve">
+    <value>The value of the component must be in the range 0-1</value>
+  </data>
 </root>

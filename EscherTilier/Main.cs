@@ -13,24 +13,31 @@ namespace EscherTilier
 {
     public partial class Main : Form
     {
-        private float _zoom = 300f;
-        private Matrix3x2 _scale = Matrix3x2.Identity;
-        private Matrix3x2 _translate = Matrix3x2.Identity;
+        private float _zoom = 100f;
+        private static readonly Matrix3x2 _flipY = Matrix3x2.CreateScale(1, -1);
+        private Matrix3x2 _scale = Matrix3x2.Identity, _invScale = Matrix3x2.Identity;
+        private Matrix3x2 _centerTranslate = Matrix3x2.Identity, _invCenterTranslate = Matrix3x2.Identity;
+        private Matrix3x2 _translate = Matrix3x2.Identity, _invTranslate = Matrix3x2.Identity;
 
-        private Matrix3x2 ViewMatrix => Matrix3x2.CreateScale(1, -1) * _scale *
-                                        Matrix3x2.CreateTranslation(renderControl.Width / 2f, renderControl.Height / 2f) * _translate;
+        private Matrix3x2 ViewMatrix =>
+            _flipY
+            * _scale
+            * _centerTranslate
+            * _translate;
+
+        private Matrix3x2 InverseViewMatrix =>
+            _invTranslate
+            * _invCenterTranslate
+            * _invScale
+            * _flipY;
 
         public Main()
         {
             InitializeComponent();
 
+            InitializeGraphics();
+
             statusInfoLabel.Text = string.Empty;
-            _miskResourceManager = new DirectXResourceManager(renderControl.RenderTarget);
-            _directXGraphics = new DirectXGraphics(
-                renderControl.RenderTarget,
-                _miskResourceManager,
-                _greyStyle,
-                new LineStyle(2, _blackStyle));
 
             renderControl.MouseWheel += renderControl_MouseWheel;
 
@@ -80,7 +87,7 @@ namespace EscherTilier
                     "Triangle",
                     new[] { "a", "b", "c" },
                     new[] { "A", "B", "C" },
-                    new[] { new System.Numerics.Vector2(-100, -86.60254f), new System.Numerics.Vector2(100, -86.60254f), new System.Numerics.Vector2(0, 86.60254f) })
+                    new[] { new System.Numerics.Vector2(-100/2, -86.60254f / 2), new System.Numerics.Vector2(100 / 2, -86.60254f / 2), new System.Numerics.Vector2(0, 86.60254f / 2) })
                 },
                 new IExpression<bool>[0],
                 new[]
@@ -97,10 +104,10 @@ namespace EscherTilier
                     new AdjacencyGraph<Labeled<EdgePart>>())
                 });
 
-            shape = template.CreateShapes().First();
+            _shape = template.CreateShapes().First();
         }
 
-        private Shape shape;
+        private Shape _shape;
 
         /// <summary>
         ///     Raises the <see cref="E:System.Windows.Forms.Form.Closing" /> event.
@@ -207,45 +214,68 @@ namespace EscherTilier
             int minDim = Math.Min(renderControl.Width, renderControl.Height);
 
             _scale = Matrix3x2.CreateScale(minDim / _zoom);
+            _invScale = Matrix3x2.CreateScale(_zoom / minDim);
         }
 
         private void AdjustTranslation(float dx, float dy)
         {
             _translate *= Matrix3x2.CreateTranslation(dx, dy);
+            _invTranslate *= Matrix3x2.CreateTranslation(-dx, -dy);
         }
 
         private void renderControl_MouseWheel(object sender, MouseEventArgs e)
         {
-            _zoom *= 1 - e.Delta / 1200f;
+            if (_zoom > 1)
+                _zoom *= 1 - e.Delta / 1200f;
+            
             AdjustScale();
+
+            UpdateSelected();
         }
 
         partial void renderControl_RenderTargetChanged(SharpDX.Direct2D1.RenderTarget obj);
 
         partial void renderControl_Render(SharpDX.Direct2D1.RenderTarget renderTarget, SharpDX.DXGI.SwapChain swapChain);
 
+        private void renderControl_Layout(object sender, LayoutEventArgs e)
+        {
+            _centerTranslate = Matrix3x2.CreateTranslation(renderControl.Width / 2f, renderControl.Height / 2f);
+            _invCenterTranslate = Matrix3x2.CreateTranslation(-renderControl.Width / 2f, -renderControl.Height / 2f);
+
+            UpdateSelected();
+        }
+
         private object _selected;
+
+        private Point _mouseLocation;
 
         private void renderControl_MouseMove(object sender, MouseEventArgs e)
         {
-            Matrix3x2 matrix;
-            if (!Matrix3x2.Invert(ViewMatrix, out matrix))
-                throw new InvalidOperationException();
+            _mouseLocation = e.Location;
 
-            Vector2 loc = Vector2.Transform(new Vector2(e.X, e.Y), matrix);
+            UpdateSelected();
+        }
 
-            Vertex vertex = shape.Vertices.OrderBy(v => Vector2.DistanceSquared(v.Location, loc)).First();
+        private void UpdateSelected()
+        {
+            if (_shape == null) return;
+
+            Matrix3x2 matrix = InverseViewMatrix;
+
+            Vector2 loc = Vector2.Transform(new Vector2(_mouseLocation.X, _mouseLocation.Y), matrix);
+
+            Vertex vertex = _shape.Vertices.OrderBy(v => Vector2.DistanceSquared(v.Location, loc)).First();
             if (Vector2.DistanceSquared(vertex.Location, loc) < 25)
             {
                 _selected = vertex;
-                return; ;
+                return;
             }
 
-            Edge edge = shape.Edges.OrderBy(d => d.DistanceTo(loc)).First();
+            Edge edge = _shape.Edges.OrderBy(d => d.DistanceTo(loc)).First();
             if (edge.DistanceTo(loc) < 5)
             {
                 _selected = edge;
-                return; ;
+                return;
             }
             _selected = null;
         }
