@@ -120,7 +120,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Graphics\DirectX\Direct2DGraphics.cs" />
+    <Compile Include="Graphics\DirectX\DirectXGraphics.cs" />
     <Compile Include="Graphics\DirectX\DirectXExtensions.cs" />
     <Compile Include="Graphics\DirectX\DirectXResourceManager.cs" />
     <Compile Include="Main.cs">
