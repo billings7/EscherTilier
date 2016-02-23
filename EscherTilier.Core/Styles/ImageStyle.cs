@@ -6,7 +6,7 @@ using JetBrains.Annotations;
 namespace EscherTilier.Styles
 {
     /// <summary>
-    ///     A style which uses an image.
+    ///     A style which draws an image.
     /// </summary>
     public class ImageStyle : IStyle
     {
@@ -38,6 +38,19 @@ namespace EscherTilier.Styles
             if (image == null) throw new ArgumentNullException(nameof(image));
             Image = image;
             ImageTransform = transform;
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="ImageStyle" /> class.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="transform">The transform.</param>
+        /// <exception cref="System.ArgumentNullException"></exception>
+        public ImageStyle([NotNull] IImage image)
+        {
+            if (image == null) throw new ArgumentNullException(nameof(image));
+            Image = image;
+            ImageTransform = Matrix3x2.Identity;
         }
 
         /// <summary>

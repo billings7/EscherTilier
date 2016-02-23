@@ -1,6 +1,8 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using EscherTilier.Graphics;
 using EscherTilier.Graphics.DirectX;
+using EscherTilier.Numerics;
 using EscherTilier.Styles;
 using EscherTilier.Utilities;
 using JetBrains.Annotations;
@@ -8,6 +10,7 @@ using SharpDX;
 using SharpDX.Direct2D1;
 using SharpDX.DXGI;
 using GradientStop = EscherTilier.Styles.GradientStop;
+using Matrix3x2 = System.Numerics.Matrix3x2;
 
 namespace EscherTilier
 {
@@ -45,7 +48,7 @@ namespace EscherTilier
             renderTarget.BeginDraw();
             renderTarget.Transform = ViewMatrix.ToRawMatrix3x2();
             renderTarget.Clear(Color.White);
-
+            
             if (_shape != null)
             {
                 using (IGraphicsPath path = _directXGraphics.CreatePath())
@@ -97,7 +100,7 @@ namespace EscherTilier
                         _directXGraphics.DrawLine(selectedEdge.Start.Location, selectedEdge.End.Location);
                 }
             }
-
+            
             renderTarget.EndDraw();
             swapChain.Present(0, PresentFlags.None);
         }

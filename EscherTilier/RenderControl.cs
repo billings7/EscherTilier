@@ -21,7 +21,7 @@ namespace EscherTilier
     /// </summary>
     public sealed class RenderControl : SharpDX.Windows.RenderControl
     {
-        private bool _disposed;
+        private bool _running;
 
         [NotNull]
         private readonly object _lock = new object();
@@ -37,6 +37,9 @@ namespace EscherTilier
 
         [NotNull]
         private Surface _backBuffer;
+
+        [NotNull]
+        private readonly Thread _renderThread;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="RenderControl" /> class.
@@ -93,6 +96,12 @@ namespace EscherTilier
                 Debug.Assert(factory != null, "factory != null");
                 factory.MakeWindowAssociation(Handle, WindowAssociationFlags.IgnoreAltEnter);
             }
+
+            _renderThread = new Thread(RenderLoop)
+            {
+                Name = "Render Thread",
+                IsBackground = true
+            };
         }
 
         /// <summary>
@@ -154,7 +163,7 @@ namespace EscherTilier
         {
             base.OnLayout(e);
 
-            if (_disposed) return;
+            if (!_running) return;
 
             lock (_lock)
             {
@@ -214,11 +223,33 @@ namespace EscherTilier
         }
 
         /// <summary>
+        /// Starts the render loop.
+        /// </summary>
+        public void Start()
+        {
+            if (_running) return;
+            lock (_lock)
+            {
+                if (_running) return;
+                _running = true;
+                _renderThread.Start();
+            }
+        }
+
+        /// <summary>
+        /// Stops the render loop.
+        /// </summary>
+        public void Stop()
+        {
+            lock (_lock) _running = false;
+        }
+
+        /// <summary>
         ///     Runs the render loop.
         /// </summary>
         public void RenderLoop()
         {
-            while (!_disposed)
+            while (_running)
             {
                 OnRender();
                 Thread.Sleep(1);
@@ -241,7 +272,7 @@ namespace EscherTilier
             base.Dispose(disposing);
             if (disposing)
             {
-                _disposed = true;
+                _running = true;
                 Interlocked.Exchange(ref _renderTarget, null)?.Dispose();
                 Interlocked.Exchange(ref _backBuffer, null)?.Dispose();
                 Interlocked.Exchange(ref _swapChain, null)?.Dispose();

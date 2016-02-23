@@ -152,7 +152,8 @@ namespace EscherTilier.Graphics.DirectX
                         },
                         new BrushProperties
                         {
-                            Transform = image.ImageTransform.ToRawMatrix3x2()
+                            Transform = image.ImageTransform.ToRawMatrix3x2(),
+                            Opacity = 1
                         });
                 }
 
@@ -290,7 +291,15 @@ namespace EscherTilier.Graphics.DirectX
                 }
 
                 if (!_brushes.ContainsValue(brush))
+                {
+                    GradientStopCollection stopCollection =
+                        (brush as LinearGradientBrush)?.GradientStopCollection ??
+                        (brush as RadialGradientBrush)?.GradientStopCollection;
+
+                    stopCollection?.Dispose();
+
                     brush.Dispose();
+                }
             }
         }
 

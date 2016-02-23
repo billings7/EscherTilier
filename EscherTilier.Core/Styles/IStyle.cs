@@ -3,7 +3,7 @@
 namespace EscherTilier.Styles
 {
     /// <summary>
-    /// Interface to a style.
+    /// Interface to a style for drawing a tile.
     /// </summary>
     public interface IStyle
     {

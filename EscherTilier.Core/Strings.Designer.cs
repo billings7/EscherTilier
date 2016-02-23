@@ -169,6 +169,15 @@ namespace EscherTilier {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Line width must be greater than 0..
+        /// </summary>
+        internal static string LineStyle_LineStyle_LineWidthNegative {
+            get {
+                return ResourceManager.GetString("LineStyle_LineStyle_LineWidthNegative", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid comparison expression type..
         /// </summary>
         internal static string LogicalExpression_LogicalExpression_InvalidType {

@@ -14,22 +14,19 @@ namespace EscherTilier
     public partial class Main : Form
     {
         private float _zoom = 100f;
-        private static readonly Matrix3x2 _flipY = Matrix3x2.CreateScale(1, -1);
         private Matrix3x2 _scale = Matrix3x2.Identity, _invScale = Matrix3x2.Identity;
         private Matrix3x2 _centerTranslate = Matrix3x2.Identity, _invCenterTranslate = Matrix3x2.Identity;
         private Matrix3x2 _translate = Matrix3x2.Identity, _invTranslate = Matrix3x2.Identity;
 
         private Matrix3x2 ViewMatrix =>
-            _flipY
-            * _scale
+            _scale
             * _centerTranslate
             * _translate;
 
         private Matrix3x2 InverseViewMatrix =>
             _invTranslate
             * _invCenterTranslate
-            * _invScale
-            * _flipY;
+            * _invScale;
 
         public Main()
         {
@@ -46,9 +43,7 @@ namespace EscherTilier
             //    _textFormat = new TextFormat(factory, "Calibri", 24.0f);
             //}
         }
-
-        public void RenderLoop() => renderControl.RenderLoop();
-
+        
         /// <summary>
         ///     Raises the <see cref="E:System.Windows.Forms.Form.Load" /> event.
         /// </summary>
@@ -87,7 +82,7 @@ namespace EscherTilier
                     "Triangle",
                     new[] { "a", "b", "c" },
                     new[] { "A", "B", "C" },
-                    new[] { new System.Numerics.Vector2(-100/2, -86.60254f / 2), new System.Numerics.Vector2(100 / 2, -86.60254f / 2), new System.Numerics.Vector2(0, 86.60254f / 2) })
+                    new[] { new Vector2(-100/2, 86.60254f / 2), new Vector2(100 / 2, 86.60254f / 2), new Vector2(0, -86.60254f / 2) })
                 },
                 new IExpression<bool>[0],
                 new[]
@@ -105,6 +100,8 @@ namespace EscherTilier
                 });
 
             _shape = template.CreateShapes().First();
+
+            renderControl.Start();
         }
 
         private Shape _shape;
@@ -117,11 +114,15 @@ namespace EscherTilier
         {
             base.OnClosing(e);
 
+            // TODO prompt to save if not
+
             Settings.Default.WindowState = WindowState;
             Settings.Default.WindowSize = _lastNormalSize;
             Settings.Default.WindowLocation = _lastNormalLocation;
 
             Settings.Default.Save();
+
+            renderControl.Stop();
         }
 
         private Size _lastNormalSize = Size.Empty;

@@ -383,7 +383,16 @@ namespace EscherTilier.Graphics.DirectX
         /// </summary>
         public void Dispose()
         {
-            // TODO Do i need to do anything here?
+            if (_fillStyle != null)
+            {
+                Debug.Assert(_fillBrush != null, "_fillBrush != null");
+                _resourceManager.Release(_fillStyle, _fillBrush);
+            }
+            if (_lineStyle != null)
+            {
+                Debug.Assert(_lineBrush != null, "_lineBrush != null");
+                _resourceManager.Release(_lineStyle, _lineBrush);
+            }
         }
 
         /// <summary>
@@ -419,6 +428,16 @@ namespace EscherTilier.Graphics.DirectX
             public void Restore([NotNull] DirectXGraphics graphics)
             {
                 Debug.Assert(graphics != null, "graphics != null");
+                if (graphics._fillBrush != null)
+                {
+                    Debug.Assert(graphics._fillStyle != null, "_fillStyle != null");
+                    graphics._resourceManager.Release(graphics._fillStyle, graphics._fillBrush);
+                }
+                if (graphics._lineBrush != null)
+                {
+                    Debug.Assert(graphics._lineStyle != null, "_lineStyle != null");
+                    graphics._resourceManager.Release(graphics._lineStyle, graphics._lineBrush);
+                }
                 graphics._fillBrush = FillBrush;
                 graphics._lineBrush = LineBrush;
                 graphics._fillStyle = FillStyle;

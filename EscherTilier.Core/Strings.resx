@@ -216,4 +216,7 @@
   <data name="Colour_CheckRange_NotInRange" xml:space="preserve">
     <value>The value of the component must be in the range 0-1</value>
   </data>
+  <data name="LineStyle_LineStyle_LineWidthNegative" xml:space="preserve">
+    <value>Line width must be greater than 0.</value>
+  </data>
 </root>

@@ -4,8 +4,17 @@ using System.Numerics;
 
 namespace EscherTilier.Styles
 {
+    /// <summary>
+    ///     A style that draws a radial gradient.
+    /// </summary>
     public class RadialGradientStyle : GradientStyle
     {
+        /// <summary>
+        /// Gets the center of the gradient.
+        /// </summary>
+        /// <value>
+        /// The center.
+        /// </value>
         public Vector2 Center { get; }
 
         public Vector2 OriginOffset { get; }

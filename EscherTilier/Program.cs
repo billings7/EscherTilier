@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Threading;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows.Forms;
-using SharpDX.Windows;
 
 namespace EscherTilier
 {
@@ -13,17 +13,24 @@ namespace EscherTilier
         [STAThread]
         static void Main()
         {
+#if DEBUG
+            SharpDX.Configuration.EnableObjectTracking = true;
+#endif
+
+            Task.Run(
+                async () =>
+                {
+                    while (true)
+                    {
+                        Debug.WriteLine(SharpDX.Diagnostics.ObjectTracker.ReportActiveObjects());
+                        await Task.Delay(1000);
+                    }
+                });
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            
-            Main form = new Main();
-            Thread renderThread = new Thread(form.RenderLoop)
-            {
-                Name = "Render Thread",
-                IsBackground = true
-            };
-            renderThread.Start();
-            Application.Run(form);
+
+            Application.Run(new Main());
         }
     }
 }

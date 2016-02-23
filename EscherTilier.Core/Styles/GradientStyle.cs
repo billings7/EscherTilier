@@ -6,12 +6,12 @@ using JetBrains.Annotations;
 namespace EscherTilier.Styles
 {
     /// <summary>
-    /// Base class for styles which have a gradient.
+    ///     Base class for styles which have a gradient.
     /// </summary>
     public abstract class GradientStyle : IStyle
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="GradientStyle"/> class.
+        ///     Initializes a new instance of the <see cref="GradientStyle" /> class.
         /// </summary>
         /// <param name="gradientStops">The gradient stops.</param>
         /// <exception cref="System.ArgumentNullException"></exception>
@@ -22,16 +22,16 @@ namespace EscherTilier.Styles
         }
 
         /// <summary>
-        /// Gets the gradient stops for this style.
+        ///     Gets the gradient stops for this style.
         /// </summary>
         /// <value>
-        /// The gradient stops.
+        ///     The gradient stops.
         /// </value>
         [NotNull]
         public IReadOnlyList<GradientStop> GradientStops { get; }
 
         /// <summary>
-        /// Returns a copy of this style with the given transform applied.
+        ///     Returns a copy of this style with the given transform applied.
         /// </summary>
         /// <param name="matrix">The transform matrix.</param>
         /// <returns>The transformed style.</returns>
