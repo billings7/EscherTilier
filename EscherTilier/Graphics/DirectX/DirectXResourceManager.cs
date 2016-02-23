@@ -279,7 +279,13 @@ namespace EscherTilier.Graphics.DirectX
 
             lock (_lock)
             {
-                if (_brushes == null) throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                if (_brushes == null)
+                {
+                    if (!brush.IsDisposed)
+                        brush.Dispose();
+                    return;
+                }
+
                 Debug.Assert(_tempBitmaps != null, "_tempBitmaps != null");
 
                 ImageStyle imageStyle = style as ImageStyle;
@@ -385,7 +391,13 @@ namespace EscherTilier.Graphics.DirectX
 
             lock (_lock)
             {
-                if (_bitmaps == null) throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                if (_bitmaps == null)
+                {
+                    if (!bitmap.IsDisposed)
+                        bitmap.Dispose();
+                    return;
+                }
+                
                 Debug.Assert(_tempBitmaps != null, "_tempBitmaps != null");
 
                 if (_tempBitmaps.ContainsValue(bitmap))

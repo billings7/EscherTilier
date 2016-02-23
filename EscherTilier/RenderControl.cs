@@ -26,20 +26,20 @@ namespace EscherTilier
         [NotNull]
         private readonly object _lock = new object();
 
-        [NotNull]
+        [CanBeNull]
         private Device _device;
 
-        [NotNull]
+        [CanBeNull]
         private SwapChain _swapChain;
 
-        [NotNull]
+        [CanBeNull]
         private RenderTarget _renderTarget;
 
-        [NotNull]
+        [CanBeNull]
         private Surface _backBuffer;
 
-        [NotNull]
-        private readonly Thread _renderThread;
+        [CanBeNull]
+        private Thread _renderThread;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="RenderControl" /> class.
@@ -117,6 +117,7 @@ namespace EscherTilier
             {
                 lock (_lock)
                 {
+                    if (_renderTarget == null) throw new ObjectDisposedException(nameof(RenderControl));
                     return _renderTarget;
                 }
             }
@@ -231,6 +232,7 @@ namespace EscherTilier
             lock (_lock)
             {
                 if (_running) return;
+                if (_renderThread == null) throw new ObjectDisposedException(nameof(RenderControl));
                 _running = true;
                 _renderThread.Start();
             }
@@ -247,19 +249,12 @@ namespace EscherTilier
         /// <summary>
         ///     Runs the render loop.
         /// </summary>
-        public void RenderLoop()
+        private void RenderLoop()
         {
             while (_running)
             {
                 OnRender();
                 Thread.Sleep(1);
-                //if (NeedsRender)
-                //{
-                //    OnRender();
-                //    Thread.Yield();
-                //}
-                //else
-                //    Thread.Sleep(1);
             }
         }
 
@@ -271,13 +266,15 @@ namespace EscherTilier
         {
             base.Dispose(disposing);
             if (disposing)
-            {
-                _running = true;
-                Interlocked.Exchange(ref _renderTarget, null)?.Dispose();
-                Interlocked.Exchange(ref _backBuffer, null)?.Dispose();
-                Interlocked.Exchange(ref _swapChain, null)?.Dispose();
-                Interlocked.Exchange(ref _device, null)?.Dispose();
-            }
+                lock (_lock)
+                {
+                    _running = false;
+                    _renderThread = null;
+                    Interlocked.Exchange(ref _renderTarget, null)?.Dispose();
+                    Interlocked.Exchange(ref _backBuffer, null)?.Dispose();
+                    Interlocked.Exchange(ref _swapChain, null)?.Dispose();
+                    Interlocked.Exchange(ref _device, null)?.Dispose();
+                }
         }
     }
 }

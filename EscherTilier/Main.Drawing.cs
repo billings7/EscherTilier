@@ -11,25 +11,28 @@ using SharpDX.Direct2D1;
 using SharpDX.DXGI;
 using GradientStop = EscherTilier.Styles.GradientStop;
 using Matrix3x2 = System.Numerics.Matrix3x2;
+using System.Threading;
+using System.Diagnostics;
 
 namespace EscherTilier
 {
     public partial class Main
     {
+        [NotNull]
         private readonly ConcurrentDictionary<StyleManager, DirectXResourceManager> _resourceManagers =
             new ConcurrentDictionary<StyleManager, DirectXResourceManager>();
 
-        [NotNull]
+        [CanBeNull]
         private DirectXResourceManager _miskResourceManager;
+
+        [CanBeNull]
+        private DirectXGraphics _directXGraphics;
 
         [NotNull]
         private readonly SolidColourStyle _grayStyle = new SolidColourStyle(Colour.Gray);
 
         [NotNull]
         private readonly SolidColourStyle _blackStyle = new SolidColourStyle(Colour.Black);
-
-        [NotNull]
-        private DirectXGraphics _directXGraphics;
 
         private void InitializeGraphics()
         {
@@ -43,12 +46,24 @@ namespace EscherTilier
                 new LineStyle(2, _blackStyle));
         }
 
+        private void UnloadGraphics()
+        {
+            Interlocked.Exchange(ref _directXGraphics, null)?.Dispose();
+            Interlocked.Exchange(ref _miskResourceManager, null)?.Dispose();
+
+            foreach (var managers in _resourceManagers)
+            {
+                managers.Key.Dispose();
+                managers.Value.Dispose();
+            }
+        }
+
         partial void renderControl_Render([NotNull] RenderTarget renderTarget, [NotNull] SwapChain swapChain)
         {
             renderTarget.BeginDraw();
             renderTarget.Transform = ViewMatrix.ToRawMatrix3x2();
             renderTarget.Clear(Color.White);
-            
+
             if (_shape != null)
             {
                 using (IGraphicsPath path = _directXGraphics.CreatePath())
@@ -100,7 +115,7 @@ namespace EscherTilier
                         _directXGraphics.DrawLine(selectedEdge.Start.Location, selectedEdge.End.Location);
                 }
             }
-            
+
             renderTarget.EndDraw();
             swapChain.Present(0, PresentFlags.None);
         }

@@ -31,7 +31,6 @@ namespace EscherTilier
         public Main()
         {
             InitializeComponent();
-
             InitializeGraphics();
 
             statusInfoLabel.Text = string.Empty;
@@ -123,6 +122,13 @@ namespace EscherTilier
             Settings.Default.Save();
 
             renderControl.Stop();
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+
+            UnloadGraphics();
         }
 
         private Size _lastNormalSize = Size.Empty;

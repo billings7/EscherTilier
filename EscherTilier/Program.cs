@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -16,21 +17,18 @@ namespace EscherTilier
 #if DEBUG
             SharpDX.Configuration.EnableObjectTracking = true;
 #endif
-
-            Task.Run(
-                async () =>
-                {
-                    while (true)
-                    {
-                        Debug.WriteLine(SharpDX.Diagnostics.ObjectTracker.ReportActiveObjects());
-                        await Task.Delay(1000);
-                    }
-                });
-
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
             Application.Run(new Main());
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            Thread.Sleep(10000);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
     }
 }

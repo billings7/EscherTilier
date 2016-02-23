@@ -63,6 +63,7 @@ namespace EscherTilier.Styles
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
