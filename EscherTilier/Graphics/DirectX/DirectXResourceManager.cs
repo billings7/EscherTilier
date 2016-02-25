@@ -15,7 +15,8 @@ using FactoryWrite = SharpDX.DirectWrite.Factory;
 
 namespace EscherTilier.Graphics.DirectX
 {
-    public class DirectXResourceManager : ResourceManager, IResourceManager<IStyle, Brush>,
+    public class DirectXResourceManager : ResourceManager, 
+        IResourceManager<IStyle, Brush>,
         IResourceManager<IImage, Bitmap>
     {
         /// <summary>
@@ -52,13 +53,12 @@ namespace EscherTilier.Graphics.DirectX
         private RenderTarget _renderTarget;
 
         [CanBeNull]
-        private Dictionary<IStyle, Brush> _brushes = new Dictionary<IStyle, Brush>();
+        private ResourceDictionary<IStyle, Resource<Brush>> _brushes = 
+            new ResourceDictionary<IStyle, Resource<Brush>>();
 
         [CanBeNull]
-        private Dictionary<IImage, Bitmap> _bitmaps = new Dictionary<IImage, Bitmap>();
-
-        [CanBeNull]
-        private Dictionary<IImage, Bitmap> _tempBitmaps = new Dictionary<IImage, Bitmap>();
+        private ResourceDictionary<IImage, Bitmap> _bitmaps = 
+            new ResourceDictionary<IImage, Bitmap>();
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="DirectXResourceManager" /> class.
@@ -113,7 +113,7 @@ namespace EscherTilier.Graphics.DirectX
         /// <param name="style">The style.</param>
         /// <returns></returns>
         [NotNull]
-        private Brush CreateBrush([NotNull] IStyle style)
+        private Brush CreateBrush([NotNull] IStyle style, bool add)
         {
             lock (_lock)
             {
@@ -124,6 +124,8 @@ namespace EscherTilier.Graphics.DirectX
                 LinearGradientStyle linearGradient = style as LinearGradientStyle;
                 if (linearGradient != null)
                 {
+                    GradientStopCollection gradientStops = add ? Add(linearGradient) : Get(linearGradient);
+
                     return new LinearGradientBrush(
                         _renderTarget,
                         new LinearGradientBrushProperties
@@ -131,15 +133,18 @@ namespace EscherTilier.Graphics.DirectX
                             StartPoint = linearGradient.Start.ToRawVector2(),
                             EndPoint = linearGradient.End.ToRawVector2()
                         },
-                        new GradientStopCollection(
+                        gradientStops);
+                    /*
+                    new GradientStopCollection(
                             _renderTarget,
-                            linearGradient.GradientStops.Select(DirectXExtensions.ToGradientStop).ToArray()));
+                            linearGradient.GradientStops.Select(DirectXExtensions.ToGradientStop).ToArray())
+                    */
                 }
 
                 ImageStyle image = style as ImageStyle;
                 if (image != null)
                 {
-                    Bitmap bitmap = Get(image.Image);
+                    Bitmap bitmap = add ? Add(image.Image) : Get(image.Image);
                     return new BitmapBrush(
                         _renderTarget,
                         bitmap,
@@ -223,12 +228,15 @@ namespace EscherTilier.Graphics.DirectX
             {
                 if (_brushes == null) throw new ObjectDisposedException(nameof(DirectXResourceManager));
                 Brush brush;
-                if (_brushes.TryGetValue(style, out brush))
+                if (_brushes.TryGetResource(style, out brush))
                 {
                     Debug.Assert(brush != null, "brush != null");
                     return brush;
                 }
-                return CreateBrush(style);
+
+                brush = CreateBrush(style, false);
+                _brushes.Add(style, brush, true);
+                return brush;
             }
         }
 
@@ -244,7 +252,7 @@ namespace EscherTilier.Graphics.DirectX
             lock (_lock)
             {
                 if (_brushes == null) throw new ObjectDisposedException(nameof(DirectXResourceManager));
-                Brush brush = CreateBrush(style);
+                Brush brush = CreateBrush(style, true);
                 _brushes.Add(style, brush);
                 return brush;
             }
@@ -470,6 +478,191 @@ namespace EscherTilier.Graphics.DirectX
                     }
                 }
             }
+        }
+
+        private class Resource<T> : IDisposable
+        {
+            private T _value;
+
+            private List<IDisposable> _disposables;
+
+            public Resource(T value, params IDisposable[] disposables)
+            {
+                _value = value;
+                _disposables = disposables.ToList();
+            }
+
+            public T Value
+            {
+                get
+                {
+                    Debug.Assert(_value != null);
+                    return _value;
+                }
+            }
+
+            public void Add(IDisposable disposable) => _disposables.Add(disposable);
+
+            public void Dispose()
+            {
+                T val = _value;
+                _value = default(T);
+
+                (val as IDisposable)?.Dispose();
+
+                var disps = Interlocked.Exchange(ref _disposables, null);
+                if (disps == null) return;
+
+                foreach (var disposable in disps)
+                    disposable?.Dispose();
+
+                disps.Clear();
+            }
+        }
+
+        private class ResourceDictionary<TKey, TResource>
+        {
+            private readonly Dictionary<TKey, Wrapper> _resources;
+            private readonly Dictionary<TResource, Count> _resourceCount;
+
+            private struct Wrapper
+            {
+                public readonly bool IsTemporary;
+
+                private readonly TResource _resource;
+
+                public TResource Resource
+                {
+                    get
+                    {
+                        Debug.Assert(_resource != null, "_resource != null");
+                        return _resource;
+                    }
+                }
+
+                public Wrapper([NotNull] TResource resource, bool isTemp)
+                {
+                    IsTemporary = isTemp;
+                    _resource = resource;
+                }
+            }
+
+            private class Count
+            {
+                public int PermCount;
+                public int TempCount;
+                public int ReferenceCount;
+                public int Total => PermCount + TempCount + ReferenceCount;
+                
+                public void Inc(bool temp)
+                {
+                    if (temp) TempCount++;
+                    else PermCount++;
+                }
+                public void IncRef() => ReferenceCount++;
+                public void Dec(bool temp)
+                {
+                    if (temp) TempCount--;
+                    else PermCount--;
+                    Debug.Assert(TempCount >= 0);
+                    Debug.Assert(PermCount >= 0);
+                }
+                public void DecRef() => ReferenceCount++;
+                public bool Any(bool temp) => temp ? TempCount > 0 : PermCount > 0;
+
+                public static implicit operator int(Count c) => c.Total;
+            }
+
+            public ResourceDictionary(IEqualityComparer<TKey> keyComparer = null, IEqualityComparer<TResource> resourceComparer = null)
+            {
+                keyComparer = keyComparer ?? EqualityComparer<TKey>.Default;
+                resourceComparer = resourceComparer ?? EqualityComparer<TResource>.Default;
+
+                _resources = new Dictionary<TKey, Wrapper>(keyComparer);
+                _resourceCount = new Dictionary<TResource, Count>(resourceComparer);
+            }
+
+            public void Add(TKey key, TResource resource, bool temp)
+            {
+                _resources.Add(key, new Wrapper(resource, temp));
+
+                Count count;
+                bool got = _resourceCount.TryGetValue(resource, out count);
+                Debug.Assert(!got || count > 0);
+
+                count.Inc(temp);
+            }
+
+            public bool TryGetResource(TKey key, out TResource resource, bool? temp = null)
+            {
+                Wrapper wrapper;
+                if (_resources.TryGetValue(key, out wrapper))
+                {                    
+                    if (temp == null || temp == wrapper.IsTemporary)
+                    {
+                        resource = wrapper.Resource;
+                        return true;
+                    }
+                }
+
+                resource = default(TResource);
+                return false;
+            }
+
+            public bool ContainsKey(TKey key, bool? temp = null)
+            {
+                if (temp == null)
+                    return _resources.ContainsKey(key);
+
+                Wrapper wrapper;
+                return _resources.TryGetValue(key, out wrapper) && wrapper.IsTemporary == temp;
+            }
+
+            public bool ContainsResource(TResource resource, bool? temp = null)
+            {
+                if (temp == null)
+                    return _resourceCount.ContainsKey(resource);
+
+                Count count;
+                return _resourceCount.TryGetValue(resource, out count) && count.Any(temp.Value);
+            }
+            
+            public Removed Remove(TKey key, out TResource resource, bool? temp = null)
+            {
+                Wrapper wrapper;
+                if (!_resources.TryGetValue(key, out wrapper))
+                {
+                    resource = default(TResource);
+                    return Removed.NotFound;
+                }
+
+                if (temp != null && temp != wrapper.IsTemporary)
+                {
+                    resource = default(TResource);
+                    return Removed.NotFound;
+                }
+
+                _resources.Remove(key);
+
+                resource = wrapper.Resource;
+
+                Count count = _resourceCount[wrapper.Resource];
+                count.Dec(wrapper.IsTemporary);
+                if (count.Total == 0)
+                {
+                    _resourceCount.Remove(wrapper.Resource);
+                    return Removed.RemovedLast;
+                }
+
+                return Removed.Removed;
+            }
+        }
+
+        private enum Removed : byte
+        {
+            NotFound,
+            Removed,
+            RemovedLast
         }
     }
 }
