@@ -95,9 +95,12 @@
     <Compile Include="Graphics\FileImage.cs" />
     <Compile Include="Graphics\IGraphics.cs" />
     <Compile Include="Graphics\IImage.cs" />
-    <Compile Include="Graphics\IResourceManager.cs" />
+    <Compile Include="Graphics\Resources\IReadonlyResourceManager.cs" />
+    <Compile Include="Graphics\Resources\IResourceManager.cs" />
     <Compile Include="Graphics\MemoryImage.cs" />
-    <Compile Include="Graphics\ResourceManager.cs" />
+    <Compile Include="Graphics\Resources\IResourceReleaser.cs" />
+    <Compile Include="Graphics\Resources\IResourceRemover.cs" />
+    <Compile Include="Graphics\Resources\ResourceManager.cs" />
     <Compile Include="ShapeSet.cs" />
     <Compile Include="Styles\Colours.cs">
       <AutoGen>True</AutoGen>

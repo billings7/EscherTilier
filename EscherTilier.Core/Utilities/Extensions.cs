@@ -5,11 +5,15 @@ using System.Numerics;
 using System.Threading;
 using EscherTilier.Expressions;
 using EscherTilier.Graphics;
+using EscherTilier.Graphics.Resources;
 using EscherTilier.Styles;
 using JetBrains.Annotations;
 
 namespace EscherTilier.Utilities
 {
+    /// <summary>
+    ///     Extension methods.
+    /// </summary>
     public static class Extensions
     {
         /// <summary>
@@ -224,18 +228,18 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// Saves the current state of the graphics, sets the state using the given action,
-        /// and reutrns an <see cref="IDisposable" /> that can can be disposed to restore the saved state.
+        ///     Saves the current state of the graphics, sets the state using the given action,
+        ///     and reutrns an <see cref="IDisposable" /> that can can be disposed to restore the saved state.
         /// </summary>
         /// <param name="graphics">The graphics.</param>
-        /// <param name="fillStyle">The fill style, or <see langword="null"/> to leave unchanged.</param>
-        /// <param name="lineStyle">The line style, or <see langword="null"/> to leave unchanged.</param>
-        /// <param name="lineWidth">The line width, or <see langword="null"/> to leave unchanged.</param>
-        /// <param name="transform">The transform, or <see langword="null"/> to leave unchanged.</param>
-        /// <param name="resourceManager">The resource manager, or <see langword="null"/> to leave unchanged.</param>
+        /// <param name="fillStyle">The fill style, or <see langword="null" /> to leave unchanged.</param>
+        /// <param name="lineStyle">The line style, or <see langword="null" /> to leave unchanged.</param>
+        /// <param name="lineWidth">The line width, or <see langword="null" /> to leave unchanged.</param>
+        /// <param name="transform">The transform, or <see langword="null" /> to leave unchanged.</param>
+        /// <param name="resourceManager">The resource manager, or <see langword="null" /> to leave unchanged.</param>
         /// <param name="setState">An action which can be used to change any values that are needed.</param>
         /// <returns>
-        /// An <see cref="IDisposable" /> that can can be disposed to restore the saved state.
+        ///     An <see cref="IDisposable" /> that can can be disposed to restore the saved state.
         /// </returns>
         public static IDisposable TempState(
             [NotNull] this IGraphics graphics,

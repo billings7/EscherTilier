@@ -13,6 +13,7 @@ using GradientStop = EscherTilier.Styles.GradientStop;
 using Matrix3x2 = System.Numerics.Matrix3x2;
 using System.Threading;
 using System.Diagnostics;
+using Vector2 = System.Numerics.Vector2;
 
 namespace EscherTilier
 {
@@ -81,6 +82,13 @@ namespace EscherTilier
                     _directXGraphics.DrawPath(path);
                 }
 
+                IStyle s =
+                    new LinearGradientStyle(Vector2.Zero,
+                        new Vector2(50, 50), new[] { new GradientStop(Colour.Aqua, 0), new GradientStop(Colour.DarkOrange, 1) });
+
+                using (_directXGraphics.TempState(s))
+                    _directXGraphics.FillRectangle(new Numerics.Rectangle(0, 0, 50, 50));
+
                 Vertex selectedVertex = _selected as Vertex;
                 Edge selectedEdge;
                 if (selectedVertex != null)
@@ -93,18 +101,14 @@ namespace EscherTilier
                         new GradientStop(Colour.Black, 1)
                     };
 
-                    LinearGradientStyle style = new LinearGradientStyle(
-                        gradientStops,
-                        selectedVertex.Location,
-                        selectedVertex.In.Start.Location);
+                    LinearGradientStyle style = new LinearGradientStyle(selectedVertex.Location,
+                        selectedVertex.In.Start.Location, gradientStops);
 
                     using (_directXGraphics.TempState(lineStyle: style))
                         _directXGraphics.DrawLine(selectedVertex.Location, selectedVertex.In.Start.Location);
 
-                    style = new LinearGradientStyle(
-                        gradientStops,
-                        selectedVertex.Location,
-                        selectedVertex.Out.End.Location);
+                    style = new LinearGradientStyle(selectedVertex.Location,
+                        selectedVertex.Out.End.Location, gradientStops);
 
                     using (_directXGraphics.TempState(lineStyle: style))
                         _directXGraphics.DrawLine(selectedVertex.Location, selectedVertex.Out.End.Location);

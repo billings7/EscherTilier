@@ -12,10 +12,10 @@ namespace EscherTilier.Styles
         /// <summary>
         ///     Initializes a new instance of the <see cref="LinearGradientStyle" /> class.
         /// </summary>
-        /// <param name="gradientStops">The gradient stops.</param>
         /// <param name="start">The start.</param>
         /// <param name="end">The end.</param>
-        public LinearGradientStyle([NotNull] IReadOnlyList<GradientStop> gradientStops, Vector2 start, Vector2 end)
+        /// <param name="gradientStops">The gradient stops.</param>
+        public LinearGradientStyle(Vector2 start, Vector2 end, [NotNull] IReadOnlyList<GradientStop> gradientStops)
             : base(gradientStops)
         {
             Start = start;
@@ -53,7 +53,7 @@ namespace EscherTilier.Styles
             Vector2 end = Vector2.Transform(End, matrix);
 
             if (start == Start && end == End) return this;
-            return new LinearGradientStyle(GradientStops, start, end);
+            return new LinearGradientStyle(start, end, GradientStops);
         }
     }
 }

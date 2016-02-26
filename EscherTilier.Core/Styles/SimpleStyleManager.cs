@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using EscherTilier.Graphics;
+using EscherTilier.Graphics.Resources;
 using EscherTilier.Utilities;
 using JetBrains.Annotations;
 

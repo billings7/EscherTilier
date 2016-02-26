@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Threading;
+using EscherTilier.Graphics.Resources;
 using EscherTilier.Numerics;
 using EscherTilier.Styles;
 using JetBrains.Annotations;
@@ -299,11 +300,8 @@ namespace EscherTilier.Graphics.DirectX
                 if (value == _fillStyle) return;
                 if (_resourceManager == null)
                     throw new InvalidOperationException("The ResourceManager must be set before setting the style.");
-                if (_fillBrush != null)
-                {
-                    Debug.Assert(_fillStyle != null, "_fillStyle != null");
-                    _resourceManager.Release(_fillStyle, _fillBrush);
-                }
+                if (_fillStyle != null)
+                    _resourceManager.Release(_fillStyle);
                 _fillBrush = _resourceManager.Get<IStyle, Brush>(value);
                 _fillStyle = value;
             }
@@ -328,11 +326,8 @@ namespace EscherTilier.Graphics.DirectX
                 if (value == _lineStyle) return;
                 if (_resourceManager == null)
                     throw new InvalidOperationException("The ResourceManager must be set before setting the style.");
-                if (_lineBrush != null)
-                {
-                    Debug.Assert(_lineStyle != null, "_lineStyle != null");
-                    _resourceManager.Release(_lineStyle, _lineBrush);
-                }
+                if (_lineStyle != null)
+                    _resourceManager.Release(_lineStyle);
                 _lineBrush = _resourceManager.Get<IStyle, Brush>(value);
                 _lineStyle = value;
             }
@@ -386,12 +381,12 @@ namespace EscherTilier.Graphics.DirectX
             if (_fillStyle != null)
             {
                 Debug.Assert(_fillBrush != null, "_fillBrush != null");
-                _resourceManager.Release(_fillStyle, _fillBrush);
+                _resourceManager.Release(_fillStyle);
             }
             if (_lineStyle != null)
             {
                 Debug.Assert(_lineBrush != null, "_lineBrush != null");
-                _resourceManager.Release(_lineStyle, _lineBrush);
+                _resourceManager.Release(_lineStyle);
             }
         }
 
@@ -431,12 +426,12 @@ namespace EscherTilier.Graphics.DirectX
                 if (graphics._fillBrush != null)
                 {
                     Debug.Assert(graphics._fillStyle != null, "_fillStyle != null");
-                    graphics._resourceManager.Release(graphics._fillStyle, graphics._fillBrush);
+                    graphics._resourceManager.Release(graphics._fillStyle);
                 }
                 if (graphics._lineBrush != null)
                 {
                     Debug.Assert(graphics._lineStyle != null, "_lineStyle != null");
-                    graphics._resourceManager.Release(graphics._lineStyle, graphics._lineBrush);
+                    graphics._resourceManager.Release(graphics._lineStyle);
                 }
                 graphics._fillBrush = FillBrush;
                 graphics._lineBrush = LineBrush;

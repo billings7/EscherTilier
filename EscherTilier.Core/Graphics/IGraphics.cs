@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using EscherTilier.Graphics.Resources;
 using EscherTilier.Numerics;
 using EscherTilier.Styles;
 using JetBrains.Annotations;
