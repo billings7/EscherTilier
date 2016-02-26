@@ -82,13 +82,16 @@ namespace EscherTilier
                     _directXGraphics.DrawPath(path);
                 }
 
-                IStyle s =
-                    new LinearGradientStyle(Vector2.Zero,
-                        new Vector2(50, 50), new[] { new GradientStop(Colour.Aqua, 0), new GradientStop(Colour.DarkOrange, 1) });
+                IStyle s = new RandomColourStyle(
+                    Colour.Red,
+                    Colour.Blue,
+                    new Vector2(_mouseLocation.X, _mouseLocation.Y));
 
                 using (_directXGraphics.TempState(s))
-                    _directXGraphics.FillRectangle(new Numerics.Rectangle(0, 0, 50, 50));
-
+                {
+                    _directXGraphics.FillRectangle(new Numerics.Rectangle(-55, 0, 50, 50));
+                }
+                
                 Vertex selectedVertex = _selected as Vertex;
                 Edge selectedEdge;
                 if (selectedVertex != null)

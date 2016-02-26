@@ -406,6 +406,8 @@ namespace EscherTilier.Graphics.DirectX
 
             private readonly float LineWidth;
 
+            private readonly Matrix3x2 Transform;
+
             [NotNull]
             private readonly DirectXResourceManager ResourceManager;
 
@@ -418,6 +420,7 @@ namespace EscherTilier.Graphics.DirectX
                 LineStyle = graphics._lineStyle;
                 LineWidth = graphics._lineWidth;
                 ResourceManager = graphics._resourceManager;
+                Transform = graphics.Transform;
             }
 
             public void Restore([NotNull] DirectXGraphics graphics)
@@ -439,6 +442,7 @@ namespace EscherTilier.Graphics.DirectX
                 graphics._lineStyle = LineStyle;
                 graphics._lineWidth = LineWidth;
                 graphics._resourceManager = ResourceManager;
+                graphics.Transform = Transform;
             }
         }
 

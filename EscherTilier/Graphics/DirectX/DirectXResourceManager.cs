@@ -9,6 +9,7 @@ using EscherTilier.Graphics.Resources;
 using EscherTilier.Styles;
 using JetBrains.Annotations;
 using SharpDX.Direct2D1;
+using SharpDX.Mathematics.Interop;
 using SharpDX.WIC;
 using Bitmap = SharpDX.Direct2D1.Bitmap;
 using BitmapInterpolationMode = SharpDX.Direct2D1.BitmapInterpolationMode;
@@ -147,12 +148,17 @@ namespace EscherTilier.Graphics.DirectX
                 if (solidColour != null)
                     return new SolidColorBrush(_renderTarget, solidColour.Colour.ToRawColor4());
 
+                RandomColourStyle randomColour = style as RandomColourStyle;
+                if (randomColour != null)
+                    return new SolidColorBrush(_renderTarget, randomColour.PositionColour.ToRawColor4());
+
                 LinearGradientStyle linearGradient = style as LinearGradientStyle;
                 if (linearGradient != null)
                 {
                     GradientStopCollection gradientStops = new GradientStopCollection(
                         _renderTarget,
-                        linearGradient.GradientStops.Select(DirectXExtensions.ToGradientStop).ToArray());
+                        linearGradient.GradientStops.Select(DirectXExtensions.ToGradientStop).ToArray(),
+                        Gamma.Linear);
 
                     return new Resource<Brush>(
                         new LinearGradientBrush(
@@ -166,6 +172,32 @@ namespace EscherTilier.Graphics.DirectX
                         gradientStops);
                 }
 
+                RadialGradientStyle radialGradient = style as RadialGradientStyle;
+                if (radialGradient != null)
+                {
+                    GradientStopCollection gradientStops = new GradientStopCollection(
+                        _renderTarget,
+                        radialGradient.GradientStops.Select(DirectXExtensions.ToGradientStop).ToArray(),
+                        Gamma.Linear);
+
+                    return new Resource<Brush>(
+                        new RadialGradientBrush(
+                            _renderTarget,
+                            new RadialGradientBrushProperties
+                            {
+                                GradientOriginOffset = radialGradient.UnitOriginOffset.ToRawVector2(),
+                                RadiusX = 1,
+                                RadiusY = 1
+                            },
+                            new BrushProperties
+                            {
+                                Opacity = 1,
+                                Transform = radialGradient.GradientTransform.ToRawMatrix3x2()
+                            },
+                            gradientStops),
+                        gradientStops);
+                }
+                
                 ImageStyle image = style as ImageStyle;
                 if (image != null)
                 {

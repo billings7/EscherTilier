@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Globalization;
 using System.Linq;
-using System.Runtime.InteropServices;
+using System.Numerics;
 using JetBrains.Annotations;
 
 namespace EscherTilier.Styles
 {
     /// <summary>
-    /// Defines a colour in an RGBA format.
+    ///     Defines a colour in an RGBA format.
     /// </summary>
     public partial struct Colour : IEquatable<Colour>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Colour"/> struct.
+        ///     Initializes a new instance of the <see cref="Colour" /> struct.
         /// </summary>
         /// <param name="red">The red component.</param>
         /// <param name="green">The green component.</param>
@@ -27,7 +27,7 @@ namespace EscherTilier.Styles
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Colour"/> struct.
+        ///     Initializes a new instance of the <see cref="Colour" /> struct.
         /// </summary>
         /// <param name="red">The red component.</param>
         /// <param name="green">The green component.</param>
@@ -101,15 +101,39 @@ namespace EscherTilier.Styles
         }
 
         /// <summary>
+        ///     Interpolates between the specified colours.
+        /// </summary>
+        /// <param name="from">The colour to interpolate from.</param>
+        /// <param name="to">The colour to interpolate to.</param>
+        /// <param name="amount">The amount.</param>
+        /// <returns></returns>
+        public static unsafe Colour Interpolate(Colour from, Colour to, float amount)
+        {
+            Vector4 a = *(Vector4*) &from;
+            Vector4 b = *(Vector4*) &to;
+
+            a *= a;
+            b *= b;
+
+            Vector4 c = (1 - amount) * a + amount * b;
+
+            return new Colour(
+                (float) Math.Sqrt(c.X),
+                (float) Math.Sqrt(c.Y),
+                (float) Math.Sqrt(c.Z),
+                (float) Math.Sqrt(c.W));
+        }
+
+        /// <summary>
         ///     Gets the ARGB value for this colour.
         /// </summary>
         /// <returns></returns>
         public int ToArgb()
         {
-            return ((byte)(A * 255) << 24) |
-                   ((byte)(R * 255) << 16) |
-                   ((byte)(G * 255) << 8) |
-                   ((byte)(A * 255) << 0);
+            return ((byte) (A * 255) << 24) |
+                   ((byte) (R * 255) << 16) |
+                   ((byte) (G * 255) << 8) |
+                   ((byte) (A * 255) << 0);
         }
 
         /// <summary>
@@ -134,7 +158,7 @@ namespace EscherTilier.Styles
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj)) return false;
-            return obj is Colour && Equals((Colour)obj);
+            return obj is Colour && Equals((Colour) obj);
         }
 
         /// <summary>
