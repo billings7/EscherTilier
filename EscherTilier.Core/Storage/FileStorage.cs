@@ -323,7 +323,7 @@ namespace EscherTilier.Storage
                 }
             }
 
-            AdjacencyGraph<Labeled<EdgePart>> adjacency = new AdjacencyGraph<Labeled<EdgePart>>();
+            EdgePartAdjacencies adjacency = new EdgePartAdjacencies();
 
             XElement adjsElm = element.Element("Adjacencies");
             if (adjsElm == null || adjsElm.IsEmpty)

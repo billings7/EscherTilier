@@ -81,7 +81,8 @@ namespace EscherTilier
             Vertices = vertices;
             Edges = edges;
 
-            IsClockwise = Edges.Sum(e => (e.End.Location.X - e.Start.Location.X) * (e.End.Location.Y + e.Start.Location.Y)) > 0;
+            IsClockwise =
+                Edges.Sum(e => (e.End.Location.X - e.Start.Location.X) * (e.End.Location.Y + e.Start.Location.Y)) > 0;
         }
 
         /// <summary>
@@ -114,26 +115,26 @@ namespace EscherTilier
         public IReadOnlyList<Edge> Edges { get; }
 
         /// <summary>
-        /// Gets a value indicating whether the verticies in this shape are defined in a clockwise order.
+        ///     Gets a value indicating whether the verticies in this shape are defined in a clockwise order.
         /// </summary>
         /// <value>
-        /// <see langword="true" /> if the shape is clockwise; otherwise, <see langword="false" />.
+        ///     <see langword="true" /> if the shape is clockwise; otherwise, <see langword="false" />.
         /// </value>
         public bool IsClockwise { get; }
 
         /// <summary>
-        /// Gets the centroid point of the shape.
+        ///     Gets the centroid point of the shape.
         /// </summary>
         /// <value>
-        /// The centroid point.
+        ///     The centroid point.
         /// </value>
         public Vector2 Centroid => Vertices.Aggregate(Vector2.Zero, (sum, vert) => sum + vert.Location) / Vertices.Count;
 
         /// <summary>
-        /// Gets the bounds of the shape.
+        ///     Gets the bounds of the shape.
         /// </summary>
         /// <value>
-        /// The shape bounds.
+        ///     The shape bounds.
         /// </value>
         public Rectangle Bounds
         {

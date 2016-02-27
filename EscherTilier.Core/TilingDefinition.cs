@@ -27,7 +27,7 @@ namespace EscherTilier
             int id,
             [CanBeNull] IExpression<bool> condition,
             [NotNull] IReadOnlyList<EdgePattern> edgePatterns,
-            [NotNull] IAdjacencyGraph<Labeled<EdgePart>> adjacentParts)
+            [NotNull] EdgePartAdjacencies adjacentParts)
         {
             if (edgePatterns == null) throw new ArgumentNullException(nameof(edgePatterns));
             if (adjacentParts == null) throw new ArgumentNullException(nameof(adjacentParts));
@@ -80,12 +80,12 @@ namespace EscherTilier
         public IReadOnlyList<EdgePattern> EdgePatterns { get; }
 
         /// <summary>
-        /// Gets the graph of adjacent edge parts.
+        /// Gets the collection of adjacent edge parts.
         /// </summary>
         /// <value>
         /// The adjacent parts.
         /// </value>
         [NotNull]
-        public IAdjacencyGraph<Labeled<EdgePart>> AdjacentParts { get; }
+        public EdgePartAdjacencies AdjacentParts { get; }
     }
 }

@@ -133,6 +133,15 @@ namespace EscherTilier {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot add a labeled edge part that has already been added..
+        /// </summary>
+        internal static string EdgePartAdjacencies_Add_Duplicate {
+            get {
+                return ResourceManager.GetString("EdgePartAdjacencies_Add_Duplicate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to At least one part is required..
         /// </summary>
         internal static string EdgePattern_EdgePattern_OnePartRequired {

@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System;
+using System.Security.Cryptography;
 using JetBrains.Annotations;
 
 namespace EscherTilier.Utilities
@@ -26,7 +27,7 @@ namespace EscherTilier.Utilities
                 U* uptr = (U*) ptr;
                 *uptr = new U(seed, x, y);
             }
-
+            
             bytes = _md5.ComputeHash(bytes);
 
             fixed (byte* ptr = bytes)
@@ -38,8 +39,13 @@ namespace EscherTilier.Utilities
 
         private struct U
         {
+            [UsedImplicitly]
             public int Seed;
+
+            [UsedImplicitly]
             public float X;
+
+            [UsedImplicitly]
             public float Y;
 
             public U(int seed, float x, float y)

@@ -2,12 +2,10 @@
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
-using System.Windows.Forms;
-using EscherTilier.Graphics.DirectX;
-using EscherTilier.Properties;
-using EscherTilier.Styles;
 using System.Numerics;
+using System.Windows.Forms;
 using EscherTilier.Expressions;
+using EscherTilier.Properties;
 
 namespace EscherTilier
 {
@@ -42,7 +40,7 @@ namespace EscherTilier
             //    _textFormat = new TextFormat(factory, "Calibri", 24.0f);
             //}
         }
-        
+
         /// <summary>
         ///     Raises the <see cref="E:System.Windows.Forms.Form.Load" /> event.
         /// </summary>
@@ -73,7 +71,6 @@ namespace EscherTilier
                     break;
             }
 
-
             Template template = new Template(
                 new[]
                 {
@@ -81,7 +78,11 @@ namespace EscherTilier
                     "Triangle",
                     new[] { "a", "b", "c" },
                     new[] { "A", "B", "C" },
-                    new[] { new Vector2(-100/2, 86.60254f / 2), new Vector2(100 / 2, 86.60254f / 2), new Vector2(0, -86.60254f / 2) })
+                    new[]
+                    {
+                        new Vector2(-100 / 2f, 86.60254f / 2), new Vector2(100 / 2f, 86.60254f / 2),
+                        new Vector2(0, -86.60254f / 2)
+                    })
                 },
                 new IExpression<bool>[0],
                 new[]
@@ -93,9 +94,9 @@ namespace EscherTilier
                     {
                         new EdgePattern("a", new[] { new EdgePart(1, PartDirection.ClockwiseIn, 1) }),
                         new EdgePattern("b", new[] { new EdgePart(2, PartDirection.ClockwiseIn, 1) }),
-                        new EdgePattern("c", new[] { new EdgePart(1, PartDirection.ClockwiseIn, 1) }),
+                        new EdgePattern("c", new[] { new EdgePart(1, PartDirection.ClockwiseIn, 1) })
                     },
-                    new AdjacencyGraph<Labeled<EdgePart>>())
+                    new EdgePartAdjacencies())
                 });
 
             _shape = template.CreateShapes().First();
@@ -215,7 +216,6 @@ namespace EscherTilier
 
         #endregion
 
-
         private void AdjustScale()
         {
             int minDim = Math.Min(renderControl.Width, renderControl.Height);
@@ -234,7 +234,7 @@ namespace EscherTilier
         {
             if (_zoom > 1)
                 _zoom *= 1 - e.Delta / 1200f;
-            
+
             AdjustScale();
 
             UpdateSelected();

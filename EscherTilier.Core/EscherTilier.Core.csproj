@@ -80,10 +80,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Arc.cs" />
+    <Compile Include="Controller.cs" />
     <Compile Include="CubicBezierCurve.cs" />
     <Compile Include="Edge.cs" />
     <Compile Include="EdgePart.cs" />
-    <Compile Include="AdjacencyGraph.cs" />
+    <Compile Include="EdgePartAdjacencies.cs" />
     <Compile Include="EdgePartShape.cs" />
     <Compile Include="EdgePattern.cs" />
     <Compile Include="Expressions\AggregateExpression.cs" />
@@ -97,6 +98,7 @@
     <Compile Include="Expressions\NumberExpression.cs" />
     <Compile Include="Expressions\VertexExpression.cs" />
     <Compile Include="Graphics\FileImage.cs" />
+    <Compile Include="Graphics\IDrawable.cs" />
     <Compile Include="Graphics\IGraphics.cs" />
     <Compile Include="Graphics\IImage.cs" />
     <Compile Include="Graphics\Resources\IReadonlyResourceManager.cs" />

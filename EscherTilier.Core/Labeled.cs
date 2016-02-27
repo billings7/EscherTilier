@@ -5,13 +5,18 @@ using JetBrains.Annotations;
 namespace EscherTilier
 {
     /// <summary>
-    /// Adds a label to a value.
+    ///     Adds a label to a value.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public struct Labeled<T> : IEquatable<Labeled<T>>
     {
         private readonly string _label;
 
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Labeled{T}" /> struct.
+        /// </summary>
+        /// <param name="label">The label.</param>
+        /// <param name="value">The value.</param>
         public Labeled([NotNull] string label, [CanBeNull] T value)
         {
             _label = label;
@@ -19,19 +24,19 @@ namespace EscherTilier
         }
 
         /// <summary>
-        /// Gets the label.
+        ///     Gets the label.
         /// </summary>
         /// <value>
-        /// The label.
+        ///     The label.
         /// </value>
         [NotNull]
         public string Label => _label ?? string.Empty;
 
         /// <summary>
-        /// Gets the value.
+        ///     Gets the value.
         /// </summary>
         /// <value>
-        /// The value.
+        ///     The value.
         /// </value>
         [CanBeNull]
         public T Value { get; }
@@ -45,7 +50,8 @@ namespace EscherTilier
         /// <param name="other">An object to compare with this object.</param>
         public bool Equals(Labeled<T> other)
         {
-            return string.Equals(Label, other.Label) && EqualityComparer<T>.Default.Equals(Value, other.Value);
+            return string.Equals(Label, other.Label, StringComparison.InvariantCulture) &&
+                   EqualityComparer<T>.Default.Equals(Value, other.Value);
         }
 
         /// <summary>
@@ -58,7 +64,7 @@ namespace EscherTilier
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj)) return false;
-            return obj is Labeled<T> && Equals((Labeled<T>)obj);
+            return obj is Labeled<T> && Equals((Labeled<T>) obj);
         }
 
         /// <summary>
@@ -71,34 +77,29 @@ namespace EscherTilier
         {
             unchecked
             {
-                return ((Label?.GetHashCode() ?? 0) * 397) ^ EqualityComparer<T>.Default.GetHashCode(Value);
+                return (StringComparer.InvariantCulture.GetHashCode(Label) * 397) ^
+                       EqualityComparer<T>.Default.GetHashCode(Value);
             }
         }
 
         /// <summary>
-        /// Implements the operator ==.
+        ///     Implements the operator ==.
         /// </summary>
         /// <param name="left">The left.</param>
         /// <param name="right">The right.</param>
         /// <returns>
-        /// The result of the operator.
+        ///     The result of the operator.
         /// </returns>
-        public static bool operator ==(Labeled<T> left, Labeled<T> right)
-        {
-            return left.Equals(right);
-        }
+        public static bool operator ==(Labeled<T> left, Labeled<T> right) => left.Equals(right);
 
         /// <summary>
-        /// Implements the operator !=.
+        ///     Implements the operator !=.
         /// </summary>
         /// <param name="left">The left.</param>
         /// <param name="right">The right.</param>
         /// <returns>
-        /// The result of the operator.
+        ///     The result of the operator.
         /// </returns>
-        public static bool operator !=(Labeled<T> left, Labeled<T> right)
-        {
-            return !left.Equals(right);
-        }
+        public static bool operator !=(Labeled<T> left, Labeled<T> right) => !left.Equals(right);
     }
 }

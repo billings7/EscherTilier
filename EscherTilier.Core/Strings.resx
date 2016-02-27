@@ -219,4 +219,7 @@
   <data name="LineStyle_LineStyle_LineWidthNegative" xml:space="preserve">
     <value>Line width must be greater than 0.</value>
   </data>
+  <data name="EdgePartAdjacencies_Add_Duplicate" xml:space="preserve">
+    <value>Cannot add a labeled edge part that has already been added.</value>
+  </data>
 </root>
