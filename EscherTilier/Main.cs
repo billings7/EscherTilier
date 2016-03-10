@@ -1,11 +1,14 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
+using System.Media;
 using System.Numerics;
 using System.Windows.Forms;
 using EscherTilier.Expressions;
 using EscherTilier.Properties;
+using JetBrains.Annotations;
 
 namespace EscherTilier
 {
@@ -16,6 +19,43 @@ namespace EscherTilier
         private Matrix3x2 _centerTranslate = Matrix3x2.Identity, _invCenterTranslate = Matrix3x2.Identity;
         private Matrix3x2 _translate = Matrix3x2.Identity, _invTranslate = Matrix3x2.Identity;
 
+        [NotNull]
+        private readonly float[] _zoomLevels =
+        {
+            3200,
+            1600,
+            1200,
+            800,
+            700,
+            600,
+            500,
+            400,
+            300,
+            200,
+            150,
+            100,
+            66.67f,
+            50f,
+            33.33f,
+            25f,
+            16.67f,
+            12.5f,
+            8.33f,
+            6.25f,
+            5f,
+            4f,
+            3f,
+            2f,
+            1.5f,
+            1f,
+            0.7f,
+            0.5f,
+            0.4f,
+            0.3f,
+            0.2f,
+            0.17f,
+        };
+
         private Matrix3x2 ViewMatrix =>
             _scale
             * _centerTranslate
@@ -25,6 +65,8 @@ namespace EscherTilier
             _invTranslate
             * _invCenterTranslate
             * _invScale;
+
+        private Controller _controller;
 
         public Main()
         {
@@ -99,12 +141,10 @@ namespace EscherTilier
                     new EdgePartAdjacencies())
                 });
 
-            _shape = template.CreateShapes().First();
+            _controller = new ShapeController(template);
 
             renderControl.Start();
         }
-
-        private Shape _shape;
 
         /// <summary>
         ///     Raises the <see cref="E:System.Windows.Forms.Form.Closing" /> event.
@@ -146,7 +186,7 @@ namespace EscherTilier
             if (WindowState != FormWindowState.Maximized)
                 _lastNormalSize = Size;
 
-            AdjustScale();
+            UpdateScale();
         }
 
         /// <summary>
@@ -216,15 +256,15 @@ namespace EscherTilier
 
         #endregion
 
-        private void AdjustScale()
+        private void UpdateScale()
         {
             int minDim = Math.Min(renderControl.Width, renderControl.Height);
 
-            _scale = Matrix3x2.CreateScale(minDim / _zoom);
-            _invScale = Matrix3x2.CreateScale(_zoom / minDim);
+            _scale = Matrix3x2.CreateScale((minDim * _zoom) / 10000f);
+            _invScale = Matrix3x2.CreateScale(10000f / (minDim * _zoom));
         }
 
-        private void AdjustTranslation(float dx, float dy)
+        private void UpdateTranslation(float dx, float dy)
         {
             _translate *= Matrix3x2.CreateTranslation(dx, dy);
             _invTranslate *= Matrix3x2.CreateTranslation(-dx, -dy);
@@ -232,15 +272,24 @@ namespace EscherTilier
 
         private void renderControl_MouseWheel(object sender, MouseEventArgs e)
         {
-            if (_zoom > 1)
-                _zoom *= 1 - e.Delta / 1200f;
+            int zoomDir = Math.Sign(e.Delta);
 
-            AdjustScale();
+            if (zoomDir == -1)
+            {
+                if (_zoom > _zoomLevels[_zoomLevels.Length - 1])
+                    _zoom = _zoomLevels.First(f => f < _zoom);
+            }
+            else if (zoomDir == 1)
+            {
+                if (_zoom < _zoomLevels[0])
+                    _zoom = _zoomLevels.Last(f => f > _zoom);
+            }
+            zoomText.Text = (_zoom / 100f).ToString("0.##%");
+
+            UpdateScale();
 
             UpdateSelected();
         }
-
-        partial void renderControl_RenderTargetChanged(SharpDX.Direct2D1.RenderTarget obj);
 
         partial void renderControl_Render(SharpDX.Direct2D1.RenderTarget renderTarget, SharpDX.DXGI.SwapChain swapChain);
 
@@ -252,19 +301,75 @@ namespace EscherTilier
             UpdateSelected();
         }
 
-        private object _selected;
-
-        private Point _mouseLocation;
+        private void zoomText_Leave(object sender, EventArgs e)
+        {
+            UpdateZoom();
+        }
+        
+        /// <summary>
+        /// Processes a command key. 
+        /// </summary>
+        /// <returns>
+        /// true if the keystroke was processed and consumed by the control; otherwise, false to allow further processing.
+        /// </returns>
+        /// <param name="msg">A <see cref="T:System.Windows.Forms.Message"/>, passed by reference, that represents the Win32 message to process. </param><param name="keyData">One of the <see cref="T:System.Windows.Forms.Keys"/> values that represents the key to process. </param>
+        protected override bool ProcessCmdKey(ref Message message, Keys keyData)
+        {
+            if (zoomText.Focused)
+                switch (keyData)
+                {
+                    case Keys.Enter:
+                        UpdateZoom();
+                        return true;
+                    case Keys.Escape:
+                        zoomText.Text = (_zoom / 100f).ToString("0.##%");
+                        Unfocus();
+                        return true;
+                }
+            return false;
+        }
 
         private void renderControl_MouseMove(object sender, MouseEventArgs e)
         {
-            _mouseLocation = e.Location;
-
             UpdateSelected();
         }
 
-        private void UpdateSelected()
+        private void UpdateZoom()
         {
+            string str = zoomText.Text.Trim();
+            if (str.EndsWith(CultureInfo.CurrentCulture.NumberFormat.PercentSymbol))
+                str = str.Substring(0, str.Length - CultureInfo.CurrentCulture.NumberFormat.PercentSymbol.Length);
+            float zoom;
+            if (!float.TryParse(str, out zoom))
+            {
+                SystemSounds.Asterisk.Play();
+                zoomText.Focus();
+                return;
+            }
+
+            zoom = (float)Math.Round(zoom, 2);
+            if (zoom < _zoomLevels[_zoomLevels.Length - 1])
+                zoom = _zoomLevels[_zoomLevels.Length - 1];
+            else if (zoom > _zoomLevels[0])
+                zoom = _zoomLevels[0];
+
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            if (_zoom != zoom)
+            {
+                _zoom = zoom;
+
+                UpdateScale();
+
+                UpdateSelected();
+            }
+
+            zoomText.Text = (_zoom / 100f).ToString("0.##%");
+
+            Unfocus();
+        }
+
+        private void UpdateSelected()
+        {/*
             if (_shape == null) return;
 
             Matrix3x2 matrix = InverseViewMatrix;
@@ -285,6 +390,18 @@ namespace EscherTilier
                 return;
             }
             _selected = null;
+            //*/
+        }
+
+        private void Unfocus()
+        {
+            IContainerControl container = this;
+            while (container != null)
+            {
+                Control control = container.ActiveControl;
+                container.ActiveControl = null;
+                container = control as IContainerControl;
+            }
         }
     }
 }

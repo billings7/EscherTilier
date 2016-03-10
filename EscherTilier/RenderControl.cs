@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Windows.Forms;
 using EscherTilier.Graphics.DirectX;
+using EscherTilier.Utilities;
 using JetBrains.Annotations;
 using SharpDX;
 using SharpDX.Direct2D1;
@@ -33,7 +34,10 @@ namespace EscherTilier
         private SwapChain _swapChain;
 
         [CanBeNull]
-        private RenderTarget _renderTarget;
+        private RenderTargetContainer _renderTargetContainer;
+
+        [CanBeNull]
+        private readonly Reference<RenderTarget> _renderTargetRef;
 
         [CanBeNull]
         private Surface _backBuffer;
@@ -78,7 +82,7 @@ namespace EscherTilier
 
             Size2F dpi = DirectXResourceManager.FactoryD2D.DesktopDpi;
 
-            _renderTarget = new RenderTarget(
+            var renderTarget = new RenderTarget(
                 DirectXResourceManager.FactoryD2D,
                 _backBuffer,
                 new RenderTargetProperties
@@ -90,6 +94,7 @@ namespace EscherTilier
                     Type = RenderTargetType.Default,
                     Usage = RenderTargetUsage.None
                 });
+            _renderTargetContainer = RenderTargetContainer.CreateContainer(renderTarget, out _renderTargetRef);
 
             using (FactoryDXGI factory = _swapChain.GetParent<FactoryDXGI>())
             {
@@ -117,13 +122,47 @@ namespace EscherTilier
             {
                 lock (_lock)
                 {
-                    if (_renderTarget == null) throw new ObjectDisposedException(nameof(RenderControl));
-                    return _renderTarget;
+                    if (_renderTargetRef == null) throw new ObjectDisposedException(nameof(RenderControl));
+                    Debug.Assert(_renderTargetRef.Value != null, "_renderTargetRef.Value != null");
+                    return _renderTargetRef.Value;
                 }
             }
         }
 
-        public event Action<RenderTarget> RenderTargetChanged;
+        /// <summary>
+        /// Gets the render target container.
+        /// </summary>
+        /// <value>
+        /// The render target container.
+        /// </value>
+        [NotNull]
+        public RenderTargetContainer RenderTargetContainer
+        {
+            get
+            {
+                if (_renderTargetContainer == null) throw new ObjectDisposedException(nameof(RenderControl));
+                return _renderTargetContainer;
+            }
+        }
+
+        /// <summary>
+        /// Occurs when the render target changes.
+        /// </summary>
+        /// <exception cref="System.ObjectDisposedException">
+        /// </exception>
+        public event Action<RenderTarget> RenderTargetChanged
+        {
+            add
+            {
+                if (_renderTargetContainer == null) throw new ObjectDisposedException(nameof(RenderControl));
+                _renderTargetContainer.RenderTargetChanged += value;
+            }
+            remove
+            {
+                if (_renderTargetContainer == null) throw new ObjectDisposedException(nameof(RenderControl));
+                _renderTargetContainer.RenderTargetChanged -= value;
+            }
+        }
 
         /// <summary>
         ///     Gets the swap chain.
@@ -168,9 +207,12 @@ namespace EscherTilier
 
             lock (_lock)
             {
-                Interlocked.Exchange(ref _renderTarget, null)?.Dispose();
+                Debug.Assert(_renderTargetRef != null, "_renderTargetRef != null");
+
+                _renderTargetRef.Value = null;
                 Interlocked.Exchange(ref _backBuffer, null)?.Dispose();
 
+                Debug.Assert(_swapChain != null, "_swapChain != null");
                 _swapChain.ResizeBuffers(
                     2,
                     Width,
@@ -184,7 +226,7 @@ namespace EscherTilier
 
                 Size2F dpi = DirectXResourceManager.FactoryD2D.DesktopDpi;
 
-                _renderTarget = new RenderTarget(
+                _renderTargetRef.Value = new RenderTarget(
                     DirectXResourceManager.FactoryD2D,
                     _backBuffer,
                     new RenderTargetProperties
@@ -198,16 +240,10 @@ namespace EscherTilier
                     });
 
                 NeedsRender = true;
-                OnRenderTargetChanged(_renderTarget);
             }
             Thread.Yield();
         }
-
-        private void OnRenderTargetChanged(RenderTarget obj)
-        {
-            RenderTargetChanged?.Invoke(obj);
-        }
-
+        
         /// <summary>
         ///     Forces the control to invalidate its client area and immediately redraw itself and any child controls.
         /// </summary>
@@ -220,7 +256,13 @@ namespace EscherTilier
         {
             NeedsRender = false;
             lock (_lock)
-                Render?.Invoke(_renderTarget, _swapChain);
+            {
+                Debug.Assert(_renderTargetRef != null, "_renderTargetRef != null");
+                Debug.Assert(_renderTargetRef.Value != null, "_renderTargetRef.Value != null");
+                Debug.Assert(_swapChain != null, "_swapChain != null");
+
+                Render?.Invoke(_renderTargetRef.Value, _swapChain);
+            }
         }
 
         /// <summary>
@@ -270,7 +312,7 @@ namespace EscherTilier
                 {
                     _running = false;
                     _renderThread = null;
-                    Interlocked.Exchange(ref _renderTarget, null)?.Dispose();
+                    Interlocked.Exchange(ref _renderTargetContainer, null)?.Dispose();
                     Interlocked.Exchange(ref _backBuffer, null)?.Dispose();
                     Interlocked.Exchange(ref _swapChain, null)?.Dispose();
                     Interlocked.Exchange(ref _device, null)?.Dispose();

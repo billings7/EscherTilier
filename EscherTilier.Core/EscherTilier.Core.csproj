@@ -59,14 +59,6 @@
       <HintPath>..\packages\JetBrains.Annotations.10.0.0\lib\net20\JetBrains.Annotations.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="StructureMap, Version=4.0.1.318, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\structuremap.4.0.1.318\lib\net40\StructureMap.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="StructureMap.Net4, Version=4.0.1.318, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\structuremap.4.0.1.318\lib\net40\StructureMap.Net4.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Compression" />
@@ -82,6 +74,8 @@
     <Compile Include="Arc.cs" />
     <Compile Include="Controller.cs" />
     <Compile Include="CubicBezierCurve.cs" />
+    <Compile Include="Dependencies\DependencyCacheFlags.cs" />
+    <Compile Include="Dependencies\DependencyManger.cs" />
     <Compile Include="Edge.cs" />
     <Compile Include="EdgePart.cs" />
     <Compile Include="EdgePartAdjacencies.cs" />
@@ -107,6 +101,7 @@
     <Compile Include="Graphics\Resources\IResourceReleaser.cs" />
     <Compile Include="Graphics\Resources\IResourceRemover.cs" />
     <Compile Include="Graphics\Resources\ResourceManager.cs" />
+    <Compile Include="ShapeController.cs" />
     <Compile Include="ShapeSet.cs" />
     <Compile Include="Styles\Colours.cs">
       <AutoGen>True</AutoGen>
@@ -163,7 +158,9 @@
     <Compile Include="Vertex.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Strings.resx">
@@ -185,6 +182,7 @@
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

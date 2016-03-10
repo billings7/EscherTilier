@@ -65,6 +65,7 @@
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.statusInfoLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.contextToolStrip = new System.Windows.Forms.ToolStrip();
+            this.zoomText = new System.Windows.Forms.ToolStripTextBox();
             this.renderControl = new EscherTilier.RenderControl();
             sep1 = new System.Windows.Forms.ToolStripSeparator();
             sep2 = new System.Windows.Forms.ToolStripSeparator();
@@ -76,6 +77,7 @@
             this.toolStrip.SuspendLayout();
             this.operationToolStrip.SuspendLayout();
             this.statusStrip.SuspendLayout();
+            this.contextToolStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // sep1
@@ -396,11 +398,25 @@
             // 
             this.contextToolStrip.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.contextToolStrip.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
+            this.contextToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.zoomText});
             this.contextToolStrip.Location = new System.Drawing.Point(41, 514);
             this.contextToolStrip.Name = "contextToolStrip";
             this.contextToolStrip.Size = new System.Drawing.Size(743, 25);
             this.contextToolStrip.TabIndex = 4;
             this.contextToolStrip.Text = "Context Tools";
+            // 
+            // zoomText
+            // 
+            this.zoomText.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.zoomText.AutoSize = false;
+            this.zoomText.BackColor = System.Drawing.SystemColors.Window;
+            this.zoomText.Name = "zoomText";
+            this.zoomText.Size = new System.Drawing.Size(50, 25);
+            this.zoomText.Text = "100%";
+            this.zoomText.TextBoxTextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.zoomText.WordWrap = false;
+            this.zoomText.TextBox.Leave += new System.EventHandler(this.zoomText_Leave);
             // 
             // renderControl
             // 
@@ -409,7 +425,6 @@
             this.renderControl.Name = "renderControl";
             this.renderControl.Size = new System.Drawing.Size(743, 465);
             this.renderControl.TabIndex = 5;
-            this.renderControl.RenderTargetChanged += new System.Action<SharpDX.Direct2D1.RenderTarget>(this.renderControl_RenderTargetChanged);
             this.renderControl.Render += new EscherTilier.RenderDelegate(this.renderControl_Render);
             this.renderControl.Layout += new System.Windows.Forms.LayoutEventHandler(this.renderControl_Layout);
             this.renderControl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.renderControl_MouseMove);
@@ -438,6 +453,8 @@
             this.operationToolStrip.PerformLayout();
             this.statusStrip.ResumeLayout(false);
             this.statusStrip.PerformLayout();
+            this.contextToolStrip.ResumeLayout(false);
+            this.contextToolStrip.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -476,6 +493,7 @@
         private System.Windows.Forms.ToolStripStatusLabel statusInfoLabel;
         private System.Windows.Forms.ToolStrip contextToolStrip;
         private EscherTilier.RenderControl renderControl;
+        private System.Windows.Forms.ToolStripTextBox zoomText;
     }
 }
 

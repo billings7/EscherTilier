@@ -8,6 +8,23 @@ namespace EscherTilier.Graphics.Resources
     public abstract class ResourceManager : IResourceManager
     {
         /// <summary>
+        ///     Adds the specified key to the manager which creates the resource(s) for the key.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <param name="key">The key.</param>
+        /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
+        /// <exception cref="System.ArgumentNullException"><paramref name="key" /> is null.</exception>
+        public void Add<TKey>(TKey key)
+        {
+            if (key == null) throw new ArgumentNullException(nameof(key));
+
+            IResourceManager<TKey> rm = this as IResourceManager<TKey>;
+            if (rm == null)
+                throw new NotSupportedException(Strings.ResourceManager_TypesNotSupported);
+            rm.Add(key);
+        }
+
+        /// <summary>
         ///     Adds the specified key and resource value to the manager.
         /// </summary>
         /// <typeparam name="TKey">The type of the key.</typeparam>

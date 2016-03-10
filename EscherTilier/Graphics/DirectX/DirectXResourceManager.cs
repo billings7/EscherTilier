@@ -9,7 +9,6 @@ using EscherTilier.Graphics.Resources;
 using EscherTilier.Styles;
 using JetBrains.Annotations;
 using SharpDX.Direct2D1;
-using SharpDX.Mathematics.Interop;
 using SharpDX.WIC;
 using Bitmap = SharpDX.Direct2D1.Bitmap;
 using BitmapInterpolationMode = SharpDX.Direct2D1.BitmapInterpolationMode;
@@ -80,6 +79,21 @@ namespace EscherTilier.Graphics.DirectX
         }
 
         /// <summary>
+        ///     Initializes a new instance of the <see cref="DirectXResourceManager" /> class.
+        /// </summary>
+        /// <param name="renderTarget">The render target.</param>
+        /// <param name="styleManager">The style manager to initialise the resources with.</param>
+        /// <exception cref="System.ArgumentNullException">
+        /// </exception>
+        public DirectXResourceManager([NotNull] RenderTarget renderTarget, [CanBeNull] StyleManager styleManager)
+        {
+            if (renderTarget == null) throw new ArgumentNullException(nameof(renderTarget));
+            _renderTarget = renderTarget;
+            if (styleManager != null)
+                AddFromStyleManager(styleManager);
+        }
+
+        /// <summary>
         ///     Gets or sets the render target.
         /// </summary>
         /// <value>
@@ -95,11 +109,12 @@ namespace EscherTilier.Graphics.DirectX
 
                 if (_bitmaps == null)
                     throw new ObjectDisposedException(nameof(DirectXResourceManager));
+
                 lock (_lock)
                 {
                     if (_bitmaps == null)
                         throw new ObjectDisposedException(nameof(DirectXResourceManager));
-                    Debug.Assert(_brushes != null);
+                    if (_renderTarget == value) return;
 
                     _renderTarget = value;
 
@@ -116,6 +131,7 @@ namespace EscherTilier.Graphics.DirectX
                         kvp.Value.Dispose();
                     }
 
+                    Debug.Assert(_brushes != null);
                     ResourceDictionary<IStyle, Resource<Brush>> oldBrushes = _brushes;
                     _brushes = new ResourceDictionary<IStyle, Resource<Brush>>();
 
@@ -197,7 +213,7 @@ namespace EscherTilier.Graphics.DirectX
                             gradientStops),
                         gradientStops);
                 }
-                
+
                 ImageStyle image = style as ImageStyle;
                 if (image != null)
                 {
@@ -219,7 +235,7 @@ namespace EscherTilier.Graphics.DirectX
                         });
                 }
 
-                throw new NotImplementedException();
+                throw new NotSupportedException();
             }
         }
 
@@ -312,6 +328,8 @@ namespace EscherTilier.Graphics.DirectX
                 return _brushes.GetOrAdd(style, k => CreateBrush(k, false), false).Value;
             }
         }
+
+        void IResourceManager<IStyle>.Add(IStyle style) => Add(style);
 
         /// <summary>
         ///     Adds the specified <see cref="IStyle" /> to <see cref="Brush" /> resource mapping to the manager.
@@ -423,6 +441,8 @@ namespace EscherTilier.Graphics.DirectX
                 return _bitmaps.GetOrAdd(image, CreateBitmap, false);
             }
         }
+
+        void IResourceManager<IImage>.Add(IImage image) => Add(image);
 
         /// <summary>
         ///     Adds the specified <see cref="IImage" /> to <see cref="Bitmap" /> resource mapping to the manager.

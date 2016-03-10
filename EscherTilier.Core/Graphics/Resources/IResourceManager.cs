@@ -8,6 +8,15 @@ namespace EscherTilier.Graphics.Resources
     public interface IResourceManager : IReadonlyResourceManager
     {
         /// <summary>
+        ///     Adds the specified key to the manager which creates the resource(s) for the key.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <param name="key">The key.</param>
+        /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
+        /// <exception cref="System.ArgumentNullException"><paramref name="key" /> is null.</exception>
+        void Add<TKey>([NotNull] TKey key);
+
+        /// <summary>
         ///     Adds the specified key and resource value to the manager.
         /// </summary>
         /// <typeparam name="TKey">The type of the key.</typeparam>
@@ -34,9 +43,25 @@ namespace EscherTilier.Graphics.Resources
     ///     Interface to a class that manages resources of a type mapped to keys of another type.
     /// </summary>
     /// <typeparam name="TKey">The type of the key.</typeparam>
+    public interface IResourceManager<in TKey> : IResourceRemover<TKey>
+    {
+        /// <summary>
+        ///     Adds the specified key to the manager which creates the resource(s) for the key.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <param name="key">The key.</param>
+        /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
+        /// <exception cref="System.ArgumentNullException"><paramref name="key" /> is null.</exception>
+        void Add([NotNull] TKey key);
+    }
+
+    /// <summary>
+    ///     Interface to a class that manages resources of a type mapped to keys of another type.
+    /// </summary>
+    /// <typeparam name="TKey">The type of the key.</typeparam>
     /// <typeparam name="TResource">The type of the resource.</typeparam>
     public interface IResourceManager<in TKey, TResource> : IReadonlyResourceManager<TKey, TResource>,
-        IResourceRemover<TKey>
+        IResourceManager<TKey>
     {
         /// <summary>
         ///     Adds the specified key and resource value to the manager.

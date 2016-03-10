@@ -222,4 +222,13 @@
   <data name="EdgePartAdjacencies_Add_Duplicate" xml:space="preserve">
     <value>Cannot add a labeled edge part that has already been added.</value>
   </data>
+  <data name="TypeDictionary_CopyTo_IndexOutOfRange" xml:space="preserve">
+    <value>Index out of boudns of the destination array.</value>
+  </data>
+  <data name="TypeDictionary_CopyTo_ArraySize" xml:space="preserve">
+    <value>Destination array was not long enough.</value>
+  </data>
+  <data name="TypeDictionary_Add_Duplicate" xml:space="preserve">
+    <value>An item with the same key has already been added.</value>
+  </data>
 </root>

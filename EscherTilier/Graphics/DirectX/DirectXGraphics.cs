@@ -27,7 +27,7 @@ namespace EscherTilier.Graphics.DirectX
             });
 
         [NotNull]
-        private readonly RenderTarget _renderTarget;
+        private RenderTarget _renderTarget;
 
         [CanBeNull]
         private Brush _fillBrush;
@@ -56,22 +56,52 @@ namespace EscherTilier.Graphics.DirectX
         /// <param name="resourceManager">The initial resource manager.</param>
         /// <param name="fillStyle">The initial fill style.</param>
         /// <param name="lineStyle">The initial line style.</param>
+        /// <param name="lineWidth">Width of the line.</param>
         /// <exception cref="System.ArgumentNullException">
         /// </exception>
         public DirectXGraphics(
             [NotNull] RenderTarget renderTarget,
-            [NotNull] DirectXResourceManager resourceManager,
+            [NotNull] IResourceManager resourceManager,
             [NotNull] IStyle fillStyle,
-            [NotNull] LineStyle lineStyle)
+            [NotNull] IStyle lineStyle,
+            float lineWidth)
         {
             if (renderTarget == null) throw new ArgumentNullException(nameof(renderTarget));
             if (resourceManager == null) throw new ArgumentNullException(nameof(resourceManager));
             if (fillStyle == null) throw new ArgumentNullException(nameof(fillStyle));
             if (lineStyle == null) throw new ArgumentNullException(nameof(lineStyle));
             _renderTarget = renderTarget;
-            _resourceManager = resourceManager;
+            ResourceManager = resourceManager;
             FillStyle = fillStyle;
-            SetLineStyle(lineStyle);
+            LineStyle = lineStyle;
+            LineWidth = lineWidth;
+        }
+
+        /// <summary>
+        /// Gets or sets the render target.
+        /// </summary>
+        /// <value>
+        /// The render target.
+        /// </value>
+        [NotNull]
+        public RenderTarget RenderTarget
+        {
+            get { return _renderTarget; }
+            set
+            {
+                if (value == null) throw new ArgumentNullException(nameof(value));
+                if (_renderTarget == value) return;
+
+                if (_fillStyle != null)
+                    _resourceManager.Release(_fillStyle);
+                if (_lineStyle != null)
+                    _resourceManager.Release(_lineStyle);
+                _lineBrush = null;
+                _fillBrush = null;
+
+                _resourceManager.RenderTarget = value;
+                _renderTarget = value;
+            }
         }
 
         /// <summary>
@@ -91,7 +121,7 @@ namespace EscherTilier.Graphics.DirectX
             if (gp == null)
                 throw new ArgumentException("The path must be a path returned by CreatePath", nameof(path));
 
-            _renderTarget.DrawGeometry(gp.PathGeometry, _lineBrush, _lineWidth, _strokeStyle);
+            _renderTarget.DrawGeometry(gp.PathGeometry, LineBrush, _lineWidth, _strokeStyle);
         }
 
         /// <summary>
@@ -105,7 +135,7 @@ namespace EscherTilier.Graphics.DirectX
             if (gp == null)
                 throw new ArgumentException("The path must be a path returned by CreatePath", nameof(path));
 
-            _renderTarget.FillGeometry(gp.PathGeometry, _fillBrush);
+            _renderTarget.FillGeometry(gp.PathGeometry, FillBrush);
         }
 
         /// <summary>
@@ -115,7 +145,7 @@ namespace EscherTilier.Graphics.DirectX
         /// <param name="to">The point to draw the line to.</param>
         public void DrawLine(Vector2 @from, Vector2 to)
         {
-            _renderTarget.DrawLine(@from.ToRawVector2(), to.ToRawVector2(), _lineBrush, _lineWidth, _strokeStyle);
+            _renderTarget.DrawLine(@from.ToRawVector2(), to.ToRawVector2(), LineBrush, _lineWidth, _strokeStyle);
         }
 
         /// <summary>
@@ -130,7 +160,7 @@ namespace EscherTilier.Graphics.DirectX
                     .AddLines(new ArraySegment<Vector2>(points, 1, points.Length - 1))
                     .End(false);
 
-                _renderTarget.DrawGeometry(path.PathGeometry, _lineBrush, _lineWidth, _strokeStyle);
+                _renderTarget.DrawGeometry(path.PathGeometry, LineBrush, _lineWidth, _strokeStyle);
             }
         }
 
@@ -150,7 +180,7 @@ namespace EscherTilier.Graphics.DirectX
                     .AddArc(to, radius, angle, clockwise)
                     .End(false);
 
-                _renderTarget.DrawGeometry(path.PathGeometry, _lineBrush, _lineWidth, _strokeStyle);
+                _renderTarget.DrawGeometry(path.PathGeometry, LineBrush, _lineWidth, _strokeStyle);
             }
         }
 
@@ -168,7 +198,7 @@ namespace EscherTilier.Graphics.DirectX
                     RadiusX = radius,
                     RadiusY = radius
                 },
-                _lineBrush,
+                LineBrush,
                 _lineWidth,
                 _strokeStyle);
         }
@@ -187,7 +217,7 @@ namespace EscherTilier.Graphics.DirectX
                     RadiusX = radius,
                     RadiusY = radius
                 },
-                _fillBrush);
+                FillBrush);
         }
 
         /// <summary>
@@ -204,7 +234,7 @@ namespace EscherTilier.Graphics.DirectX
                     RadiusX = radius.X,
                     RadiusY = radius.Y
                 },
-                _lineBrush,
+                LineBrush,
                 _lineWidth,
                 _strokeStyle);
         }
@@ -223,7 +253,7 @@ namespace EscherTilier.Graphics.DirectX
                     RadiusX = radius.X,
                     RadiusY = radius.Y
                 },
-                _fillBrush);
+                FillBrush);
         }
 
         /// <summary>
@@ -232,7 +262,7 @@ namespace EscherTilier.Graphics.DirectX
         /// <param name="rect">The rectangle to draw.</param>
         public void DrawRectangle(Rectangle rect)
         {
-            _renderTarget.DrawRectangle(rect.ToRawRectangleF(), _lineBrush, _lineWidth, _strokeStyle);
+            _renderTarget.DrawRectangle(rect.ToRawRectangleF(), LineBrush, _lineWidth, _strokeStyle);
         }
 
         /// <summary>
@@ -241,7 +271,7 @@ namespace EscherTilier.Graphics.DirectX
         /// <param name="rect">The rectangle to fill.</param>
         public void FillRectangle(Rectangle rect)
         {
-            _renderTarget.FillRectangle(rect.ToRawRectangleF(), _fillBrush);
+            _renderTarget.FillRectangle(rect.ToRawRectangleF(), FillBrush);
         }
 
         /// <summary>
@@ -272,11 +302,16 @@ namespace EscherTilier.Graphics.DirectX
             set
             {
                 if (value == null) throw new ArgumentNullException(nameof(value));
+                if (value == _resourceManager) return;
 
                 DirectXResourceManager manager = value as DirectXResourceManager;
                 if (manager == null)
                     throw new ArgumentException("Expected resource manager of type DirectXResourceManager.");
 
+                if (_fillStyle != null) _resourceManager.Release(_fillStyle);
+                if (_lineStyle != null) _resourceManager.Release(_lineStyle);
+                _lineBrush = null;
+                _fillBrush = null;
                 _resourceManager = manager;
             }
         }
@@ -291,7 +326,7 @@ namespace EscherTilier.Graphics.DirectX
         {
             get
             {
-                Debug.Assert(_fillStyle != null, "_style != null");
+                Debug.Assert(_fillStyle != null, "_fillStyle != null");
                 return _fillStyle;
             }
             set
@@ -304,6 +339,19 @@ namespace EscherTilier.Graphics.DirectX
                     _resourceManager.Release(_fillStyle);
                 _fillBrush = _resourceManager.Get<IStyle, Brush>(value);
                 _fillStyle = value;
+            }
+        }
+
+        [NotNull]
+        private Brush FillBrush
+        {
+            get
+            {
+                if (_fillBrush != null) return _fillBrush;
+                Debug.Assert(_fillStyle != null, "_fillStyle != null");
+                _fillBrush = _resourceManager.Get<IStyle, Brush>(_fillStyle);
+                Debug.Assert(_fillBrush != null, "_fillBrush != null");
+                return _fillBrush;
             }
         }
 
@@ -330,6 +378,19 @@ namespace EscherTilier.Graphics.DirectX
                     _resourceManager.Release(_lineStyle);
                 _lineBrush = _resourceManager.Get<IStyle, Brush>(value);
                 _lineStyle = value;
+            }
+        }
+
+        [NotNull]
+        private Brush LineBrush
+        {
+            get
+            {
+                if (_lineBrush != null) return _lineBrush;
+                Debug.Assert(_lineStyle != null, "_lineStyle != null");
+                _lineBrush = _resourceManager.Get<IStyle, Brush>(_lineStyle);
+                Debug.Assert(_lineBrush != null, "_lineBrush != null");
+                return _lineBrush;
             }
         }
 
@@ -380,13 +441,13 @@ namespace EscherTilier.Graphics.DirectX
         {
             if (_fillStyle != null)
             {
-                Debug.Assert(_fillBrush != null, "_fillBrush != null");
                 _resourceManager.Release(_fillStyle);
+                _fillBrush = null;
             }
             if (_lineStyle != null)
             {
-                Debug.Assert(_lineBrush != null, "_lineBrush != null");
                 _resourceManager.Release(_lineStyle);
+                _lineBrush = null;
             }
         }
 
@@ -396,12 +457,10 @@ namespace EscherTilier.Graphics.DirectX
         [SuppressMessage("ReSharper", "InconsistentNaming")]
         private class State
         {
-            private readonly Brush FillBrush;
-            
-            private readonly Brush LineBrush;
-            
+            [NotNull]
             private readonly IStyle FillStyle;
-            
+
+            [NotNull]
             private readonly IStyle LineStyle;
 
             private readonly float LineWidth;
@@ -414,10 +473,8 @@ namespace EscherTilier.Graphics.DirectX
             public State([NotNull] DirectXGraphics graphics)
             {
                 Debug.Assert(graphics != null, "graphics != null");
-                FillBrush = graphics._fillBrush;
-                LineBrush = graphics._lineBrush;
-                FillStyle = graphics._fillStyle;
-                LineStyle = graphics._lineStyle;
+                FillStyle = graphics.FillStyle;
+                LineStyle = graphics.LineStyle;
                 LineWidth = graphics._lineWidth;
                 ResourceManager = graphics._resourceManager;
                 Transform = graphics.Transform;
@@ -426,22 +483,10 @@ namespace EscherTilier.Graphics.DirectX
             public void Restore([NotNull] DirectXGraphics graphics)
             {
                 Debug.Assert(graphics != null, "graphics != null");
-                if (graphics._fillBrush != null)
-                {
-                    Debug.Assert(graphics._fillStyle != null, "_fillStyle != null");
-                    graphics._resourceManager.Release(graphics._fillStyle);
-                }
-                if (graphics._lineBrush != null)
-                {
-                    Debug.Assert(graphics._lineStyle != null, "_lineStyle != null");
-                    graphics._resourceManager.Release(graphics._lineStyle);
-                }
-                graphics._fillBrush = FillBrush;
-                graphics._lineBrush = LineBrush;
-                graphics._fillStyle = FillStyle;
-                graphics._lineStyle = LineStyle;
-                graphics._lineWidth = LineWidth;
                 graphics._resourceManager = ResourceManager;
+                graphics.FillStyle = FillStyle;
+                graphics.LineStyle = LineStyle;
+                graphics._lineWidth = LineWidth;
                 graphics.Transform = Transform;
             }
         }

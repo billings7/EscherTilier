@@ -1,33 +1,27 @@
 ﻿using System;
-using System.Collections.Concurrent;
+using System.Threading;
+using EscherTilier.Dependencies;
 using EscherTilier.Graphics;
 using EscherTilier.Graphics.DirectX;
-using EscherTilier.Numerics;
+using EscherTilier.Graphics.Resources;
 using EscherTilier.Styles;
-using EscherTilier.Utilities;
 using JetBrains.Annotations;
 using SharpDX;
 using SharpDX.Direct2D1;
 using SharpDX.DXGI;
-using GradientStop = EscherTilier.Styles.GradientStop;
-using Matrix3x2 = System.Numerics.Matrix3x2;
-using System.Threading;
-using System.Diagnostics;
-using Vector2 = System.Numerics.Vector2;
 
 namespace EscherTilier
 {
     public partial class Main
     {
+        [CanBeNull]
+        private IResourceManager _miskResourceManager;
+
+        [CanBeNull]
+        private IGraphics _directXGraphics;
+
         [NotNull]
-        private readonly ConcurrentDictionary<StyleManager, DirectXResourceManager> _resourceManagers =
-            new ConcurrentDictionary<StyleManager, DirectXResourceManager>();
-
-        [CanBeNull]
-        private DirectXResourceManager _miskResourceManager;
-
-        [CanBeNull]
-        private DirectXGraphics _directXGraphics;
+        private readonly SolidColourStyle _whiteStyle = new SolidColourStyle(Colour.White);
 
         [NotNull]
         private readonly SolidColourStyle _grayStyle = new SolidColourStyle(Colour.Gray);
@@ -37,34 +31,43 @@ namespace EscherTilier
 
         private void InitializeGraphics()
         {
-            _miskResourceManager = new DirectXResourceManager(renderControl.RenderTarget);
+            DependencyManger.ForTypeUse(() => renderControl.RenderTargetContainer, DependencyCacheFlags.CacheGlobal);
+
+            _miskResourceManager = DependencyManger.GetResourceManager();
+            _miskResourceManager.Add(_whiteStyle);
             _miskResourceManager.Add(_grayStyle);
             _miskResourceManager.Add(_blackStyle);
-            _directXGraphics = new DirectXGraphics(
-                renderControl.RenderTarget,
+
+            RenderTargetContainer renderTargetContainer = renderControl.RenderTargetContainer;
+            DirectXGraphics graphics = new DirectXGraphics(
+                renderTargetContainer.RenderTarget,
                 _miskResourceManager,
-                _grayStyle,
-                new LineStyle(2, _blackStyle));
+                _whiteStyle,
+                _blackStyle,
+                1f);
+            renderTargetContainer.RenderTargetChanged += rt => graphics.RenderTarget = rt;
+
+            _directXGraphics = graphics;
         }
 
         private void UnloadGraphics()
         {
             Interlocked.Exchange(ref _directXGraphics, null)?.Dispose();
             Interlocked.Exchange(ref _miskResourceManager, null)?.Dispose();
-
-            foreach (var managers in _resourceManagers)
-            {
-                managers.Key.Dispose();
-                managers.Value.Dispose();
-            }
+            Interlocked.Exchange(ref _controller, null)?.Dispose();
         }
 
         partial void renderControl_Render([NotNull] RenderTarget renderTarget, [NotNull] SwapChain swapChain)
         {
+            IGraphics graphics = _directXGraphics;
+            Controller controller = _controller;
+            if (graphics == null || controller == null) throw new ObjectDisposedException(nameof(Main));
+            
+
             renderTarget.BeginDraw();
             renderTarget.Transform = ViewMatrix.ToRawMatrix3x2();
             renderTarget.Clear(Color.White);
-
+            /*
             if (_shape != null)
             {
                 using (IGraphicsPath path = _directXGraphics.CreatePath())
@@ -88,10 +91,8 @@ namespace EscherTilier
                     new Vector2(_mouseLocation.X, _mouseLocation.Y));
 
                 using (_directXGraphics.TempState(s))
-                {
                     _directXGraphics.FillRectangle(new Numerics.Rectangle(-55, 0, 50, 50));
-                }
-                
+
                 Vertex selectedVertex = _selected as Vertex;
                 Edge selectedEdge;
                 if (selectedVertex != null)
@@ -104,14 +105,18 @@ namespace EscherTilier
                         new GradientStop(Colour.Black, 1)
                     };
 
-                    LinearGradientStyle style = new LinearGradientStyle(selectedVertex.Location,
-                        selectedVertex.In.Start.Location, gradientStops);
+                    LinearGradientStyle style = new LinearGradientStyle(
+                        selectedVertex.Location,
+                        selectedVertex.In.Start.Location,
+                        gradientStops);
 
                     using (_directXGraphics.TempState(lineStyle: style))
                         _directXGraphics.DrawLine(selectedVertex.Location, selectedVertex.In.Start.Location);
 
-                    style = new LinearGradientStyle(selectedVertex.Location,
-                        selectedVertex.Out.End.Location, gradientStops);
+                    style = new LinearGradientStyle(
+                        selectedVertex.Location,
+                        selectedVertex.Out.End.Location,
+                        gradientStops);
 
                     using (_directXGraphics.TempState(lineStyle: style))
                         _directXGraphics.DrawLine(selectedVertex.Location, selectedVertex.Out.End.Location);
@@ -122,24 +127,12 @@ namespace EscherTilier
                         _directXGraphics.DrawLine(selectedEdge.Start.Location, selectedEdge.End.Location);
                 }
             }
+            //*/
+            
+            controller.Draw(graphics);
 
             renderTarget.EndDraw();
             swapChain.Present(0, PresentFlags.None);
-        }
-
-        partial void renderControl_RenderTargetChanged([NotNull] RenderTarget renderTarget)
-        {
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (_miskResourceManager == null) return;
-
-            _miskResourceManager.RenderTarget = renderTarget;
-            foreach (DirectXResourceManager manager in _resourceManagers.Values)
-                manager.RenderTarget = renderTarget;
-            _directXGraphics = new DirectXGraphics(
-                renderTarget,
-                _miskResourceManager,
-                _grayStyle,
-                new LineStyle(2, _blackStyle));
         }
     }
 }

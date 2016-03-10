@@ -367,6 +367,33 @@ namespace EscherTilier {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to An item with the same key has already been added..
+        /// </summary>
+        internal static string TypeDictionary_Add_Duplicate {
+            get {
+                return ResourceManager.GetString("TypeDictionary_Add_Duplicate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Destination array was not long enough..
+        /// </summary>
+        internal static string TypeDictionary_CopyTo_ArraySize {
+            get {
+                return ResourceManager.GetString("TypeDictionary_CopyTo_ArraySize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Index out of boudns of the destination array..
+        /// </summary>
+        internal static string TypeDictionary_CopyTo_IndexOutOfRange {
+            get {
+                return ResourceManager.GetString("TypeDictionary_CopyTo_IndexOutOfRange", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The vertex name cannot be null, empty or whitespace..
         /// </summary>
         internal static string VertexExpression_VertexExpression_NameNullOrWhitespace {
