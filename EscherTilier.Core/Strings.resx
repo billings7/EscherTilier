@@ -231,4 +231,13 @@
   <data name="TypeDictionary_Add_Duplicate" xml:space="preserve">
     <value>An item with the same key has already been added.</value>
   </data>
+  <data name="Template_CreateTiling_UnknownTilingDefinition" xml:space="preserve">
+    <value>The specified TilingDefinition is not part of this template.</value>
+  </data>
+  <data name="ShapeSet_ShapeSet_DuplicateShapeTemplate" xml:space="preserve">
+    <value>There must only be one Shape instance per ShapeTemplate</value>
+  </data>
+  <data name="Template_CreateTiling_WrongShapes" xml:space="preserve">
+    <value>There must be a shape specified for all ShapeTemplates and there can be no extra shapes.</value>
+  </data>
 </root>

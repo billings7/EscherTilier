@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using EscherTilier.Utilities;
 using JetBrains.Annotations;
 
 namespace EscherTilier
@@ -29,6 +30,8 @@ namespace EscherTilier
         {
             if (shapes == null) throw new ArgumentNullException(nameof(shapes));
             if (shapes.Any(s => s == null)) throw new ArgumentNullException(nameof(shapes));
+            if (!shapes.Select(s => s.Template).AreDistinct())
+                throw new ArgumentException(Strings.ShapeSet_ShapeSet_DuplicateShapeTemplate, nameof(shapes));
             _shapes = shapes;
 
             _edgesByName = new Dictionary<string, Edge>(StringComparer.InvariantCulture);
@@ -50,6 +53,7 @@ namespace EscherTilier
         /// <returns>
         ///     An enumerator that can be used to iterate through the collection.
         /// </returns>
+        [ItemNotNull]
         public IEnumerator<Shape> GetEnumerator() => _shapes.GetEnumerator();
 
         /// <summary>
@@ -58,6 +62,7 @@ namespace EscherTilier
         /// <returns>
         ///     An <see cref="T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.
         /// </returns>
+        [ItemNotNull]
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable) _shapes).GetEnumerator();
 
         /// <summary>

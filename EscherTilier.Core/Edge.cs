@@ -103,7 +103,15 @@ namespace EscherTilier
         public float Length => Vector2.Distance(Start.Location, End.Location);
 
         /// <summary>
-        /// Gets the distance from a point to this edge.
+        ///     Gets the center point of the edge.
+        /// </summary>
+        /// <value>
+        ///     The center point of the edge.
+        /// </value>
+        public Vector2 Center => (Start.Location + End.Location) / 2;
+
+        /// <summary>
+        ///     Gets the distance from a point to this edge.
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns></returns>

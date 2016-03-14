@@ -223,6 +223,15 @@ namespace EscherTilier {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to There must only be one Shape instance per ShapeTemplate.
+        /// </summary>
+        internal static string ShapeSet_ShapeSet_DuplicateShapeTemplate {
+            get {
+                return ResourceManager.GetString("ShapeSet_ShapeSet_DuplicateShapeTemplate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to All edge names must not be null, empty or contain only whitespace..
         /// </summary>
         internal static string ShapeTemplate_ShapeTemplate_EdgeNamesNullOrWhitespace {
@@ -273,6 +282,24 @@ namespace EscherTilier {
         internal static string ShapeTemplate_ShapeTemplate_VertexNamesNullOrWhitespace {
             get {
                 return ResourceManager.GetString("ShapeTemplate_ShapeTemplate_VertexNamesNullOrWhitespace", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified TilingDefinition is not part of this template..
+        /// </summary>
+        internal static string Template_CreateTiling_UnknownTilingDefinition {
+            get {
+                return ResourceManager.GetString("Template_CreateTiling_UnknownTilingDefinition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to There must be a shape specified for all ShapeTemplates and there can be no extra shapes..
+        /// </summary>
+        internal static string Template_CreateTiling_WrongShapes {
+            get {
+                return ResourceManager.GetString("Template_CreateTiling_WrongShapes", resourceCulture);
             }
         }
         

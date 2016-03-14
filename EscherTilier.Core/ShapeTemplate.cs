@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using EscherTilier.Utilities;
@@ -12,12 +13,64 @@ namespace EscherTilier
     /// </summary>
     public class ShapeTemplate
     {
+        private Template _template;
+
+        [NotNull]
+        internal Template Template
+        {
+            get
+            {
+                Debug.Assert(_template != null, "_template != null");
+                return _template;
+            }
+            set
+            {
+                Debug.Assert(_template == null || _template == value, "The shape template is already used by another template.");
+                _template = value;
+            }
+        }
+
+        private IReadOnlyDictionary<TilingDefinition, IReadOnlyList<EdgePattern>> _edgePatterns;
+
+        [NotNull]
+        internal IReadOnlyDictionary<TilingDefinition, IReadOnlyList<EdgePattern>> EdgePatterns
+        {
+            get
+            {
+                Debug.Assert(_edgePatterns != null, "_edgePatterns != null");
+                return _edgePatterns;
+            }
+            set
+            {
+                Debug.Assert(_edgePatterns == null || _edgePatterns == value, "The shape template is already used by a set of edge patterns.");
+                _edgePatterns = value;
+            }
+        }
+
+        private IReadOnlyDictionary<TilingDefinition, IReadOnlyList<EdgePart>> _edgeParts;
+
+        [NotNull]
+        internal IReadOnlyDictionary<TilingDefinition, IReadOnlyList<EdgePart>> EdgeParts
+        {
+            get
+            {
+                Debug.Assert(_edgeParts != null, "_edgeParts != null");
+                return _edgeParts;
+            }
+            set
+            {
+                Debug.Assert(_edgeParts == null || _edgeParts == value, "The shape template is already used by a set of edge parts.");
+                _edgeParts = value;
+            }
+        }
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="ShapeTemplate" /> class.
         /// </summary>
         /// <param name="name">The name.</param>
         /// <param name="edgeNames">The edge names.</param>
         /// <param name="vertexNames">The vertex names.</param>
+        /// <param name="initialVertices">The initial vertex locations.</param>
         /// TODO Exceptions
         public ShapeTemplate(
             string name,

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
 
@@ -10,6 +11,40 @@ namespace EscherTilier
     /// </summary>
     public class EdgePattern
     {
+        private TilingDefinition _tilingDefinition;
+
+        [NotNull]
+        internal TilingDefinition TilingDefinition
+        {
+            get
+            {
+                Debug.Assert(_tilingDefinition != null, "_tilingDefinition != null");
+                return _tilingDefinition;
+            }
+            set
+            {
+                Debug.Assert(_tilingDefinition == null || _tilingDefinition == value, "The pattern is already used by another definition.");
+                _tilingDefinition = value;
+            }
+        }
+
+        private ShapeTemplate _shapeTemplate;
+
+        [NotNull]
+        internal ShapeTemplate ShapeTemplate
+        {
+            get
+            {
+                Debug.Assert(_shapeTemplate != null, "_shapeTemplate != null");
+                return _shapeTemplate;
+            }
+            set
+            {
+                Debug.Assert(_shapeTemplate == null || _shapeTemplate == value, "The pattern is already used by another shape template.");
+                _shapeTemplate = value;
+            }
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="EdgePattern"/> class.
         /// </summary>
@@ -20,14 +55,17 @@ namespace EscherTilier
         /// <exception cref="System.ArgumentException"></exception>
         public EdgePattern(
             [NotNull] string edgeName,
-            [NotNull] IReadOnlyList<EdgePart> parts)
+            [NotNull][ItemNotNull] IReadOnlyList<EdgePart> parts)
         {
             if (edgeName == null) throw new ArgumentNullException(nameof(edgeName));
             if (parts == null) throw new ArgumentNullException(nameof(parts));
             if (parts.Count < 1)
                 throw new ArgumentException(Strings.EdgePattern_EdgePattern_OnePartRequired, nameof(parts));
+            if (parts.Any(p => p == null)) throw new ArgumentNullException(nameof(parts));
             if (Math.Abs(parts.Sum(p => p.Amount) - 1) > 0.001f)
                 throw new ArgumentException(Strings.EdgePattern_EdgePattern_PartAmountEqual1, nameof(parts));
+
+            foreach (EdgePart part in parts) part.EdgePattern = this;
 
             EdgeName = edgeName;
             Parts = parts;

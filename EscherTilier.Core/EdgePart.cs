@@ -1,10 +1,32 @@
+using System.Diagnostics;
+using JetBrains.Annotations;
+
 namespace EscherTilier
 {
     /// <summary>
     ///     Defines one part of an edge.
     /// </summary>
-    public struct EdgePart
+    public class EdgePart
     {
+        private EdgePattern _edgePattern;
+
+        [NotNull]
+        internal EdgePattern EdgePattern
+        {
+            get
+            {
+                Debug.Assert(_edgePattern != null, "_edgePattern != null");
+                return _edgePattern;
+            }
+            set
+            {
+                Debug.Assert(_edgePattern == null || _edgePattern == value, "The part is already used in another pattern.");
+                _edgePattern = value;
+            }
+        }
+
+        internal ShapeTemplate ShapeTemplate => EdgePattern.ShapeTemplate;
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="EdgePart" /> class.
         /// </summary>
