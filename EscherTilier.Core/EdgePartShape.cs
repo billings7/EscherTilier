@@ -1,21 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Numerics;
-using EscherTilier.Numerics;
 using JetBrains.Annotations;
 
 namespace EscherTilier
 {
     public class EdgePartShape
     {
-        public EdgePartShape(EdgePart part, Edge edge)
+        public EdgePartShape(EdgePart part, Edge edge, ShapeLines lines)
         {
             Part = part;
             Edge = edge;
-            Lines = new List<ILine>
-            {
-                new Line(Vector2.Zero, new Vector2(1, 0))
-            };
+            Lines = lines;
         }
 
         [NotNull]
@@ -26,6 +19,6 @@ namespace EscherTilier
 
         [NotNull]
         [ItemNotNull]
-        public IList<ILine> Lines { get; }
+        public ShapeLines Lines { get; }
     }
 }

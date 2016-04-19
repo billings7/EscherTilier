@@ -45,8 +45,7 @@ namespace EscherTilier
         /// <returns></returns>
         public Rectangle GetApproximateBounds(Matrix3x2 transform)
         {
-            return new Rectangle(Vector2.Transform(Start, transform), Vector2.Zero)
-                .Expand(Vector2.Transform(End, transform));
+            return Rectangle.ContainingPoints(Vector2.Transform(Start, transform), Vector2.Transform(End, transform));
         }
 
         /// <summary>
@@ -72,7 +71,7 @@ namespace EscherTilier
         }
 
         /// <summary>
-        /// Tests whether the given point is within the given tolerance on this line after it has been transformed by the given <paramref name="transform"/>, 
+        /// Tests whether the given point is within the given tolerance on this line after it has been transformed by the given <paramref name="transform"/>,
         /// returning the exact point on the line if hit.
         /// </summary>
         /// <param name="point">The point to test.</param>
@@ -87,9 +86,12 @@ namespace EscherTilier
             Vector2 a = Vector2.Transform(Start, transform);
             Vector2 b = Vector2.Transform(End, transform);
 
-            Rectangle bounds = new Rectangle(a, Vector2.Zero).Expand(b);
-            bounds = new Rectangle(bounds.X - tolerance, bounds.Y - tolerance,
-                bounds.Width + tolerance * 2, bounds.Height + tolerance * 2);
+            Rectangle bounds = Rectangle.ContainingPoints(a, b);
+            bounds = new Rectangle(
+                bounds.X - tolerance,
+                bounds.Y - tolerance,
+                bounds.Width + tolerance * 2,
+                bounds.Height + tolerance * 2);
 
             if (!bounds.Contains(point))
                 return null;

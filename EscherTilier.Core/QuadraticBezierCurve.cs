@@ -1,18 +1,18 @@
+using System;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using EscherTilier.Graphics;
 using EscherTilier.Numerics;
-using System;
-using System.Runtime.CompilerServices;
 
 namespace EscherTilier
 {
     /// <summary>
-    /// Defines a quadratic bezier curve.
+    ///     Defines a quadratic bezier curve.
     /// </summary>
     public class QuadraticBezierCurve : ILine
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="QuadraticBezierCurve"/> class.
+        ///     Initializes a new instance of the <see cref="QuadraticBezierCurve" /> class.
         /// </summary>
         /// <param name="start">The start point.</param>
         /// <param name="controlPoint">The control point.</param>
@@ -25,44 +25,46 @@ namespace EscherTilier
         }
 
         /// <summary>
-        /// Gets the start point of the line.
+        ///     Gets the start point of the line.
         /// </summary>
         /// <value>
-        /// The start point.
+        ///     The start point.
         /// </value>
         public Vector2 Start { get; }
 
         /// <summary>
-        /// Gets the ens point of the line.
+        ///     Gets the ens point of the line.
         /// </summary>
         /// <value>
-        /// The ens point.
+        ///     The ens point.
         /// </value>
         public Vector2 End { get; }
 
         /// <summary>
-        /// Gets the control point.
+        ///     Gets the control point.
         /// </summary>
         /// <value>
-        /// The control point.
+        ///     The control point.
         /// </value>
         public Vector2 ControlPoint { get; }
 
         /// <summary>
-        /// Gets the approximate bounds for this line after it has been transformed by the given <paramref name="transform" />.
-        /// The rectangle returned should equal or contain the actual bounds.
+        ///     Gets the approximate bounds for this line after it has been transformed by the given <paramref name="transform" />.
+        ///     The rectangle returned should equal or contain the actual bounds.
         /// </summary>
         /// <param name="transform">The transform to apply to the line.</param>
         /// <returns></returns>
         public Rectangle GetApproximateBounds(Matrix3x2 transform)
         {
-            return new Rectangle(Vector2.Transform(Start, transform), Vector2.Zero)
-                .Expand(Vector2.Transform(End, transform))
-                .Expand(Vector2.Transform(ControlPoint, transform));
+            return Rectangle.ContainingPoints(
+                Vector2.Transform(Start, transform),
+                Vector2.Transform(End, transform),
+                Vector2.Transform(ControlPoint, transform));
         }
 
         /// <summary>
-        /// Adds the line to the given <paramref name="path" /> after transforming it by the given <paramref name="transform" />.
+        ///     Adds the line to the given <paramref name="path" /> after transforming it by the given
+        ///     <paramref name="transform" />.
         /// </summary>
         /// <param name="path">The path to add the line to.</param>
         /// <param name="transform">The transform.</param>
@@ -74,7 +76,8 @@ namespace EscherTilier
         }
 
         /// <summary>
-        /// Draws the line to the given <paramref name="graphics" /> after transforming it by the given <paramref name="transform" />.
+        ///     Draws the line to the given <paramref name="graphics" /> after transforming it by the given
+        ///     <paramref name="transform" />.
         /// </summary>
         /// <param name="graphics">The graphics to draw to.</param>
         /// <param name="transform">The transform.</param>
@@ -87,13 +90,14 @@ namespace EscherTilier
         }
 
         /// <summary>
-        /// Tests whether the given point is within the given tolerance on this line after it has been transformed by the given <paramref name="transform"/>, 
-        /// returning the exact point on the line if hit.
+        ///     Tests whether the given point is within the given tolerance on this line after it has been transformed by the given
+        ///     <paramref name="transform" />,
+        ///     returning the exact point on the line if hit.
         /// </summary>
         /// <param name="point">The point to test.</param>
         /// <param name="tolerance">The tolerance. Must be greater than or equal 0.1.</param>
         /// <param name="transform">The transform.</param>
-        /// <returns>The exact point on the line if hit; otherwise <see langword="null"/>.</returns>
+        /// <returns>The exact point on the line if hit; otherwise <see langword="null" />.</returns>
         public LinePoint HitTest(Vector2 point, float tolerance, Matrix3x2 transform)
         {
             if (tolerance < 0.1f)
@@ -103,9 +107,12 @@ namespace EscherTilier
             Vector2 b = Vector2.Transform(ControlPoint, transform);
             Vector2 c = Vector2.Transform(End, transform);
 
-            Rectangle bounds = new Rectangle(a, Vector2.Zero).Expand(b).Expand(c);
-            bounds = new Rectangle(bounds.X - tolerance, bounds.Y - tolerance,
-                bounds.Width + tolerance * 2, bounds.Height + tolerance * 2);
+            Rectangle bounds = Rectangle.ContainingPoints(a, b, c);
+            bounds = new Rectangle(
+                bounds.X - tolerance,
+                bounds.Y - tolerance,
+                bounds.Width + tolerance * 2,
+                bounds.Height + tolerance * 2);
 
             if (!bounds.Contains(point))
                 return null;
@@ -120,7 +127,7 @@ namespace EscherTilier
 
             float step = tolerance / approxLen;
 
-            for (float t = 0; ; t += step)
+            for (float t = 0;; t += step)
             {
                 if (t > 1) t = 1;
 
@@ -134,6 +141,7 @@ namespace EscherTilier
                     closestDistSq = distSq;
                 }
 
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
                 if (t == 1) break;
             }
 

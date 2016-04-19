@@ -316,7 +316,7 @@ namespace EscherTilier
             tl = Vector2.Transform(tl, InverseViewMatrix);
             br = Vector2.Transform(br, InverseViewMatrix);
 
-            _bounds = new Numerics.Rectangle(tl, Vector2.Zero).Expand(br);
+            _bounds = Numerics.Rectangle.ContainingPoints(tl, br);
             if (_controller != null)
                 _controller.ScreenBounds = _bounds;
         }

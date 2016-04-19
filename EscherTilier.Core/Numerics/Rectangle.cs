@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using JetBrains.Annotations;
 
 namespace EscherTilier.Numerics
 {
@@ -75,6 +75,88 @@ namespace EscherTilier.Numerics
         }
 
         /// <summary>
+        /// Creates a rectangle that contains the points given.
+        /// </summary>
+        /// <param name="point1">The first point.</param>
+        /// <param name="point2">The second point.</param>
+        /// <returns></returns>
+        public static Rectangle ContainingPoints(Vector2 point1, Vector2 point2)
+        {
+            float x1 = Math.Min(point1.X, point2.X);
+            float x2 = Math.Max(point1.X, point2.X);
+            float y1 = Math.Min(point1.Y, point2.Y);
+            float y2 = Math.Max(point1.Y, point2.Y);
+
+            return new Rectangle(x1, y1, x2 - x1, y2 - y1);
+        }
+
+        /// <summary>
+        /// Creates a rectangle that contains the points given.
+        /// </summary>
+        /// <param name="point1">The first point.</param>
+        /// <param name="point2">The second point.</param>
+        /// <param name="point3">The third point.</param>
+        /// <returns></returns>
+        public static Rectangle ContainingPoints(Vector2 point1, Vector2 point2, Vector2 point3)
+        {
+            float x1 = Math.Min(point1.X, Math.Min(point2.X, point3.X));
+            float x2 = Math.Max(point1.X, Math.Max(point2.X, point3.X));
+            float y1 = Math.Min(point1.Y, Math.Min(point2.Y, point3.Y));
+            float y2 = Math.Max(point1.Y, Math.Max(point2.Y, point3.Y));
+
+            return new Rectangle(x1, y1, x2 - x1, y2 - y1);
+        }
+
+        /// <summary>
+        /// Creates a rectangle that contains the points given.
+        /// </summary>
+        /// <param name="point1">The first point.</param>
+        /// <param name="point2">The second point.</param>
+        /// <param name="point3">The third point.</param>
+        /// <param name="point4">The fourth point.</param>
+        /// <returns></returns>
+        public static Rectangle ContainingPoints(Vector2 point1, Vector2 point2, Vector2 point3, Vector2 point4)
+        {
+            float x1 = Math.Min(Math.Min(point1.X, point2.X), Math.Min(point3.X, point4.X));
+            float x2 = Math.Max(Math.Max(point1.X, point2.X), Math.Max(point3.X, point4.X));
+            float y1 = Math.Min(Math.Min(point1.Y, point2.Y), Math.Min(point3.Y, point4.Y));
+            float y2 = Math.Max(Math.Max(point1.Y, point2.Y), Math.Max(point3.Y, point4.Y));
+
+            return new Rectangle(x1, y1, x2 - x1, y2 - y1);
+        }
+
+        /// <summary>
+        /// Creates a rectangle that contains all the points given.
+        /// </summary>
+        /// <param name="points">The points the rectangle should contain.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentNullException"></exception>
+        /// <exception cref="System.ArgumentException">Need at least two points.</exception>
+        public static Rectangle ContainingPoints([NotNull] params Vector2[] points)
+        {
+            if (points == null) throw new ArgumentNullException(nameof(points));
+            if (points.Length < 2) throw new ArgumentException("Need at least two points.", nameof(points));
+
+            float x1 = points[0].X;
+            float x2 = points[0].X;
+            float y1 = points[0].Y;
+            float y2 = points[0].Y;
+
+            for (int i = 1; i < points.Length; i++)
+            {
+                Vector2 p = points[i];
+
+                if (p.X < x1) x1 = p.X;
+                else if (p.X > x2) x2 = p.X;
+
+                if (p.Y < y1) y1 = p.Y;
+                else if (p.Y > y2) y2 = p.Y;
+            }
+
+            return new Rectangle(x1, y1, x2 - x1, y2 - y1);
+        }
+
+        /// <summary>
         ///     Gets the position of the left side of the rectangle.
         /// </summary>
         public float Left => X;
@@ -100,7 +182,7 @@ namespace EscherTilier.Numerics
         /// <param name="point">The point.</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         public bool Contains(Vector2 point)
             => Left >= point.X && point.X >= Right && Top >= point.Y && point.Y >= Bottom;
 
@@ -110,7 +192,7 @@ namespace EscherTilier.Numerics
         /// <param name="rect">The rect.</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         public bool IntersectsWith(Rectangle rect)
         {
             return (rect.X < X + Width) &&
@@ -125,7 +207,7 @@ namespace EscherTilier.Numerics
         /// <param name="a">A rectangle to union.</param>
         /// <param name="b">A rectangle to union.</param>
         /// <returns>A <see cref="Rectangle"/> structure that bounds the union of the two <see cref="Rectangle"/> structures.</returns>
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         public static Rectangle Union(Rectangle a, Rectangle b)
         {
             float x1 = Math.Min(a.X, b.X);
@@ -143,7 +225,7 @@ namespace EscherTilier.Numerics
         /// <returns>
         /// A <see cref="Rectangle" /> structure that contains both this rectangle and the point given.
         /// </returns>
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         public Rectangle Expand(Vector2 point)
         {
             float x1 = Math.Min(X, point.X);

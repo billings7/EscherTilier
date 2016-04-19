@@ -161,6 +161,8 @@ namespace EscherTilier
             if (!templates.SetEquals(ShapeTemplates))
                 throw new ArgumentException(Strings.Template_CreateTiling_WrongShapes, nameof(shapes));
 
+            Dictionary<int, ShapeLines> shapeLines = new Dictionary<int, ShapeLines>();
+
             List<Tile> tiles = new List<Tile>(shapes.Count);
 
             // TODO Order shapes so that the nth shape is adjacent to at least one of the previous shapes
@@ -208,9 +210,12 @@ namespace EscherTilier
                     if (label == null) throw new InvalidDataException();
                 }
 
-                // TODO EdgePartShapes for EdgeParts with the same ID need to share the same instance of line list (new "ShapeLines" class?)
                 EdgePartShape[] partShapes = shape.Template.EdgeParts[tilingDefinition]
-                    .Select(ep => new EdgePartShape(ep, shapes.GetEdge(ep.EdgePattern.EdgeName)))
+                    .Select(
+                        ep => new EdgePartShape(
+                            ep,
+                            shapes.GetEdge(ep.EdgePattern.EdgeName),
+                            shapeLines.GetOrAdd(ep.ID, _ => ShapeLines.CreateDefault())))
                     .ToArray();
 
                 Tile tile = new Tile(label, shape, transform, partShapes);
@@ -219,6 +224,17 @@ namespace EscherTilier
             }
 
             return new Tiling(this, tilingDefinition, tiles, styleManager);
+        }
+    }
+
+    public class ShapeLines : List<ILine>
+    {
+        public static ShapeLines CreateDefault()
+        {
+            return new ShapeLines
+            {
+                new Line(Vector2.Zero, new Vector2(1, 0))
+            };
         }
     }
 }
