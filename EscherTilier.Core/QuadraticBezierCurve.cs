@@ -1,6 +1,8 @@
 using System.Numerics;
 using EscherTilier.Graphics;
 using EscherTilier.Numerics;
+using System;
+using System.Runtime.CompilerServices;
 
 namespace EscherTilier
 {
@@ -82,6 +84,72 @@ namespace EscherTilier
                 Vector2.Transform(Start, transform),
                 Vector2.Transform(ControlPoint, transform),
                 Vector2.Transform(End, transform));
+        }
+
+        /// <summary>
+        /// Tests whether the given point is within the given tolerance on this line after it has been transformed by the given <paramref name="transform"/>, 
+        /// returning the exact point on the line if hit.
+        /// </summary>
+        /// <param name="point">The point to test.</param>
+        /// <param name="tolerance">The tolerance. Must be greater than or equal 0.1.</param>
+        /// <param name="transform">The transform.</param>
+        /// <returns>The exact point on the line if hit; otherwise <see langword="null"/>.</returns>
+        public LinePoint HitTest(Vector2 point, float tolerance, Matrix3x2 transform)
+        {
+            if (tolerance < 0.1f)
+                throw new ArgumentOutOfRangeException(nameof(tolerance));
+
+            Vector2 a = Vector2.Transform(Start, transform);
+            Vector2 b = Vector2.Transform(ControlPoint, transform);
+            Vector2 c = Vector2.Transform(End, transform);
+
+            Rectangle bounds = new Rectangle(a, Vector2.Zero).Expand(b).Expand(c);
+            bounds = new Rectangle(bounds.X - tolerance, bounds.Y - tolerance,
+                bounds.Width + tolerance * 2, bounds.Height + tolerance * 2);
+
+            if (!bounds.Contains(point))
+                return null;
+
+            float approxLen =
+                Vector2.Distance(a, b) +
+                Vector2.Distance(b, c);
+
+            Vector2 closest = Vector2.Zero;
+            float closestDistSq = float.PositiveInfinity;
+            float cloestT = 0;
+
+            float step = tolerance / approxLen;
+
+            for (float t = 0; ; t += step)
+            {
+                if (t > 1) t = 1;
+
+                Vector2 p = GetPointOnCurve(t, a, b, c);
+                float distSq = Vector2.DistanceSquared(p, point);
+
+                if (distSq < closestDistSq)
+                {
+                    closest = p;
+                    cloestT = t;
+                    closestDistSq = distSq;
+                }
+
+                if (t == 1) break;
+            }
+
+            float tolSq = tolerance * tolerance;
+
+            if (closestDistSq > tolSq)
+                return null;
+
+            return new LinePoint(closest, cloestT);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Vector2 GetPointOnCurve(float t, Vector2 a, Vector2 b, Vector2 c)
+        {
+            float it = 1 - t;
+            return (it * it * a) + (2 * it * t * b) + (t * t * c);
         }
     }
 }
