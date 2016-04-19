@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Numerics;
+using EscherTilier.Numerics;
+using JetBrains.Annotations;
 
 namespace EscherTilier
 {
@@ -15,10 +18,14 @@ namespace EscherTilier
             };
         }
 
+        [NotNull]
         public Edge Edge { get; }
 
+        [NotNull]
         public EdgePart Part { get; }
 
+        [NotNull]
+        [ItemNotNull]
         public IList<ILine> Lines { get; }
     }
 }

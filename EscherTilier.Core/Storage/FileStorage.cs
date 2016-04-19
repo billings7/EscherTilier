@@ -212,7 +212,7 @@ namespace EscherTilier.Storage
             XElement consElm = element.Element("ShapeConstraints");
             if (consElm == null || consElm.IsEmpty)
                 return new Template(templates, Array<IExpression<bool>>.Empty, tilings);
-            
+
             IExpression<bool>[] constraints = consElm
                 .Elements()
                 .Select(DeserializeExpressionBool)
@@ -423,7 +423,7 @@ namespace EscherTilier.Storage
             return new XElement(
                 "Part",
                 new XAttribute("id", edgePart.ID.ToString(_culture)),
-                new XAttribute("direction", edgePart.Direction),
+                new XAttribute("clockwise", edgePart.IsClockwise),
                 new XAttribute("amount", edgePart.Amount.ToString("R", _culture)));
         }
 
@@ -435,17 +435,17 @@ namespace EscherTilier.Storage
         private static EdgePart DeserializeEdgePart([NotNull] XElement element)
         {
             int id;
-            PartDirection dir;
+            bool clockwise;
             float amount;
 
             if (!int.TryParse(element.Attribute("id")?.Value, NumberStyles.Integer, _culture, out id))
                 throw new InvalidDataException("Edge part ID missing or invalid.");
-            if (!Enum.TryParse(element.Attribute("direction")?.Value, out dir))
-                throw new InvalidDataException("Edge part direction missing or invalid.");
+            if (!bool.TryParse(element.Attribute("clockwise")?.Value, out clockwise))
+                throw new InvalidDataException("Edge part clockwise flag missing or invalid.");
             if (!float.TryParse(element.Attribute("amount")?.Value, FloatNumberStyle, _culture, out amount))
                 throw new InvalidDataException("Edge part amount missing or invalid.");
 
-            return new EdgePart(id, dir, amount);
+            return new EdgePart(id, amount, clockwise);
         }
 
         /// <summary>
@@ -637,7 +637,7 @@ namespace EscherTilier.Storage
             ExpressionType type;
             if (!Enum.TryParse(element.Name.LocalName, out type))
                 throw new InvalidDataException("Invalid expression type.");
-            
+
             switch (type)
             {
                 case ExpressionType.Number:

@@ -12,7 +12,7 @@ namespace EscherTilier.Styles
 
         public int ParamC { get; }
 
-        protected override IStyle GetStyle(ITile tile, IStyle[] styles)
+        protected override IStyle GetStyle(TileBase tile, IStyle[] styles)
         {
             throw new System.NotImplementedException();
         }

@@ -56,11 +56,12 @@ namespace EscherTilier.Graphics
         /// </summary>
         /// <param name="to">The end point of the arc.</param>
         /// <param name="radius">The radius of the arc.</param>
-        /// <param name="angle">The sweep angle of the arc.</param>
-        /// <param name="clockwise">if set to <see langword="true" /> the arc will be drawn clockwise.</param>
+        /// <param name="angle">The angle of the arc, in radians.</param>
+        /// <param name="clockwise">If set to <see langword="true" /> the arc will be drawn clockwise.</param>
+        /// <param name="isLarge">Specifies whether the given arc is larger than 180 degrees</param>
         /// <returns>This <see cref="IGraphicsPath" />.</returns>
         [NotNull]
-        IGraphicsPath AddArc(Vector2 to, Vector2 radius, float angle, bool clockwise);
+        IGraphicsPath AddArc(Vector2 to, Vector2 radius, float angle, bool clockwise, bool isLarge);
 
         /// <summary>
         ///     Adds a quadratic bezier curve to the end of the line.

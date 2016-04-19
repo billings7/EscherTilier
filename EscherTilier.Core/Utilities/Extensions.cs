@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using EscherTilier.Expressions;
 using EscherTilier.Graphics;
 using EscherTilier.Graphics.Resources;
+using EscherTilier.Numerics;
 using EscherTilier.Styles;
 using JetBrains.Annotations;
 
@@ -22,6 +24,7 @@ namespace EscherTilier.Utilities
         /// <typeparam name="T"></typeparam>
         /// <param name="value">The value.</param>
         /// <param name="label">The label.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Labeled<T> WithLabel<T>(this T value, [NotNull] string label)
         {
             if (label == null) throw new ArgumentNullException(nameof(label));
@@ -158,6 +161,7 @@ namespace EscherTilier.Utilities
         ///     The compiled expression.
         /// </returns>
         [NotNull]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static CompiledExpression<T> Compile<T>([NotNull] this IExpression<T> expression)
             => CompiledExpression<T>.Compile(expression);
 
@@ -184,6 +188,32 @@ namespace EscherTilier.Utilities
 
             value = factory(key);
             dictionary.Add(key, value);
+            return value;
+        }
+
+        /// <summary>
+        /// Adds or updates the value associated with the given key.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="dictionary">The dictionary.</param>
+        /// <param name="key">The key.</param>
+        /// <param name="factory">The value factory.</param>
+        /// <param name="update">The value update function.</param>
+        /// <returns></returns>
+        public static TValue AddOrUpdate<TKey, TValue>(
+            [NotNull] this Dictionary<TKey, TValue> dictionary,
+            [NotNull] TKey key,
+            [NotNull] Func<TKey, TValue> factory,
+            [NotNull] Func<TValue, TKey, TValue> update)
+        {
+            if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
+            if (factory == null) throw new ArgumentNullException(nameof(factory));
+            if (update == null) throw new ArgumentNullException(nameof(update));
+
+            TValue value;
+            value = dictionary.TryGetValue(key, out value) ? update(value, key) : factory(key);
+            dictionary[key] = value;
             return value;
         }
 
@@ -225,6 +255,20 @@ namespace EscherTilier.Utilities
 
             value = stack.Peek();
             return true;
+        }
+
+        /// <summary>
+        /// Rounds each component of the vector.
+        /// </summary>
+        /// <param name="vector">The vector to round.</param>
+        /// <param name="digits">The number of fractional digits in the return value.</param>
+        /// <param name="mode">Specification for how to round a value if it is midway between two other numbers.</param>
+        /// <returns>A vector where each component has a number of fractional digits equal to <paramref name="digits"/>.</returns>
+        public static Vector2 Round(this Vector2 vector, int digits = 0, MidpointRounding mode = MidpointRounding.ToEven)
+        {
+            return new Vector2(
+                (float)Math.Round(vector.X, digits, mode),
+                (float)Math.Round(vector.Y, digits, mode));
         }
 
         /// <summary>

@@ -167,8 +167,10 @@ namespace EscherTilier
         /// </summary>
         /// <param name="name">The name.</param>
         /// <returns></returns>
-        /// <exception cref="System.ArgumentNullException"><paramref name="name" /> was <see langword="null" />.</exception>
-        [CanBeNull]
+        /// <exception cref="ArgumentNullException"><paramref name="name" /> was <see langword="null" />.</exception>
+        /// <exception cref="KeyNotFoundException">This shape does not contain an edge with the given name.</exception>
+        [NotNull]
+        // ReSharper disable once AssignNullToNotNullAttribute
         public Edge GetEdge([NotNull] string name) => _edgesByName[name];
 
         /// <summary>
@@ -176,8 +178,10 @@ namespace EscherTilier
         /// </summary>
         /// <param name="name">The name.</param>
         /// <returns></returns>
-        /// <exception cref="System.ArgumentNullException"><paramref name="name" /> was <see langword="null" />.</exception>
-        [CanBeNull]
+        /// <exception cref="ArgumentNullException"><paramref name="name" /> was <see langword="null" />.</exception>
+        /// <exception cref="KeyNotFoundException">This shape does not contain a vertex with the given name.</exception>
+        [NotNull]
+        // ReSharper disable once AssignNullToNotNullAttribute
         public Vertex GetVertex([NotNull] string name) => _verticesByName[name];
     }
 }

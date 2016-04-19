@@ -165,19 +165,59 @@ namespace EscherTilier.Graphics.DirectX
         }
 
         /// <summary>
-        ///     Draws an arc of an elipse.
+        /// Draws an arc of an elipse.
         /// </summary>
         /// <param name="from">The start point of the arc.</param>
         /// <param name="to">The end point of the arc.</param>
         /// <param name="radius">The radius of the arc.</param>
-        /// <param name="angle">The angle that the arc sweeps.</param>
-        /// <param name="clockwise">if set to <see langword="true" /> the arc is drawm clockwise.</param>
-        public void DrawArc(Vector2 from, Vector2 to, Vector2 radius, float angle, bool clockwise)
+        /// <param name="angle">The angle of the arc, in radians.</param>
+        /// <param name="clockwise">If set to <see langword="true" /> the arc will be drawn clockwise.</param>
+        /// <param name="isLarge">Specifies whether the given arc is larger than 180 degrees</param>
+        public void DrawArc(Vector2 @from, Vector2 to, Vector2 radius, float angle, bool clockwise, bool isLarge)
         {
             using (GraphicsPath path = new GraphicsPath(DirectXResourceManager.CreatePathGeometry()))
             {
                 path.Start(from)
-                    .AddArc(to, radius, angle, clockwise)
+                    .AddArc(to, radius, angle, clockwise, isLarge)
+                    .End(false);
+
+                _renderTarget.DrawGeometry(path.PathGeometry, LineBrush, _lineWidth, _strokeStyle);
+            }
+        }
+
+        /// <summary>
+        ///     Draws a quadratic bezier curve to the end of the line.
+        /// </summary>
+        /// <param name="from">The start point of the curve.</param>
+        /// <param name="control">The control point of the curve.</param>
+        /// <param name="to">The end point of the curve.</param>
+        /// <returns>This <see cref="IGraphicsPath" />.</returns>
+        public void DrawQuadraticBezier(Vector2 @from, Vector2 control, Vector2 to)
+        {
+            using (GraphicsPath path = new GraphicsPath(DirectXResourceManager.CreatePathGeometry()))
+            {
+                path.Start(from)
+                    .AddQuadraticBezier(control, to)
+                    .End(false);
+
+                _renderTarget.DrawGeometry(path.PathGeometry, LineBrush, _lineWidth, _strokeStyle);
+            }
+        }
+
+        /// <summary>
+        ///     Draws a cubic bezier curve to the end of the line.
+        /// </summary>
+        /// <param name="from">The start point of the curve.</param>
+        /// <param name="controlA">The first control point of the curve.</param>
+        /// <param name="controlB">The second control point of the curve.</param>
+        /// <param name="to">The end point of the curve.</param>
+        /// <returns>This <see cref="IGraphicsPath" />.</returns>
+        public void DrawCubicBezier(Vector2 @from, Vector2 controlA, Vector2 controlB, Vector2 to)
+        {
+            using (GraphicsPath path = new GraphicsPath(DirectXResourceManager.CreatePathGeometry()))
+            {
+                path.Start(from)
+                    .AddCubicBezier(controlA, controlB, to)
                     .End(false);
 
                 _renderTarget.DrawGeometry(path.PathGeometry, LineBrush, _lineWidth, _strokeStyle);
@@ -582,22 +622,26 @@ namespace EscherTilier.Graphics.DirectX
             }
 
             /// <summary>
-            ///     Adds an arc of an elipse to the end of the path.
+            /// Adds an arc of an elipse to the end of the path.
             /// </summary>
             /// <param name="to">The end point of the arc.</param>
             /// <param name="radius">The radius of the arc.</param>
-            /// <param name="angle">The sweep angle of the arc.</param>
-            /// <param name="clockwise">if set to <see langword="true" /> the arc will be drawn clockwise.</param>
-            /// <returns>This <see cref="IGraphicsPath" />.</returns>
-            public IGraphicsPath AddArc(Vector2 to, Vector2 radius, float angle, bool clockwise)
+            /// <param name="angle">The angle of the arc, in radians.</param>
+            /// <param name="clockwise">If set to <see langword="true" /> the arc will be drawn clockwise.</param>
+            /// <param name="isLarge">Specifies whether the given arc is larger than 180 degrees</param>
+            /// <returns>
+            /// This <see cref="IGraphicsPath" />.
+            /// </returns>
+            public IGraphicsPath AddArc(Vector2 to, Vector2 radius, float angle, bool clockwise, bool isLarge)
             {
                 _sink?.AddArc(
                     new ArcSegment
                     {
                         Point = to.ToRawVector2(),
-                        RotationAngle = angle,
+                        RotationAngle = (float) (angle * 180 / Math.PI),
                         Size = radius.ToSize2F(),
-                        SweepDirection = clockwise ? SweepDirection.Clockwise : SweepDirection.CounterClockwise
+                        SweepDirection = clockwise ? SweepDirection.Clockwise : SweepDirection.CounterClockwise,
+                        ArcSize = isLarge ? ArcSize.Large : ArcSize.Small
                     });
                 return this;
             }

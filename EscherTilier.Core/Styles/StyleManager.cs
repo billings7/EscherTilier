@@ -1,8 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using EscherTilier.Graphics;
 using EscherTilier.Graphics.Resources;
 using JetBrains.Annotations;
 
@@ -18,10 +18,7 @@ namespace EscherTilier.Styles
 
         [NotNull]
         [ItemNotNull]
-        public IReadOnlyList<TileStyle> Styles
-        {
-            get { return _styles; }
-        }
+        public IList<TileStyle> Styles => _styles;
 
         [NotNull]
         public LineStyle LineStyle { get; set; }
@@ -37,18 +34,34 @@ namespace EscherTilier.Styles
             _resourceManager = resourceManager;
         }
 
-        public void AddStyle(TileStyle style)
+        public void Add(TileStyle style)
         {
             _styles.Add(style);
         }
 
         [CanBeNull]
         public IResourceManager ResourceManager => _resourceManager;
-        
-        public IStyle GetStyle(ITile tile)
-            => GetStyle(tile, Styles.Where(s => s.Shapes.Contains(tile.Shape)).Select(s => s.Style).ToArray());
 
-        protected abstract IStyle GetStyle(ITile tile, IStyle[] styles);
+        /// <summary>
+        /// Gets the style for the given tile.
+        /// </summary>
+        /// <param name="tile">The tile.</param>
+        /// <returns>The style for the tile.</returns>
+        [CanBeNull]
+        public IStyle GetStyle([NotNull] TileBase tile)
+        {
+            if (tile == null) throw new ArgumentNullException(nameof(tile));
+            return GetStyle(tile, _styles.Where(s => s.Shapes.Contains(tile.Shape)).Select(s => s.Style).ToArray());
+        }
+
+        /// <summary>
+        /// Gets the style for the given tile.
+        /// </summary>
+        /// <param name="tile">The tile.</param>
+        /// <param name="styles">The styles to choose from.</param>
+        /// <returns></returns>
+        [CanBeNull]
+        protected abstract IStyle GetStyle([NotNull] TileBase tile, [NotNull] IStyle[] styles);
 
         /// <summary>
         ///     Finalizes an instance of the <see cref="StyleManager" /> class.

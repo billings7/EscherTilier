@@ -28,16 +28,24 @@ namespace EscherTilier
         internal ShapeTemplate ShapeTemplate => EdgePattern.ShapeTemplate;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="EdgePart" /> class.
+        /// Gets the distance along the edge that the part starts, if this part has been added to a pattern.
+        /// </summary>
+        /// <value>
+        /// The start amount.
+        /// </value>
+        internal float StartAmount { get; set; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EdgePart" /> class.
         /// </summary>
         /// <param name="id">The part identifier.</param>
-        /// <param name="direction">The direction.</param>
         /// <param name="amount">The amount.</param>
-        public EdgePart(int id, PartDirection direction, float amount)
+        /// <param name="isClockwise">If set to <see langword="true" /> the part is clockwise; otherwise counter-clockwise.</param>
+        public EdgePart(int id, float amount, bool isClockwise)
         {
             ID = id;
-            Direction = direction;
             Amount = amount;
+            IsClockwise = isClockwise;
         }
 
         /// <summary>
@@ -50,18 +58,18 @@ namespace EscherTilier
         public int ID { get; }
 
         /// <summary>
-        ///     Gets the direction the part is oriented.
+        /// Gets a value indicating whether this part is oriented in a clockwise direction.
         /// </summary>
         /// <value>
-        ///     The direction.
+        /// <see langword="true" /> if this part is clockwise; otherwise, <see langword="false" />.
         /// </value>
-        public PartDirection Direction { get; }
+        public bool IsClockwise { get; }
 
         /// <summary>
         ///     Gets the amount of the edge that the part takes up.
         /// </summary>
         /// <value>
-        ///     The amount.
+        ///     The amount of the edge that the part takes up, in the range 0-1.
         /// </value>
         public float Amount { get; }
     }

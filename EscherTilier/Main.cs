@@ -8,6 +8,8 @@ using System.Numerics;
 using System.Windows.Forms;
 using EscherTilier.Expressions;
 using EscherTilier.Properties;
+using EscherTilier.Styles;
+using EscherTilier.Utilities;
 using JetBrains.Annotations;
 
 namespace EscherTilier
@@ -40,20 +42,20 @@ namespace EscherTilier
             25f,
             16.67f,
             12.5f,
-            8.33f,
-            6.25f,
-            5f,
-            4f,
-            3f,
-            2f,
-            1.5f,
-            1f,
-            0.7f,
-            0.5f,
-            0.4f,
-            0.3f,
-            0.2f,
-            0.17f,
+            //8.33f,
+            //6.25f,
+            //5f,
+            //4f,
+            //3f,
+            //2f,
+            //1.5f,
+            //1f,
+            //0.7f,
+            //0.5f,
+            //0.4f,
+            //0.3f,
+            //0.2f,
+            //0.17f,
         };
 
         private Matrix3x2 ViewMatrix =>
@@ -65,6 +67,8 @@ namespace EscherTilier
             _invTranslate
             * _invCenterTranslate
             * _invScale;
+
+        private Numerics.Rectangle _bounds;
 
         private Controller _controller;
 
@@ -113,35 +117,65 @@ namespace EscherTilier
                     break;
             }
 
+            EdgePart pa, pb, pc, pd;
+
             Template template = new Template(
                 new[]
                 {
                     new ShapeTemplate(
-                    "Triangle",
-                    new[] { "a", "b", "c" },
-                    new[] { "A", "B", "C" },
-                    new[]
-                    {
-                        new Vector2(-100 / 2f, 86.60254f / 2), new Vector2(100 / 2f, 86.60254f / 2),
-                        new Vector2(0, -86.60254f / 2)
-                    })
+                        "Square",
+                        new[] { "a", "b", "c", "d" },
+                        new[] { "A", "B", "C", "D" },
+                        new[]
+                        {
+                            new Vector2(-40, -40),
+                            new Vector2(40, -40),
+                            new Vector2(40, 40),
+                            new Vector2(-40, 40),
+                        })
                 },
                 new IExpression<bool>[0],
                 new[]
                 {
                     new TilingDefinition(
-                    1,
-                    null,
-                    new[]
-                    {
-                        new EdgePattern("a", new[] { new EdgePart(1, PartDirection.ClockwiseIn, 1) }),
-                        new EdgePattern("b", new[] { new EdgePart(2, PartDirection.ClockwiseIn, 1) }),
-                        new EdgePattern("c", new[] { new EdgePart(1, PartDirection.ClockwiseIn, 1) })
-                    },
-                    new EdgePartAdjacencies())
+                        1,
+                        null,
+                        new[]
+                        {
+                            new EdgePattern("a", new[] { pa = new EdgePart(1, 1, true) }),
+                            new EdgePattern("b", new[] { pb = new EdgePart(2, 1, true) }),
+                            new EdgePattern("c", new[] { pc = new EdgePart(1, 1, false) }),
+                            new EdgePattern("d", new[] { pd = new EdgePart(2, 1, false) })
+                        },
+                        new EdgePartAdjacencies
+                        {
+                            { pa.WithLabel("A"), pc.WithLabel("B") },
+                            { pb.WithLabel("A"), pd.WithLabel("B") },
+                            { pa.WithLabel("B"), pc.WithLabel("A") },
+                            { pb.WithLabel("B"), pd.WithLabel("A") },
+                        })
                 });
 
-            _controller = new ShapeController(template);
+            UpdateBounds();
+
+            ShapeController sc = new ShapeController(template, _bounds);
+
+            RandomStyleManager randomStyleManager = new RandomStyleManager(null, 0)
+            {
+                LineStyle = new LineStyle(1, _blackStyle),
+                Styles =
+                {
+                    new TileStyle(new SolidColourStyle(Colour.Red), sc.Shapes.ToArray()),
+                    new TileStyle(new SolidColourStyle(Colour.White), sc.Shapes.ToArray()),
+                    new TileStyle(new SolidColourStyle(Colour.Yellow), sc.Shapes.ToArray()),
+                    new TileStyle(new SolidColourStyle(Colour.Orange), sc.Shapes.ToArray()),
+                },
+            };
+
+            _controller = new TilingController(
+                template.CreateTiling(template.Tilings[0], sc.Shapes, randomStyleManager),
+                randomStyleManager,
+                _bounds);
 
             renderControl.Start();
         }
@@ -262,12 +296,29 @@ namespace EscherTilier
 
             _scale = Matrix3x2.CreateScale((minDim * _zoom) / 10000f);
             _invScale = Matrix3x2.CreateScale(10000f / (minDim * _zoom));
+
+            UpdateBounds();
         }
 
         private void UpdateTranslation(float dx, float dy)
         {
             _translate *= Matrix3x2.CreateTranslation(dx, dy);
             _invTranslate *= Matrix3x2.CreateTranslation(-dx, -dy);
+
+            UpdateBounds();
+        }
+
+        private void UpdateBounds()
+        {
+            Vector2 tl = Vector2.Zero;
+            Vector2 br = new Vector2(renderControl.Width, renderControl.Height);
+
+            tl = Vector2.Transform(tl, InverseViewMatrix);
+            br = Vector2.Transform(br, InverseViewMatrix);
+
+            _bounds = new Numerics.Rectangle(tl, Vector2.Zero).Expand(br);
+            if (_controller != null)
+                _controller.ScreenBounds = _bounds;
         }
 
         private void renderControl_MouseWheel(object sender, MouseEventArgs e)
@@ -298,6 +349,7 @@ namespace EscherTilier
             _centerTranslate = Matrix3x2.CreateTranslation(renderControl.Width / 2f, renderControl.Height / 2f);
             _invCenterTranslate = Matrix3x2.CreateTranslation(-renderControl.Width / 2f, -renderControl.Height / 2f);
 
+            UpdateBounds();
             UpdateSelected();
         }
 
@@ -305,9 +357,9 @@ namespace EscherTilier
         {
             UpdateZoom();
         }
-        
+
         /// <summary>
-        /// Processes a command key. 
+        /// Processes a command key.
         /// </summary>
         /// <returns>
         /// true if the keystroke was processed and consumed by the control; otherwise, false to allow further processing.

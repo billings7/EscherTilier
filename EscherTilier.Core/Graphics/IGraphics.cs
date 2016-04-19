@@ -50,9 +50,29 @@ namespace EscherTilier.Graphics
         /// <param name="from">The start point of the arc.</param>
         /// <param name="to">The end point of the arc.</param>
         /// <param name="radius">The radius of the arc.</param>
-        /// <param name="angle">The angle that the arc sweeps.</param>
-        /// <param name="clockwise">if set to <see langword="true" /> the arc is drawm clockwise.</param>
-        void DrawArc(Vector2 from, Vector2 to, Vector2 radius, float angle, bool clockwise);
+        /// <param name="angle">The angle of the arc, in radians.</param>
+        /// <param name="clockwise">If set to <see langword="true" /> the arc will be drawn clockwise.</param>
+        /// <param name="isLarge">Specifies whether the given arc is larger than 180 degrees</param>
+        void DrawArc(Vector2 @from, Vector2 to, Vector2 radius, float angle, bool clockwise, bool isLarge);
+
+        /// <summary>
+        ///     Draws a quadratic bezier curve to the end of the line.
+        /// </summary>
+        /// <param name="from">The start point of the curve.</param>
+        /// <param name="control">The control point of the curve.</param>
+        /// <param name="to">The end point of the curve.</param>
+        /// <returns>This <see cref="IGraphicsPath" />.</returns>
+        void DrawQuadraticBezier(Vector2 @from, Vector2 control, Vector2 to);
+
+        /// <summary>
+        ///     Draws a cubic bezier curve to the end of the line.
+        /// </summary>
+        /// <param name="from">The start point of the curve.</param>
+        /// <param name="controlA">The first control point of the curve.</param>
+        /// <param name="controlB">The second control point of the curve.</param>
+        /// <param name="to">The end point of the curve.</param>
+        /// <returns>This <see cref="IGraphicsPath" />.</returns>
+        void DrawCubicBezier(Vector2 @from, Vector2 controlA, Vector2 controlB, Vector2 to);
 
         /// <summary>
         ///     Draws a circle.

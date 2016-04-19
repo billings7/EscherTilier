@@ -76,7 +76,7 @@ namespace EscherTilier
                     st => st.EdgeNames
                         .Select(e => new KeyValuePair<string, ShapeTemplate>(e, st)))
                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.InvariantCulture);
-            
+
             foreach (TilingDefinition tiling in tilings)
             {
                 tiling.Template = this;
@@ -169,7 +169,7 @@ namespace EscherTilier
                 Debug.Assert(shape != null, "shape != null");
 
                 string label = null;
-                Matrix3x2 transform;
+                Matrix3x2 transform = default(Matrix3x2);
 
                 if (tiles.Count < 1)
                 {
@@ -193,11 +193,13 @@ namespace EscherTilier
                                 out adjacent))
                                 continue;
 
+                            Debug.Assert(adjacent.Value != null, "adjacent.Value != null");
                             if (adjacent.Value.ShapeTemplate != shape.Template)
                                 continue;
 
                             label = adjacent.Label;
-                            // TODO Get transformation 
+                            transform = EdgePartPosition.Create(adjacent.Value, shape)
+                                .GetTransformTo(t.GetEdgePartPosition(partShape.Part));
                         }
 
                         if (label != null) break;
@@ -206,6 +208,7 @@ namespace EscherTilier
                     if (label == null) throw new InvalidDataException();
                 }
 
+                // TODO EdgePartShapes for EdgeParts with the same ID need to share the same instance of line list (new "ShapeLines" class?)
                 EdgePartShape[] partShapes = shape.Template.EdgeParts[tilingDefinition]
                     .Select(ep => new EdgePartShape(ep, shapes.GetEdge(ep.EdgePattern.EdgeName)))
                     .ToArray();

@@ -65,7 +65,13 @@ namespace EscherTilier
             if (Math.Abs(parts.Sum(p => p.Amount) - 1) > 0.001f)
                 throw new ArgumentException(Strings.EdgePattern_EdgePattern_PartAmountEqual1, nameof(parts));
 
-            foreach (EdgePart part in parts) part.EdgePattern = this;
+            float amount = 0;
+            foreach (EdgePart part in parts)
+            {
+                part.EdgePattern = this;
+                part.StartAmount = amount;
+                amount += part.StartAmount;
+            }
 
             EdgeName = edgeName;
             Parts = parts;

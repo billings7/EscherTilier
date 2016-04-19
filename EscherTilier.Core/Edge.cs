@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Numerics;
+using EscherTilier.Numerics;
 using JetBrains.Annotations;
 
 namespace EscherTilier
@@ -129,6 +130,22 @@ namespace EscherTilier
 
             Vector2 proj = p1 + t * (p2 - p1);
             return Vector2.Distance(point, proj);
+        }
+
+        /// <summary>
+        ///     Gets the point the specified amount along the edge.
+        /// </summary>
+        /// <param name="amount">
+        ///     The amount, in the range 0-1. 0 returns the <see cref="Start" /> location, 1 returns the
+        ///     <see cref="End" /> location.
+        /// </param>
+        /// <remarks>The <paramref name="amount"/> will be clamped to the range 0-1.</remarks>
+        /// <returns></returns>
+        public Vector2 GetPointOnEdge(float amount)
+        {
+            if (amount <= 0) return Start.Location;
+            if (amount >= 1) return End.Location;
+            return Start.Location + Vector * amount;
         }
     }
 }

@@ -2,6 +2,7 @@ using System;
 using EscherTilier.Dependencies;
 using EscherTilier.Graphics;
 using EscherTilier.Graphics.Resources;
+using EscherTilier.Numerics;
 using JetBrains.Annotations;
 
 namespace EscherTilier
@@ -12,7 +13,7 @@ namespace EscherTilier
         private readonly Template _template;
 
         [NotNull]
-        private readonly ShapeSet _shapes;
+        public readonly ShapeSet Shapes;
 
         [CanBeNull]
         private IResourceManager _resourceManager;
@@ -21,13 +22,15 @@ namespace EscherTilier
         ///     Initializes a new instance of the <see cref="ShapeController" /> class.
         /// </summary>
         /// <param name="template">The template.</param>
+        /// <param name="screenBounds"></param>
         /// <exception cref="System.ArgumentNullException"></exception>
-        public ShapeController([NotNull] Template template)
+        public ShapeController([NotNull] Template template, Rectangle screenBounds)
+            : base(screenBounds)
         {
             if (template == null) throw new ArgumentNullException(nameof(template));
 
             _template = template;
-            _shapes = template.CreateShapes();
+            Shapes = template.CreateShapes();
 
             IResourceManager resourceManager = DependencyManger.GetResourceManager();
             if (resourceManager == null) throw new InvalidOperationException();
@@ -44,7 +47,7 @@ namespace EscherTilier
 
             graphics.ResourceManager = _resourceManager;
 
-            foreach (Shape shape in _shapes)
+            foreach (Shape shape in Shapes)
             {
                 using (IGraphicsPath path = graphics.CreatePath())
                 {

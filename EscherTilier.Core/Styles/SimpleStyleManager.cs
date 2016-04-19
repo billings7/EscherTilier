@@ -16,8 +16,8 @@ namespace EscherTilier.Styles
             : base(resourceManager)
         {
         }
-        
-        protected override IStyle GetStyle(ITile tile, IStyle[] styles)
+
+        protected override IStyle GetStyle(TileBase tile, IStyle[] styles)
         {
             Debug.Assert(styles.Length == 1);
             return styles[0];
