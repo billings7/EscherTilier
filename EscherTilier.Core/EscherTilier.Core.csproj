@@ -72,7 +72,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Arc.cs" />
-    <Compile Include="Controller.cs" />
+    <Compile Include="Controllers\Controller.cs" />
     <Compile Include="CubicBezierCurve.cs" />
     <Compile Include="Dependencies\DependencyCacheFlags.cs" />
     <Compile Include="Dependencies\DependencyManger.cs" />
@@ -103,7 +103,7 @@
     <Compile Include="Graphics\Resources\ResourceManager.cs" />
     <Compile Include="LinePoint.cs" />
     <Compile Include="Numerics\Matrix.cs" />
-    <Compile Include="ShapeController.cs" />
+    <Compile Include="Controllers\ShapeController.cs" />
     <Compile Include="ShapeSet.cs" />
     <Compile Include="Styles\Colours.cs">
       <AutoGen>True</AutoGen>
@@ -112,7 +112,7 @@
     </Compile>
     <Compile Include="Styles\SimpleStyleManager.cs" />
     <Compile Include="TileBase.cs" />
-    <Compile Include="TilingController.cs" />
+    <Compile Include="Controllers\TilingController.cs" />
     <Compile Include="Utilities\Extensions.cs" />
     <Compile Include="Graphics\IGraphicsPath.cs" />
     <Compile Include="ILine.cs" />

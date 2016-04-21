@@ -102,9 +102,7 @@ namespace EscherTilier
             Vector2 linePt = tmp * n;
 
             float distSq = ((a - point) - linePt).LengthSquared();
-
-            //lbl.Text = $"{tmp} \t {linePt} \t {Math.Sqrt(distSq)}";
-
+            
             float tolSq = tolerance * tolerance;
 
             if (distSq > tolSq)

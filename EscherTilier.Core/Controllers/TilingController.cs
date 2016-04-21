@@ -9,7 +9,7 @@ using EscherTilier.Numerics;
 using EscherTilier.Styles;
 using JetBrains.Annotations;
 
-namespace EscherTilier
+namespace EscherTilier.Controllers
 {
     public class TilingController : Controller
     {

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Media;
 using System.Numerics;
 using System.Windows.Forms;
+using EscherTilier.Controllers;
 using EscherTilier.Expressions;
 using EscherTilier.Properties;
 using EscherTilier.Styles;
@@ -156,7 +157,7 @@ namespace EscherTilier
                         })
                 });
 
-            UpdateBounds();
+            UpdateViewBounds();
 
             ShapeController sc = new ShapeController(template, _bounds);
 
@@ -297,7 +298,7 @@ namespace EscherTilier
             _scale = Matrix3x2.CreateScale((minDim * _zoom) / 10000f);
             _invScale = Matrix3x2.CreateScale(10000f / (minDim * _zoom));
 
-            UpdateBounds();
+            UpdateViewBounds();
         }
 
         private void UpdateTranslation(float dx, float dy)
@@ -305,10 +306,10 @@ namespace EscherTilier
             _translate *= Matrix3x2.CreateTranslation(dx, dy);
             _invTranslate *= Matrix3x2.CreateTranslation(-dx, -dy);
 
-            UpdateBounds();
+            UpdateViewBounds();
         }
 
-        private void UpdateBounds()
+        private void UpdateViewBounds()
         {
             Vector2 tl = Vector2.Zero;
             Vector2 br = new Vector2(renderControl.Width, renderControl.Height);
@@ -349,7 +350,7 @@ namespace EscherTilier
             _centerTranslate = Matrix3x2.CreateTranslation(renderControl.Width / 2f, renderControl.Height / 2f);
             _invCenterTranslate = Matrix3x2.CreateTranslation(-renderControl.Width / 2f, -renderControl.Height / 2f);
 
-            UpdateBounds();
+            UpdateViewBounds();
             UpdateSelected();
         }
 

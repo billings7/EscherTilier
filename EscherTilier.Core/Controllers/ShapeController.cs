@@ -5,7 +5,7 @@ using EscherTilier.Graphics.Resources;
 using EscherTilier.Numerics;
 using JetBrains.Annotations;
 
-namespace EscherTilier
+namespace EscherTilier.Controllers
 {
     public class ShapeController : Controller
     {

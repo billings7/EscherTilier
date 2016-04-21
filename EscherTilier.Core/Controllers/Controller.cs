@@ -2,7 +2,7 @@
 using EscherTilier.Graphics;
 using EscherTilier.Numerics;
 
-namespace EscherTilier
+namespace EscherTilier.Controllers
 {
     /// <summary>
     ///     Base class for controllers.
