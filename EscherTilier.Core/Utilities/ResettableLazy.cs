@@ -1,7 +1,8 @@
 ﻿#region © Copyright Web Applications (UK) Ltd, 2015.  All rights reserved.
+
 // Copyright (c) 2015, Web Applications UK Ltd
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 //     * Redistributions of source code must retain the above copyright
@@ -12,7 +13,7 @@
 //     * Neither the name of Web Applications UK Ltd nor the
 //       names of its contributors may be used to endorse or promote products
 //       derived from this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 // ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 // WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -23,6 +24,7 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #endregion
 
 using System;
@@ -47,16 +49,17 @@ namespace EscherTilier.Utilities
     }
 
     /// <summary>
-    /// Provides support for lazy initialization.
+    ///     Provides support for lazy initialization.
     /// </summary>
     /// <typeparam name="T">Specifies the type of element being lazily initialized.</typeparam>
     /// <remarks>
-    /// <para>
-    /// By default, all public and protected members of <see cref="ResettableLazy{T}"/> are thread-safe and may be used
-    /// concurrently from multiple threads.  These thread-safety guarantees may be removed optionally and per instance
-    /// using parameters to the type's constructors.
-    /// </para>
-    /// <para>This code is based off the source code for the <see cref="Lazy{T}"/> class.</para>
+    ///     <para>
+    ///         By default, all public and protected members of <see cref="ResettableLazy{T}" /> are thread-safe and may be
+    ///         used
+    ///         concurrently from multiple threads.  These thread-safety guarantees may be removed optionally and per instance
+    ///         using parameters to the type's constructors.
+    ///     </para>
+    ///     <para>This code is based off the source code for the <see cref="Lazy{T}" /> class.</para>
     /// </remarks>
     [Serializable]
     [PublicAPI]
@@ -67,9 +70,11 @@ namespace EscherTilier.Utilities
     public class ResettableLazy<T>
     {
         #region Inner classes
+
         /// <summary>
-        /// wrapper class to box the initialized value, this is mainly created to avoid boxing/unboxing the value each time the value is called in case T is 
-        /// a value type
+        ///     wrapper class to box the initialized value, this is mainly created to avoid boxing/unboxing the value each time the
+        ///     value is called in case T is
+        ///     a value type
         /// </summary>
         [Serializable]
         private class Boxed
@@ -81,20 +86,21 @@ namespace EscherTilier.Utilities
                 Value = value;
             }
         }
+
         #endregion
 
         private static readonly Func<T> _ctorFunc;
 
         /// <summary>
-        /// Initializes the <see cref="ResettableLazy{T}"/> class.
+        ///     Initializes the <see cref="ResettableLazy{T}" /> class.
         /// </summary>
         static ResettableLazy()
         {
-            ConstructorInfo ctor = typeof(T).GetConstructor(Array<Type>.Empty);
+            ConstructorInfo ctor = typeof(T).GetConstructor(Array.Empty<Type>());
 
             if (ctor != null)
             {
-                _ctorFunc = () => (T) ctor.Invoke(Array<object>.Empty);
+                _ctorFunc = () => (T) ctor.Invoke(Array.Empty<object>());
                 return;
             }
 
@@ -103,10 +109,13 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// Gets the function for the default constructor for the type <typeparamref name="T"/>.
+        ///     Gets the function for the default constructor for the type <typeparamref name="T" />.
         /// </summary>
         /// <returns></returns>
-        /// <exception cref="System.ArgumentException">The lazily-initialized type does not have a public, parameterless constructor.</exception>
+        /// <exception cref="System.ArgumentException">
+        ///     The lazily-initialized type does not have a public, parameterless
+        ///     constructor.
+        /// </exception>
         [NotNull]
         private static Func<T> GetCtorFunc()
         {
@@ -116,116 +125,139 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// The boxed value of the lazy.
+        ///     The boxed value of the lazy.
         /// </summary>
         /// <remarks>
-        /// <para>If <see cref="_boxed"/> == <see langword="null"/>, the value is not yet created.</para>
-        /// <para>If <see cref="_boxed"/> is <see cref="Boxed"/>, the value is created.</para>
-        /// <para>If <see cref="_boxed"/> is <see cref="ExceptionDispatchInfo"/>, the value is an exception.</para>
+        ///     <para>If <see cref="_boxed" /> == <see langword="null" />, the value is not yet created.</para>
+        ///     <para>If <see cref="_boxed" /> is <see cref="Boxed" />, the value is created.</para>
+        ///     <para>If <see cref="_boxed" /> is <see cref="ExceptionDispatchInfo" />, the value is an exception.</para>
         /// </remarks>
         private object _boxed;
 
         /// <summary>
-        /// The factory delegate that returns the value.
+        ///     The factory delegate that returns the value.
         /// </summary>
         [NonSerialized]
         [NotNull]
         private readonly Func<T> _valueFactory;
 
         /// <summary>
-        /// In None and ExecutionAndPublication modes, this will be set to <see langword="true"/> to avoid recursive calls.
+        ///     In None and ExecutionAndPublication modes, this will be set to <see langword="true" /> to avoid recursive calls.
         /// </summary>
         private bool _initialized;
 
         /// <summary>
-        /// The object used for thread safety. Will be <see langword="null"/> if not thread safe, <see cref="ResettableLazyHelpers.PublicationOnlySentinel"/> if PublicationOnly mode, or an object if ExecutionAndPublication mode.
+        ///     The object used for thread safety. Will be <see langword="null" /> if not thread safe,
+        ///     <see cref="ResettableLazyHelpers.PublicationOnlySentinel" /> if PublicationOnly mode, or an object if
+        ///     ExecutionAndPublication mode.
         /// </summary>
         [NonSerialized]
         private readonly object _threadSafeObj;
 
         /// <summary>
-        /// Whether the value should be created when <see cref="ToString"/> is called.
+        ///     Whether the value should be created when <see cref="ToString" /> is called.
         /// </summary>
         [NonSerialized]
         private readonly bool _createOnToString;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ResettableLazy{T}"/> class that 
-        /// uses <typeparamref name="T"/>'s default constructor for lazy initialization.
+        ///     Initializes a new instance of the <see cref="ResettableLazy{T}" /> class that
+        ///     uses <typeparamref name="T" />'s default constructor for lazy initialization.
         /// </summary>
         /// <remarks>
-        /// An instance created with this constructor may be used concurrently from multiple threads.
+        ///     An instance created with this constructor may be used concurrently from multiple threads.
         /// </remarks>
         public ResettableLazy()
-            : this(GetCtorFunc())
-        {
-        }
+            : this(GetCtorFunc()) { }
 
         /// <summary>
-        /// Initializes a new instance of the  <see cref="ResettableLazy{T}" /> class that uses 
-        /// <typeparamref name="T" />'s default constructor for lazy initialization.
+        ///     Initializes a new instance of the  <see cref="ResettableLazy{T}" /> class that uses
+        ///     <typeparamref name="T" />'s default constructor for lazy initialization.
         /// </summary>
-        /// <param name="createOnToString">if set to <see langword="true" /> the value will be created when <see cref="ToString"/> is called.</param>
+        /// <param name="createOnToString">
+        ///     if set to <see langword="true" /> the value will be created when <see cref="ToString" />
+        ///     is called.
+        /// </param>
         /// <remarks>
-        /// An instance created with this constructor may be used concurrently from multiple threads.
+        ///     An instance created with this constructor may be used concurrently from multiple threads.
         /// </remarks>
         public ResettableLazy(bool createOnToString)
-            : this(GetCtorFunc(), LazyThreadSafetyMode.ExecutionAndPublication, createOnToString)
-        {
-        }
+            : this(GetCtorFunc(), LazyThreadSafetyMode.ExecutionAndPublication, createOnToString) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ResettableLazy{T}" /> class that uses 
-        /// <typeparamref name="T" />'s default constructor and a specified thread-safety mode.
+        ///     Initializes a new instance of the <see cref="ResettableLazy{T}" /> class that uses
+        ///     <typeparamref name="T" />'s default constructor and a specified thread-safety mode.
         /// </summary>
-        /// <param name="isThreadSafe">true if this instance should be usable by multiple threads concurrently; false if the instance will only be used by one thread at a time.</param>
-        /// <param name="createOnToString">if set to <see langword="true" /> the value will be created when <see cref="ToString"/> is called.</param>
+        /// <param name="isThreadSafe">
+        ///     true if this instance should be usable by multiple threads concurrently; false if the
+        ///     instance will only be used by one thread at a time.
+        /// </param>
+        /// <param name="createOnToString">
+        ///     if set to <see langword="true" /> the value will be created when <see cref="ToString" />
+        ///     is called.
+        /// </param>
         public ResettableLazy(bool isThreadSafe, bool createOnToString = false)
             : this(
                 GetCtorFunc(),
                 isThreadSafe ? LazyThreadSafetyMode.ExecutionAndPublication : LazyThreadSafetyMode.None,
-                createOnToString)
-        {
-        }
+                createOnToString) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ResettableLazy{T}" /> class that uses 
-        /// <typeparamref name="T" />'s default constructor and a specified thread-safety mode.
+        ///     Initializes a new instance of the <see cref="ResettableLazy{T}" /> class that uses
+        ///     <typeparamref name="T" />'s default constructor and a specified thread-safety mode.
         /// </summary>
         /// <param name="mode">The lazy thread-safety mode mode</param>
-        /// <param name="createOnToString">if set to <see langword="true" /> the value will be created when <see cref="ToString" /> is called.</param>
+        /// <param name="createOnToString">
+        ///     if set to <see langword="true" /> the value will be created when <see cref="ToString" />
+        ///     is called.
+        /// </param>
         /// <exception cref="System.ArgumentOutOfRangeException"><paramref name="mode" /> mode contains an invalid valuee</exception>
         public ResettableLazy(LazyThreadSafetyMode mode, bool createOnToString = false)
-            : this(GetCtorFunc(), mode, createOnToString)
-        {
-        }
-
+            : this(GetCtorFunc(), mode, createOnToString) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ResettableLazy{T}" /> class
-        /// that uses a specified initialization function and a specified thread-safety mode.
+        ///     Initializes a new instance of the <see cref="ResettableLazy{T}" /> class
+        ///     that uses a specified initialization function and a specified thread-safety mode.
         /// </summary>
-        /// <param name="valueFactory">The <see cref="T:System.Func{T}" /> invoked to produce the lazily-initialized value when it is needed.</param>
-        /// <param name="isThreadSafe">true if this instance should be usable by multiple threads concurrently; false if the instance will only be used by one thread at a time.</param>
-        /// <param name="createOnToString">if set to <see langword="true" /> the value will be created when <see cref="ToString"/> is called.</param>
-        /// <exception cref="System.ArgumentNullException"><paramref name="valueFactory" /> is a null reference (Nothing in Visual Basic).</exception>
+        /// <param name="valueFactory">
+        ///     The <see cref="T:System.Func{T}" /> invoked to produce the lazily-initialized value when it
+        ///     is needed.
+        /// </param>
+        /// <param name="isThreadSafe">
+        ///     true if this instance should be usable by multiple threads concurrently; false if the
+        ///     instance will only be used by one thread at a time.
+        /// </param>
+        /// <param name="createOnToString">
+        ///     if set to <see langword="true" /> the value will be created when <see cref="ToString" />
+        ///     is called.
+        /// </param>
+        /// <exception cref="System.ArgumentNullException">
+        ///     <paramref name="valueFactory" /> is a null reference (Nothing in Visual
+        ///     Basic).
+        /// </exception>
         public ResettableLazy([NotNull] Func<T> valueFactory, bool isThreadSafe, bool createOnToString = false)
             : this(
                 valueFactory,
                 isThreadSafe ? LazyThreadSafetyMode.ExecutionAndPublication : LazyThreadSafetyMode.None,
-                createOnToString)
-        {
-        }
+                createOnToString) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ResettableLazy{T}" /> class
-        /// that uses a specified initialization function and a specified thread-safety mode.
+        ///     Initializes a new instance of the <see cref="ResettableLazy{T}" /> class
+        ///     that uses a specified initialization function and a specified thread-safety mode.
         /// </summary>
-        /// <param name="valueFactory">The <see cref="T:System.Func{T}" /> invoked to produce the lazily-initialized value when it is needed.</param>
+        /// <param name="valueFactory">
+        ///     The <see cref="T:System.Func{T}" /> invoked to produce the lazily-initialized value when it
+        ///     is needed.
+        /// </param>
         /// <param name="mode">The lazy thread-safety mode.</param>
-        /// <param name="createOnToString">if set to <see langword="true" /> the value will be created when <see cref="ToString"/> is called.</param>
-        /// <exception cref="System.ArgumentNullException"><paramref name="valueFactory" /> is
-        /// a null reference (Nothing in Visual Basic).</exception>
+        /// <param name="createOnToString">
+        ///     if set to <see langword="true" /> the value will be created when <see cref="ToString" />
+        ///     is called.
+        /// </param>
+        /// <exception cref="System.ArgumentNullException">
+        ///     <paramref name="valueFactory" /> is
+        ///     a null reference (Nothing in Visual Basic).
+        /// </exception>
         /// <exception cref="System.ArgumentOutOfRangeException"><paramref name="mode" /> mode contains an invalid value.</exception>
         public ResettableLazy(
             [NotNull] Func<T> valueFactory,
@@ -240,7 +272,8 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// Static helper function that returns an object based on the given mode. it also throws an exception if the mode is invalid
+        ///     Static helper function that returns an object based on the given mode. it also throws an exception if the mode is
+        ///     invalid
         /// </summary>
         [CanBeNull]
         private static object GetObjectFromMode(LazyThreadSafetyMode mode)
@@ -256,7 +289,7 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// Forces initialization during serialization.
+        ///     Forces initialization during serialization.
         /// </summary>
         /// <param name="context">The StreamingContext for the serialization operation.</param>
         [OnSerializing]
@@ -268,10 +301,10 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// Creates and returns a string representation of this instance.
+        ///     Creates and returns a string representation of this instance.
         /// </summary>
         /// <returns>
-        /// The result of calling <see cref="System.Object.ToString" /> on the <see cref="Value" />.
+        ///     The result of calling <see cref="System.Object.ToString" /> on the <see cref="Value" />.
         /// </returns>
         /// <exception cref="T:System.NullReferenceException">The <see cref="Value" /> is null.</exception>
         public override string ToString()
@@ -296,15 +329,15 @@ namespace EscherTilier.Utilities
                 // NOTE: Never actually returned
                 return "Value has exception";
             }
-            
+
             return "Value not created";
         }
 
         /// <summary>
-        /// Gets the value of the Lazy&lt;T&gt; for debugging display purposes.
+        ///     Gets the value of the Lazy&lt;T&gt; for debugging display purposes.
         /// </summary>
         /// <value>
-        /// The value if created; otherwise <see langword="default{T}"/>.
+        ///     The value if created; otherwise <see langword="default{T}" />.
         /// </value>
         [UsedImplicitly]
         internal T ValueForDebugDisplay
@@ -320,7 +353,7 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// Gets a value indicating whether this instance may be used concurrently from multiple threads.
+        ///     Gets a value indicating whether this instance may be used concurrently from multiple threads.
         /// </summary>
         internal LazyThreadSafetyMode Mode
         {
@@ -334,7 +367,7 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// Gets whether the value creation is faulted or not
+        ///     Gets whether the value creation is faulted or not
         /// </summary>
         internal bool IsValueFaulted
         {
@@ -342,41 +375,44 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// Gets a value indicating whether the <see cref="ResettableLazy{T}" /> has been initialized.
+        ///     Gets a value indicating whether the <see cref="ResettableLazy{T}" /> has been initialized.
         /// </summary>
         /// <value>
-        /// <see langword="true"/> if the <see cref="ResettableLazy{T}" /> instance has been initialized;
-        /// otherwise, <see langword="false"/>.
+        ///     <see langword="true" /> if the <see cref="ResettableLazy{T}" /> instance has been initialized;
+        ///     otherwise, <see langword="false" />.
         /// </value>
         /// <remarks>
-        /// The initialization of a 
-        /// <see cref="ResettableLazy{T}" /> instance may result in either
-        /// a value being produced or an exception being thrown.  If an exception goes unhandled during initialization,
-        /// <see cref="IsValueCreated" /> will return <see langword="false"/>.
+        ///     The initialization of a
+        ///     <see cref="ResettableLazy{T}" /> instance may result in either
+        ///     a value being produced or an exception being thrown.  If an exception goes unhandled during initialization,
+        ///     <see cref="IsValueCreated" /> will return <see langword="false" />.
         /// </remarks>
         public bool IsValueCreated
         {
             get { return _boxed is Boxed; }
         }
 
-        /// <summary>Gets the lazily initialized value of the current <see cref="ResettableLazy{T}"/>.</summary>
-        /// <value>The lazily initialized value of the current <see cref="ResettableLazy{T}"/>.</value>
+        /// <summary>Gets the lazily initialized value of the current <see cref="ResettableLazy{T}" />.</summary>
+        /// <value>The lazily initialized value of the current <see cref="ResettableLazy{T}" />.</value>
         /// <exception cref="T:System.MissingMemberException">
-        /// The <see cref="ResettableLazy{T}"/> was initialized to use the default constructor 
-        /// of the type being lazily initialized, and that type does not have a public, parameterless constructor.
+        ///     The <see cref="ResettableLazy{T}" /> was initialized to use the default constructor
+        ///     of the type being lazily initialized, and that type does not have a public, parameterless constructor.
         /// </exception>
         /// <exception cref="T:System.MemberAccessException">
-        /// The <see cref="ResettableLazy{T}"/> was initialized to use the default constructor 
-        /// of the type being lazily initialized, and permissions to access the constructor were missing.
+        ///     The <see cref="ResettableLazy{T}" /> was initialized to use the default constructor
+        ///     of the type being lazily initialized, and permissions to access the constructor were missing.
         /// </exception>
         /// <exception cref="T:System.InvalidOperationException">
-        /// The <see cref="ResettableLazy{T}"/> was constructed with the <see cref="LazyThreadSafetyMode.ExecutionAndPublication"/> or
-        /// <see cref="LazyThreadSafetyMode.None"/>  and the initialization function attempted to access <see cref="Value"/> on this instance.
+        ///     The <see cref="ResettableLazy{T}" /> was constructed with the
+        ///     <see cref="LazyThreadSafetyMode.ExecutionAndPublication" /> or
+        ///     <see cref="LazyThreadSafetyMode.None" />  and the initialization function attempted to access <see cref="Value" />
+        ///     on this instance.
         /// </exception>
         /// <remarks>
-        /// If <see cref="IsValueCreated"/> is false, accessing <see cref="Value"/> will force initialization.
-        /// Please <see cref="LazyThreadSafetyMode"/> for more information on how <see cref="ResettableLazy{T}"/> will behave if an exception is thrown
-        /// from initialization delegate.
+        ///     If <see cref="IsValueCreated" /> is false, accessing <see cref="Value" /> will force initialization.
+        ///     Please <see cref="LazyThreadSafetyMode" /> for more information on how <see cref="ResettableLazy{T}" /> will behave
+        ///     if an exception is thrown
+        ///     from initialization delegate.
         /// </remarks>
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public T Value
@@ -401,10 +437,10 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// local helper method to initialize the value
+        ///     local helper method to initialize the value
         /// </summary>
         /// <returns>
-        /// The initialized value
+        ///     The initialized value
         /// </returns>
         private T LazyInitValue()
         {
@@ -423,7 +459,7 @@ namespace EscherTilier.Utilities
                     // If CreateValue returns null, it means another thread successfully invoked the value factory
                     // and stored the result, so we should just take what was stored.  If CreateValue returns non-null
                     // but we lose the ---- to store the single value, again we should just take what was stored.
-                    boxed = (Boxed)_boxed;
+                    boxed = (Boxed) _boxed;
                 else
                     _initialized = true;
             }
@@ -455,12 +491,15 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// Creates an instance of T using <see cref="_valueFactory" />.
+        ///     Creates an instance of T using <see cref="_valueFactory" />.
         /// </summary>
         /// <returns>
-        /// An instance of Boxed.
+        ///     An instance of Boxed.
         /// </returns>
-        /// <exception cref="System.InvalidOperationException">ValueFactory attempted to access the Value property of this instance.</exception>
+        /// <exception cref="System.InvalidOperationException">
+        ///     ValueFactory attempted to access the Value property of this
+        ///     instance.
+        /// </exception>
         [CanBeNull]
         private Boxed CreateValue()
         {
@@ -493,7 +532,7 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// Resets the value of this <see cref="ResettableLazy{T}"/> to not created.
+        ///     Resets the value of this <see cref="ResettableLazy{T}" /> to not created.
         /// </summary>
         public void Reset()
         {

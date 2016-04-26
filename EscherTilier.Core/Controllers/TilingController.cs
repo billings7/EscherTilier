@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using EscherTilier.Dependencies;
 using EscherTilier.Graphics;
 using EscherTilier.Graphics.Resources;
@@ -13,8 +15,6 @@ namespace EscherTilier.Controllers
 {
     public class TilingController : Controller
     {
-        private readonly bool _tilingSet;
-
         [NotNull]
         private readonly Tiling _tiling;
 
@@ -27,8 +27,8 @@ namespace EscherTilier.Controllers
         [CanBeNull]
         private IResourceManager _resourceManager;
 
-        public TilingController([NotNull] Tiling tiling, [NotNull] StyleManager styleManager, Rectangle screenBounds)
-            : base(screenBounds)
+        public TilingController([NotNull] Tiling tiling, [NotNull] StyleManager styleManager, [NotNull] IView view)
+            : base(view)
         {
             if (tiling == null) throw new ArgumentNullException(nameof(tiling));
             if (styleManager == null) throw new ArgumentNullException(nameof(styleManager));
@@ -40,20 +40,39 @@ namespace EscherTilier.Controllers
             if (resourceManager == null) throw new InvalidOperationException();
             _resourceManager = resourceManager;
 
-            _tiles = _tiling.GetTiles(ScreenBounds, _styleManager, Enumerable.Empty<TileBase>());
-            _tilingSet = true;
+            resourceManager.Add(SolidColourStyle.White);
+            resourceManager.Add(SolidColourStyle.Black);
+            resourceManager.Add(SolidColourStyle.Gray);
+            resourceManager.Add(SolidColourStyle.CornflowerBlue);
+
+            _tiles = _tiling.GetTiles(view.ViewBounds, Enumerable.Empty<TileBase>());
+
+            Tools = new Tool[]
+            {
+                new EditLineTool(this, 5)
+            };
+
+            view.ViewBoundsChanged += View_ViewBoundsChanged;
         }
+
+        /// <summary>
+        ///     Gets the tiles.
+        /// </summary>
+        /// <value>
+        ///     The tiles.
+        /// </value>
+        [NotNull]
+        [ItemNotNull]
+        public IEnumerable<TileBase> Tiles => _tiles;
 
         /// <summary>
         ///     Raises the <see cref="E:ScreenBoundsChanged" /> event.
         /// </summary>
+        /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
-        protected override void OnScreenBoundsChanged(EventArgs e)
+        private void View_ViewBoundsChanged(object sender, EventArgs e)
         {
-            base.OnScreenBoundsChanged(e);
-
-            if (_tilingSet)
-                _tiles = _tiling.GetTiles(ScreenBounds, _styleManager, _tiles);
+            _tiles = _tiling.GetTiles(View.ViewBounds, _tiles);
         }
 
         /// <summary>
@@ -70,14 +89,16 @@ namespace EscherTilier.Controllers
 
             graphics.SetLineStyle(_styleManager.LineStyle);
 
+            // First draw the tiles
             Dictionary<Tile, IGraphicsPath> tilePaths = new Dictionary<Tile, IGraphicsPath>();
-
             try
             {
                 IEnumerable<TileBase> tiles = _tiles;
                 foreach (TileBase tile in tiles)
                 {
-                    graphics.FillStyle = tile.Style;
+                    Debug.Assert(tile != null, "tile != null");
+
+                    graphics.FillStyle = tile.Style ?? SolidColourStyle.White;
 
                     IGraphicsPath path;
                     bool disposePath = false;
@@ -100,6 +121,7 @@ namespace EscherTilier.Controllers
                             tileInstance.Tile.PopulateGraphicsPath(path);
                             tilePaths.Add(tileInstance.Tile, path);
                         }
+                        Debug.Assert(path != null, "path != null");
 
                         graphics.Transform = tile.Transform * initialTransform;
                     }
@@ -121,9 +143,15 @@ namespace EscherTilier.Controllers
             }
             finally
             {
+                graphics.Transform = initialTransform;
                 foreach (IGraphicsPath path in tilePaths.Values)
+                {
+                    Debug.Assert(path != null, "path != null");
                     path.Dispose();
+                }
             }
+
+            CurrentTool?.Draw(graphics);
         }
 
         /// <summary>
@@ -140,6 +168,402 @@ namespace EscherTilier.Controllers
             {
                 DependencyManger.ReleaseResourceManager(ref _resourceManager, _styleManager);
                 _styleManager.Dispose();
+            }
+        }
+
+        /// <summary>
+        ///     Tool used for editing the lines of a tile
+        /// </summary>
+        /// <seealso cref="Tool" />
+        public class EditLineTool : Tool
+        {
+            /// <summary>
+            ///     The tool name.
+            /// </summary>
+            public const string ToolName = "EditLineTool";
+
+            [CanBeNull]
+            private SelectedLine _selectedLine;
+
+            [CanBeNull]
+            private LineVector _selectedVector;
+
+            private float _tolerance;
+
+            /// <summary>
+            ///     Gets or sets the tolerance for how close the point has to be to the line to select it.
+            /// </summary>
+            /// <value>
+            ///     The tolerance.
+            /// </value>
+            /// <exception cref="ArgumentOutOfRangeException"></exception>
+            public float Tolerance
+            {
+                get { return _tolerance; }
+                set
+                {
+                    if (value <= 0) throw new ArgumentOutOfRangeException(nameof(value));
+                    _tolerance = value;
+                }
+            }
+
+            /// <summary>
+            ///     Initializes a new instance of the <see cref="EditLineTool" /> class.
+            /// </summary>
+            /// <param name="controller">The controller.</param>
+            /// <param name="tolerance">The tolerance. Must be greater than 0.</param>
+            public EditLineTool([NotNull] TilingController controller, float tolerance)
+                : base(controller, ToolName)
+            {
+                if (tolerance <= 0) throw new ArgumentOutOfRangeException(nameof(tolerance));
+                _tolerance = tolerance;
+            }
+
+            /// <summary>
+            ///     Gets the controller the tool belongs to.
+            /// </summary>
+            /// <value>
+            ///     The controller.
+            /// </value>
+            [NotNull]
+            public new TilingController Controller => (TilingController) base.Controller;
+
+            /// <summary>
+            ///     Gets the distance squared from the <paramref name="vector" /> to the <paramref name="loc" />.
+            ///     Only used by <see cref="StartAction" />
+            /// </summary>
+            /// <param name="vector">The vector.</param>
+            /// <param name="transform">The transform.</param>
+            /// <param name="loc">The loc.</param>
+            /// <returns></returns>
+            [NotNull]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private static Tuple<LineVector, float> GetDist(LineVector vector, Matrix3x2 transform, Vector2 loc)
+                => Tuple.Create(vector, Vector2.DistanceSquared(Vector2.Transform(vector, transform), loc));
+
+            /// <summary>
+            ///     Starts the action associated with this tool at the location given.
+            /// </summary>
+            /// <param name="rawLocation">
+            ///     The raw location to start the action.
+            ///     Should be transformed by the <see cref="IView.InverseViewMatrix" /> for the
+            ///     <see cref="Controller">Controllers</see> <see cref="EscherTilier.Controllers.Controller.View" /> to get the
+            ///     location in the tiling itself.
+            /// </param>
+            /// <returns>
+            ///     The action that was performed, or null if no action was performed.
+            /// </returns>
+            public override Action StartAction(Vector2 rawLocation)
+            {
+                Matrix3x2 viewMatrix = Controller.View.ViewMatrix;
+
+                // If there is a line selected, see if one of the control points has been selected
+                if (_selectedLine != null)
+                {
+                    Matrix3x2 transform =
+                        Matrix.GetTransform(
+                            new Vector2(0, 0),
+                            new Vector2(1, 0),
+                            _selectedLine.EdgePart.Edge.Start.Location,
+                            _selectedLine.EdgePart.Edge.End.Location)
+                        * _selectedLine.Tile.Transform
+                        * viewMatrix;
+
+                    // Gets the closest point to the location
+                    Tuple<LineVector, float> closest =
+                        _selectedLine.Line.Points
+                            .Where(p => !p.IsFixed)
+                            .Select(p => GetDist(p, transform, rawLocation))
+                            .OrderBy(t => t.Item2)
+                            .FirstOrDefault();
+
+                    // If the closest point is within the toelrance, select it
+                    if (closest != null && closest.Item2 < (_tolerance * _tolerance))
+                    {
+                        Debug.Assert(closest.Item1 != null, "closest.Item1 != null");
+
+                        // Need the inverse transform for updating the line from a raw location
+                        Matrix3x2 inverseTransform;
+                        if (!Matrix3x2.Invert(_selectedLine.Tile.Transform, out inverseTransform))
+                            throw new InvalidOperationException();
+
+                        inverseTransform =
+                            Controller.View.InverseViewMatrix
+                            * inverseTransform
+                            * Matrix.GetTransform(
+                                _selectedLine.EdgePart.Edge.Start.Location,
+                                _selectedLine.EdgePart.Edge.End.Location,
+                                new Vector2(0, 0),
+                                new Vector2(1, 0));
+
+                        _selectedVector = closest.Item1;
+                        return new EditPointAction(closest.Item1, inverseTransform, this);
+                    }
+                }
+                _selectedVector = null;
+
+                bool checkNext = false;
+                SelectedLine last = null;
+
+                // Check each line for each edge part for each tile
+                foreach (TileBase tile in Controller.Tiles)
+                {
+                    foreach (EdgePartShape partShape in tile.PartShapes)
+                    {
+                        Matrix3x2 transform =
+                            Matrix.GetTransform(
+                                new Vector2(0, 0),
+                                new Vector2(1, 0),
+                                partShape.Edge.Start.Location,
+                                partShape.Edge.End.Location)
+                            * tile.Transform
+                            * viewMatrix;
+
+                        foreach (ILine line in partShape.Lines)
+                        {
+                            LinePoint hit = line.HitTest(rawLocation, _tolerance, transform);
+                            if (hit != null)
+                            {
+                                if (checkNext)
+                                {
+                                    _selectedLine = hit.Distance > 0
+                                        ? new SelectedLine(tile, partShape, line)
+                                        : last;
+                                    return InstantAction.Instance;
+                                }
+
+                                // If the hit was just at/past the end of the line, check to see if it was in the next line
+                                if (hit.Distance >= 1)
+                                {
+                                    last = new SelectedLine(tile, partShape, line);
+                                    checkNext = true;
+                                    continue;
+                                }
+
+                                _selectedLine = new SelectedLine(tile, partShape, line);
+                                return InstantAction.Instance;
+                            }
+
+                            if (checkNext)
+                            {
+                                _selectedLine = last;
+                                return InstantAction.Instance;
+                            }
+                        }
+                    }
+                }
+
+                if (checkNext)
+                {
+                    _selectedLine = last;
+                    return InstantAction.Instance;
+                }
+
+                _selectedLine = null;
+                return null;
+            }
+
+            /// <summary>
+            ///     Draws this object to the <see cref="IGraphics" /> provided.
+            /// </summary>
+            /// <param name="graphics">The graphics object to use to draw this object.</param>
+            public override void Draw(IGraphics graphics)
+            {
+                base.Draw(graphics);
+
+                if (_selectedLine == null) return;
+
+                float radius = Controller._styleManager.LineStyle.Width * 2;
+
+                Matrix3x2 transform =
+                    Matrix.GetTransform(
+                        new Vector2(0, 0),
+                        new Vector2(1, 0),
+                        _selectedLine.EdgePart.Edge.Start.Location,
+                        _selectedLine.EdgePart.Edge.End.Location)
+                    * _selectedLine.Tile.Transform;
+
+                graphics.LineStyle = SolidColourStyle.Black;
+                graphics.LineWidth = radius / 3;
+
+                foreach (LineVector point in _selectedLine.Line.Points)
+                {
+                    if (_selectedLine.Line.End.IsFixed) graphics.FillStyle = SolidColourStyle.Gray;
+                    else if (point == _selectedVector) graphics.FillStyle = SolidColourStyle.CornflowerBlue;
+                    else graphics.FillStyle = SolidColourStyle.White;
+
+                    DrawControl(graphics, Vector2.Transform(point, transform), radius);
+                }
+            }
+
+            /// <summary>
+            ///     Draws a control point at the location given.
+            /// </summary>
+            /// <param name="graphics">The graphics.</param>
+            /// <param name="location">The location.</param>
+            /// <param name="radius">The radius.</param>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private void DrawControl([NotNull] IGraphics graphics, Vector2 location, float radius)
+            {
+                graphics.FillCircle(location, radius);
+                graphics.DrawCircle(location, radius);
+            }
+
+            private class SelectedLine
+            {
+                [NotNull]
+                public readonly TileBase Tile;
+
+                [NotNull]
+                public readonly EdgePartShape EdgePart;
+
+                [NotNull]
+                public readonly ILine Line;
+
+                public SelectedLine(TileBase tile, EdgePartShape edgePart, ILine line)
+                {
+                    Debug.Assert(tile != null, "tile != null");
+                    Debug.Assert(edgePart != null, "edgePart != null");
+                    Debug.Assert(line != null, "line != null");
+                    Tile = tile;
+                    EdgePart = edgePart;
+                    Line = line;
+                }
+            }
+
+            /// <summary>
+            ///     Action for editing a point of a line.
+            /// </summary>
+            private class EditPointAction : DragAction
+            {
+                private readonly Vector2 _initial;
+
+                [NotNull]
+                private readonly LineVector _lineVector;
+
+                private readonly Matrix3x2 _inverseTransform;
+
+                [NotNull]
+                private readonly EditLineTool _tool;
+
+                /// <summary>
+                ///     Initializes a new instance of the <see cref="EditPointAction" /> class.
+                /// </summary>
+                /// <param name="lineVector">The line vector of the point to edit.</param>
+                /// <param name="inverseTransform">The inverse transform matrix.</param>
+                /// <param name="tool">The tool.</param>
+                public EditPointAction(
+                    [NotNull] LineVector lineVector,
+                    Matrix3x2 inverseTransform,
+                    [NotNull] EditLineTool tool)
+                {
+                    Debug.Assert(lineVector != null, "lineVector != null");
+                    Debug.Assert(tool != null, "tool != null");
+                    Debug.Assert(!lineVector.IsFixed, "!lineVector.IsFixed");
+
+                    _lineVector = lineVector;
+                    _inverseTransform = inverseTransform;
+                    _initial = lineVector;
+                    _tool = tool;
+                }
+
+                /// <summary>
+                ///     Updates the location of the action.
+                /// </summary>
+                /// <param name="rawLocation">
+                ///     The raw location that the action has been dragged to.
+                ///     Should be transformed by the <see cref="IView.InverseViewMatrix" /> for the
+                ///     <see cref="EscherTilier.Controllers.Controller.View" /> to get the location in 1the tiling itself.
+                /// </param>
+                public override void Update(Vector2 rawLocation)
+                {
+                    _lineVector.Vector = Vector2.Transform(rawLocation, _inverseTransform);
+                }
+
+                /// <summary>
+                ///     Cancels this action.
+                /// </summary>
+                public override void Cancel()
+                {
+                    _lineVector.Vector = _initial;
+                    _tool._selectedVector = null;
+                }
+
+                /// <summary>
+                ///     Applies this action.
+                /// </summary>
+                public override void Apply()
+                {
+                    _tool._selectedVector = null;
+                }
+            }
+        }
+
+        public class SplitLineTool : Tool
+        {
+            /// <summary>
+            ///     The tool name.
+            /// </summary>
+            public const string ToolName = "SplitLineTool";
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="SplitLineTool"/> class.
+            /// </summary>
+            /// <param name="controller">The controller.</param>
+            public SplitLineTool([NotNull] TilingController controller)
+                : base(controller, ToolName) { }
+
+            /// <summary>
+            ///     Gets the controller the tool belongs to.
+            /// </summary>
+            /// <value>
+            ///     The controller.
+            /// </value>
+            [NotNull]
+            public new TilingController Controller => (TilingController)base.Controller;
+
+            /// <summary>
+            /// Called when the highlighted location (ie the cursor location) changes.
+            /// </summary>
+            /// <param name="rawLocation">
+            ///     The raw location.
+            ///     Should be transformed by the <see cref="IView.InverseViewMatrix" /> for the
+            ///     <see cref="Controller">Controllers</see> <see cref="EscherTilier.Controllers.Controller.View" /> to get the
+            ///     location in the tiling itself.
+            /// </param>
+            public override void UpdateLocation(Vector2 rawLocation)
+            {
+                base.UpdateLocation(rawLocation);
+
+                throw new NotImplementedException();
+            }
+
+            /// <summary>
+            ///     Starts the action associated with this tool at the location given.
+            /// </summary>
+            /// <param name="rawLocation">
+            ///     The raw location to start the action.
+            ///     Should be transformed by the <see cref="IView.InverseViewMatrix" /> for the
+            ///     <see cref="Controller">Controllers</see> <see cref="EscherTilier.Controllers.Controller.View" /> to get the
+            ///     location in the tiling itself.
+            /// </param>
+            /// <returns>
+            ///     The action that was performed, or null if no action was performed.
+            /// </returns>
+            public override Action StartAction(Vector2 rawLocation)
+            {
+                throw new NotImplementedException();
+            }
+
+            /// <summary>
+            ///     Draws this object to the <see cref="IGraphics" /> provided.
+            /// </summary>
+            /// <param name="graphics">The graphics object to use to draw this object.</param>
+            public override void Draw(IGraphics graphics)
+            {
+                base.Draw(graphics);
+
+                throw new NotImplementedException();
             }
         }
     }

@@ -5,7 +5,7 @@ namespace EscherTilier.Styles
     /// <summary>
     ///     A style that draws a solid colour.
     /// </summary>
-    public class SolidColourStyle : IStyle
+    public partial class SolidColourStyle : IStyle
     {
         /// <summary>
         ///     Initializes a new instance of the <see cref="SolidColourStyle" /> class.
@@ -14,6 +14,30 @@ namespace EscherTilier.Styles
         public SolidColourStyle(Colour colour)
         {
             Colour = colour;
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="SolidColourStyle" /> class.
+        /// </summary>
+        /// <param name="red">The red component.</param>
+        /// <param name="green">The green component.</param>
+        /// <param name="blue">The blue component.</param>
+        /// <param name="alpha">The alpha component.</param>
+        public SolidColourStyle(byte red, byte green, byte blue, byte alpha = 255)
+        {
+            Colour = new Colour(red, green, blue, alpha);
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="SolidColourStyle" /> class.
+        /// </summary>
+        /// <param name="red">The red component.</param>
+        /// <param name="green">The green component.</param>
+        /// <param name="blue">The blue component.</param>
+        /// <param name="alpha">The alpha component.</param>
+        public SolidColourStyle(float red, float green, float blue, float alpha = 1f)
+        {
+            Colour = new Colour(red, green, blue, alpha);
         }
 
         /// <summary>

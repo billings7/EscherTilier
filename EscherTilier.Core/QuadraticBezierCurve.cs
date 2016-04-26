@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using EscherTilier.Graphics;
 using EscherTilier.Numerics;
+using JetBrains.Annotations;
 
 namespace EscherTilier
 {
@@ -17,8 +19,14 @@ namespace EscherTilier
         /// <param name="start">The start point.</param>
         /// <param name="controlPoint">The control point.</param>
         /// <param name="end">The end point.</param>
-        public QuadraticBezierCurve(Vector2 start, Vector2 controlPoint, Vector2 end)
+        public QuadraticBezierCurve(
+            [NotNull] LineVector start,
+            [NotNull] LineVector controlPoint,
+            [NotNull] LineVector end)
         {
+            if (start == null) throw new ArgumentNullException(nameof(start));
+            if (controlPoint == null) throw new ArgumentNullException(nameof(controlPoint));
+            if (end == null) throw new ArgumentNullException(nameof(end));
             Start = start;
             ControlPoint = controlPoint;
             End = end;
@@ -30,15 +38,15 @@ namespace EscherTilier
         /// <value>
         ///     The start point.
         /// </value>
-        public Vector2 Start { get; }
+        public LineVector Start { get; }
 
         /// <summary>
-        ///     Gets the ens point of the line.
+        ///     Gets the end point of the line.
         /// </summary>
         /// <value>
-        ///     The ens point.
+        ///     The end point.
         /// </value>
-        public Vector2 End { get; }
+        public LineVector End { get; }
 
         /// <summary>
         ///     Gets the control point.
@@ -46,7 +54,25 @@ namespace EscherTilier
         /// <value>
         ///     The control point.
         /// </value>
-        public Vector2 ControlPoint { get; }
+        [NotNull]
+        public LineVector ControlPoint { get; }
+
+        /// <summary>
+        ///     Gets the points that are used to define this line.
+        /// </summary>
+        /// <value>
+        ///     The points.
+        /// </value>
+        /// <remarks>At minimum, this should include the <see cref="Start" /> and <see cref="End" /> points.</remarks>
+        public IEnumerable<LineVector> Points
+        {
+            get
+            {
+                yield return Start;
+                yield return ControlPoint;
+                yield return End;
+            }
+        }
 
         /// <summary>
         ///     Gets the approximate bounds for this line after it has been transformed by the given <paramref name="transform" />.
@@ -95,12 +121,12 @@ namespace EscherTilier
         ///     returning the exact point on the line if hit.
         /// </summary>
         /// <param name="point">The point to test.</param>
-        /// <param name="tolerance">The tolerance. Must be greater than or equal 0.1.</param>
+        /// <param name="tolerance">The tolerance. Must be greater than 0.</param>
         /// <param name="transform">The transform.</param>
         /// <returns>The exact point on the line if hit; otherwise <see langword="null" />.</returns>
         public LinePoint HitTest(Vector2 point, float tolerance, Matrix3x2 transform)
         {
-            if (tolerance < 0.1f)
+            if (tolerance <= 0)
                 throw new ArgumentOutOfRangeException(nameof(tolerance));
 
             Vector2 a = Vector2.Transform(Start, transform);
@@ -158,6 +184,71 @@ namespace EscherTilier
         {
             float it = 1 - t;
             return (it * it * a) + (2 * it * t * b) + (t * t * c);
+        }
+
+        /// <summary>
+        ///     Splits the line into two lines at the distance along the line given.
+        /// </summary>
+        /// <param name="distance">The distance along the line to split the line, in the range 0-1 (exclusive).</param>
+        /// <param name="line1">The first line.</param>
+        /// <param name="line2">The second line.</param>
+        /// <exception cref="System.ArgumentOutOfRangeException">The distance must be in the range 0-1.</exception>
+        public void SplitLine(float distance, out ILine line1, out ILine line2)
+        {
+            if (distance <= 0 || distance >= 1)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(distance),
+                    distance,
+                    "The distance must be in the range 0-1.");
+            }
+
+            Vector2 p1 = Start;
+            Vector2 p2 = ControlPoint;
+            Vector2 p3 = End;
+
+            Vector2 p12 = ((p2 - p1) * distance) + p1;
+            Vector2 p23 = ((p3 - p2) * distance) + p2;
+
+            Vector2 p123 = ((p23 - p12) * distance) + p12;
+
+            LineVector midVector = new LineVector(p123);
+
+            line1 = new QuadraticBezierCurve(Start, new LineVector(p12), midVector);
+            line2 = new QuadraticBezierCurve(midVector, new LineVector(p23), End);
+        }
+
+        /// <summary>
+        ///     Gets the tangent vector at the distance along the line given.
+        /// </summary>
+        /// <param name="distance">The distance along the line to get the tangent of, in the range 0-1 (inclusive).</param>
+        /// <param name="transform">The transform to apply to the line.</param>
+        /// <returns>
+        ///     The tagent vector at the distance along the line.
+        /// </returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">The distance must be in the range 0-1.</exception>
+        public Vector2 GetTangent(float distance, Matrix3x2 transform)
+        {
+            if (distance < 0 || distance > 1)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(distance),
+                    distance,
+                    "The distance must be in the range 0-1.");
+            }
+
+            Vector2 a = Vector2.Transform(Start, transform);
+            Vector2 b = Vector2.Transform(ControlPoint, transform);
+            Vector2 c = Vector2.Transform(End, transform);
+
+            return GetTangent(distance, a, b, c);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Vector2 GetTangent(float t, Vector2 a, Vector2 b, Vector2 c)
+        {
+            float it = 1 - t;
+            return (2 * it * (b - a)) + (2 * t * (c - b));
         }
     }
 }

@@ -2,7 +2,6 @@ using System;
 using EscherTilier.Dependencies;
 using EscherTilier.Graphics;
 using EscherTilier.Graphics.Resources;
-using EscherTilier.Numerics;
 using JetBrains.Annotations;
 
 namespace EscherTilier.Controllers
@@ -22,10 +21,11 @@ namespace EscherTilier.Controllers
         ///     Initializes a new instance of the <see cref="ShapeController" /> class.
         /// </summary>
         /// <param name="template">The template.</param>
-        /// <param name="screenBounds"></param>
+        /// <param name="view">The view.</param>
         /// <exception cref="System.ArgumentNullException"></exception>
-        public ShapeController([NotNull] Template template, Rectangle screenBounds)
-            : base(screenBounds)
+        /// <exception cref="System.InvalidOperationException"></exception>
+        public ShapeController([NotNull] Template template, [NotNull] IView view)
+            : base(view)
         {
             if (template == null) throw new ArgumentNullException(nameof(template));
 

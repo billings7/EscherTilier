@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using EscherTilier.Expressions;
 using EscherTilier.Graphics;
 using EscherTilier.Graphics.Resources;
-using EscherTilier.Numerics;
 using EscherTilier.Styles;
 using JetBrains.Annotations;
 
@@ -192,7 +190,7 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// Adds or updates the value associated with the given key.
+        ///     Adds or updates the value associated with the given key.
         /// </summary>
         /// <typeparam name="TKey">The type of the key.</typeparam>
         /// <typeparam name="TValue">The type of the value.</typeparam>
@@ -258,17 +256,20 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// Rounds each component of the vector.
+        ///     Rounds each component of the vector.
         /// </summary>
         /// <param name="vector">The vector to round.</param>
         /// <param name="digits">The number of fractional digits in the return value.</param>
         /// <param name="mode">Specification for how to round a value if it is midway between two other numbers.</param>
-        /// <returns>A vector where each component has a number of fractional digits equal to <paramref name="digits"/>.</returns>
-        public static Vector2 Round(this Vector2 vector, int digits = 0, MidpointRounding mode = MidpointRounding.ToEven)
+        /// <returns>A vector where each component has a number of fractional digits equal to <paramref name="digits" />.</returns>
+        public static Vector2 Round(
+            this Vector2 vector,
+            int digits = 0,
+            MidpointRounding mode = MidpointRounding.ToEven)
         {
             return new Vector2(
-                (float)Math.Round(vector.X, digits, mode),
-                (float)Math.Round(vector.Y, digits, mode));
+                (float) Math.Round(vector.X, digits, mode),
+                (float) Math.Round(vector.Y, digits, mode));
         }
 
         /// <summary>
@@ -334,18 +335,5 @@ namespace EscherTilier.Utilities
             /// </summary>
             public void Dispose() => Interlocked.Exchange(ref _graphics, null)?.RestoreState();
         }
-    }
-
-    /// <summary>
-    ///     Helpter methods for arrays.
-    /// </summary>
-    /// <typeparam name="T">The type of the element of the array.</typeparam>
-    public static class Array<T>
-    {
-        /// <summary>
-        ///     An instance of an empty array of type <typeparamref name="T" />.
-        /// </summary>
-        [NotNull]
-        public static readonly T[] Empty = Enumerable.Empty<T>() as T[] ?? new T[0];
     }
 }

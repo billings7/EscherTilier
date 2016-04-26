@@ -1,0 +1,44 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Drawing" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Drawing" #>
+<#@ import namespace="System.Reflection" #>
+<#@ output extension=".cs" #>
+using System.Collections.Generic;
+using JetBrains.Annotations;
+
+namespace EscherTilier.Styles
+{
+    public partial class SolidColourStyle
+    {
+        [NotNull]
+        private static readonly Dictionary<string, SolidColourStyle> _styles = new Dictionary<string, SolidColourStyle>();
+
+<# foreach (Color col in typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Where(p => p.PropertyType == typeof(Color)).Select(p => (Color)p.GetValue(null)))
+{
+    var name = col.Name;
+    var hex = col.ToArgb().ToString("X8", System.Globalization.CultureInfo.InvariantCulture);
+#>
+        /// <summary>
+        ///     Gets the <see cref="SolidColourStyle"/> for the system-defined color <#= name #> that has an ARGB value of #<#= hex #>.
+        /// </summary>
+        [PublicAPI]
+        [NotNull]
+        public static SolidColourStyle <#= col.Name #>
+        {
+            get
+            {
+                SolidColourStyle style;
+                if (_styles.TryGetValue("<#= col.Name #>", out style)) return style;
+                _styles["<#= col.Name #>"] = style = new SolidColourStyle(Colour.<#= col.Name #>);
+                return style;
+            }
+        }
+
+<#}#>
+    }
+}

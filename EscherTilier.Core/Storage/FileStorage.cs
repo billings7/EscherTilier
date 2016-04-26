@@ -211,7 +211,7 @@ namespace EscherTilier.Storage
 
             XElement consElm = element.Element("ShapeConstraints");
             if (consElm == null || consElm.IsEmpty)
-                return new Template(templates, Array<IExpression<bool>>.Empty, tilings);
+                return new Template(templates, Array.Empty<IExpression<bool>>(), tilings);
 
             IExpression<bool>[] constraints = consElm
                 .Elements()
@@ -584,7 +584,7 @@ namespace EscherTilier.Storage
                     case ExpressionType.BoolEqual:
                     case ExpressionType.Xor:
                     case ExpressionType.Not:
-                        LogicalExpression logicalExpression = (LogicalExpression)expression;
+                        LogicalExpression logicalExpression = (LogicalExpression) expression;
                         foreach (IExpression<bool> exp in logicalExpression.Expressions)
                         {
                             XElement elm = new XElement(exp.ExpressionType.ToString());
@@ -654,9 +654,11 @@ namespace EscherTilier.Storage
                 case ExpressionType.Add:
                     return ArithmeticExpression.Add(element.Elements().Select(DeserializeExpressionFloat).ToArray());
                 case ExpressionType.Subtract:
-                    return ArithmeticExpression.Subtract(element.Elements().Select(DeserializeExpressionFloat).ToArray());
+                    return ArithmeticExpression.Subtract(
+                        element.Elements().Select(DeserializeExpressionFloat).ToArray());
                 case ExpressionType.Multiply:
-                    return ArithmeticExpression.Multiply(element.Elements().Select(DeserializeExpressionFloat).ToArray());
+                    return ArithmeticExpression.Multiply(
+                        element.Elements().Select(DeserializeExpressionFloat).ToArray());
                 case ExpressionType.Divide:
                     return ArithmeticExpression.Divide(element.Elements().Select(DeserializeExpressionFloat).ToArray());
                 case ExpressionType.Equal:

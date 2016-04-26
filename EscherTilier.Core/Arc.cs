@@ -40,10 +40,10 @@ namespace EscherTilier
         public Vector2 Start { get; }
 
         /// <summary>
-        ///     Gets the ens point of the arc.
+        ///     Gets the end point of the arc.
         /// </summary>
         /// <value>
-        ///     The ens point.
+        ///     The end point.
         /// </value>
         public Vector2 End { get; }
 

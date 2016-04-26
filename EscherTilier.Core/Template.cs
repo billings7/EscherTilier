@@ -233,7 +233,7 @@ namespace EscherTilier
         {
             return new ShapeLines
             {
-                new Line(Vector2.Zero, new Vector2(1, 0))
+                new Line(new LineVector(Vector2.Zero, true), new LineVector(new Vector2(1, 0), true))
             };
         }
     }

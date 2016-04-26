@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
 using System.Media;
 using System.Numerics;
+using System.Threading;
 using System.Windows.Forms;
 using EscherTilier.Controllers;
 using EscherTilier.Expressions;
@@ -12,10 +15,12 @@ using EscherTilier.Properties;
 using EscherTilier.Styles;
 using EscherTilier.Utilities;
 using JetBrains.Annotations;
+using Action = EscherTilier.Controllers.Action;
+using DragAction = EscherTilier.Controllers.DragAction;
 
 namespace EscherTilier
 {
-    public partial class Main : Form
+    public partial class Main : Form, IView
     {
         private float _zoom = 100f;
         private Matrix3x2 _scale = Matrix3x2.Identity, _invScale = Matrix3x2.Identity;
@@ -43,44 +48,144 @@ namespace EscherTilier
             25f,
             16.67f,
             12.5f,
-            //8.33f,
-            //6.25f,
-            //5f,
-            //4f,
-            //3f,
-            //2f,
-            //1.5f,
-            //1f,
-            //0.7f,
-            //0.5f,
-            //0.4f,
-            //0.3f,
-            //0.2f,
-            //0.17f,
+            10f
         };
 
-        private Matrix3x2 ViewMatrix =>
-            _scale
-            * _centerTranslate
-            * _translate;
+        public Matrix3x2 ViewMatrix =>
+            _centerTranslate
+            * _translate
+            * _scale;
 
-        private Matrix3x2 InverseViewMatrix =>
-            _invTranslate
-            * _invCenterTranslate
-            * _invScale;
+        public Matrix3x2 InverseViewMatrix =>
+            _invScale
+            * _invTranslate
+            * _invCenterTranslate;
+
+        public Numerics.Rectangle ViewBounds => _bounds;
+
+        public event EventHandler ViewBoundsChanged;
 
         private Numerics.Rectangle _bounds;
 
+        [CanBeNull]
         private Controller _controller;
 
+        [NotNull]
+        private PanTool _panTool;
+
+        [NotNull]
+        private readonly Dictionary<Tool, ToolStripButton> _toolBtns = new Dictionary<Tool, ToolStripButton>();
+
+        #region Controls
+
+        [NotNull]
+        private MenuStrip _menuStrip;
+
+        [NotNull]
+        private ToolStripMenuItem _fileMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _newMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _openMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _saveMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _saveAsMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _printMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _printPreviewMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _exitMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _undoMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _redoMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _toolsMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _customizeMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _optionsMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _helpMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _indexMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _searchMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _aboutMenuItem;
+
+        [NotNull]
+        private ToolStripButton _newButton;
+
+        [NotNull]
+        private ToolStripButton _openButton;
+
+        [NotNull]
+        private ToolStripButton _saveButton;
+
+        [NotNull]
+        private ToolStripButton _printButton;
+
+        [NotNull]
+        private ToolStripButton _helpButton;
+
+        [NotNull]
+        private ToolStrip _toolStrip;
+
+        [NotNull]
+        private ToolStrip _operationToolStrip;
+
+        [NotNull]
+        private ToolStripButton _panToolBtn;
+
+        [NotNull]
+        private StatusStrip _statusStrip;
+
+        [NotNull]
+        private ToolStripStatusLabel _statusInfoLabel;
+
+        [NotNull]
+        private ToolStrip _contextToolStrip;
+
+        [NotNull]
+        private RenderControl _renderControl;
+
+        [NotNull]
+        private ToolStripTextBox _zoomText;
+
+        #endregion
+
+        // ReSharper disable once NotNullMemberIsNotInitialized - they are
         public Main()
         {
             InitializeComponent();
             InitializeGraphics();
 
-            statusInfoLabel.Text = string.Empty;
+            _centerTranslate = Matrix3x2.CreateTranslation(_renderControl.Width / 2f, _renderControl.Height / 2f);
+            _invCenterTranslate = Matrix3x2.CreateTranslation(-_renderControl.Width / 2f, -_renderControl.Height / 2f);
+            UpdateScale();
 
-            renderControl.MouseWheel += renderControl_MouseWheel;
+            _statusInfoLabel.Text = string.Empty;
+
+            _renderControl.MouseWheel += renderControl_MouseWheel;
 
             //using (Factory factory = new Factory())
             //{
@@ -124,42 +229,42 @@ namespace EscherTilier
                 new[]
                 {
                     new ShapeTemplate(
-                        "Square",
-                        new[] { "a", "b", "c", "d" },
-                        new[] { "A", "B", "C", "D" },
-                        new[]
-                        {
-                            new Vector2(-40, -40),
-                            new Vector2(40, -40),
-                            new Vector2(40, 40),
-                            new Vector2(-40, 40),
-                        })
+                    "Square",
+                    new[] { "a", "b", "c", "d" },
+                    new[] { "A", "B", "C", "D" },
+                    new[]
+                    {
+                        new Vector2(-40, -40),
+                        new Vector2(40, -40),
+                        new Vector2(40, 40),
+                        new Vector2(-40, 40)
+                    })
                 },
                 new IExpression<bool>[0],
                 new[]
                 {
                     new TilingDefinition(
-                        1,
-                        null,
-                        new[]
-                        {
-                            new EdgePattern("a", new[] { pa = new EdgePart(1, 1, true) }),
-                            new EdgePattern("b", new[] { pb = new EdgePart(2, 1, true) }),
-                            new EdgePattern("c", new[] { pc = new EdgePart(1, 1, false) }),
-                            new EdgePattern("d", new[] { pd = new EdgePart(2, 1, false) })
-                        },
-                        new EdgePartAdjacencies
-                        {
-                            { pa.WithLabel("A"), pc.WithLabel("B") },
-                            { pb.WithLabel("A"), pd.WithLabel("B") },
-                            { pa.WithLabel("B"), pc.WithLabel("A") },
-                            { pb.WithLabel("B"), pd.WithLabel("A") },
-                        })
+                    1,
+                    null,
+                    new[]
+                    {
+                        new EdgePattern("a", new[] { pa = new EdgePart(1, 1, true) }),
+                        new EdgePattern("b", new[] { pb = new EdgePart(2, 1, true) }),
+                        new EdgePattern("c", new[] { pc = new EdgePart(1, 1, false) }),
+                        new EdgePattern("d", new[] { pd = new EdgePart(2, 1, false) })
+                    },
+                    new EdgePartAdjacencies
+                    {
+                        { pa.WithLabel("A"), pc.WithLabel("B") },
+                        { pb.WithLabel("A"), pd.WithLabel("B") },
+                        { pa.WithLabel("B"), pc.WithLabel("A") },
+                        { pb.WithLabel("B"), pd.WithLabel("A") }
+                    })
                 });
 
             UpdateViewBounds();
 
-            ShapeController sc = new ShapeController(template, _bounds);
+            ShapeController sc = new ShapeController(template, this);
 
             RandomStyleManager randomStyleManager = new RandomStyleManager(null, 0)
             {
@@ -169,16 +274,21 @@ namespace EscherTilier
                     new TileStyle(new SolidColourStyle(Colour.Red), sc.Shapes.ToArray()),
                     new TileStyle(new SolidColourStyle(Colour.White), sc.Shapes.ToArray()),
                     new TileStyle(new SolidColourStyle(Colour.Yellow), sc.Shapes.ToArray()),
-                    new TileStyle(new SolidColourStyle(Colour.Orange), sc.Shapes.ToArray()),
-                },
+                    new TileStyle(new SolidColourStyle(Colour.Orange), sc.Shapes.ToArray())
+                }
             };
 
             _controller = new TilingController(
                 template.CreateTiling(template.Tilings[0], sc.Shapes, randomStyleManager),
                 randomStyleManager,
-                _bounds);
+                this);
+            _panTool = new PanTool(_controller, this);
 
-            renderControl.Start();
+            _toolBtns.Add(_panTool, _panToolBtn);
+
+            UpdateTools();
+
+            _renderControl.Start();
         }
 
         /// <summary>
@@ -197,9 +307,13 @@ namespace EscherTilier
 
             Settings.Default.Save();
 
-            renderControl.Stop();
+            _renderControl.Stop();
         }
 
+        /// <summary>
+        ///     Raises the <see cref="E:System.Windows.Forms.Form.Closed" /> event.
+        /// </summary>
+        /// <param name="e">The <see cref="T:System.EventArgs" /> that contains the event data.</param>
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);
@@ -291,38 +405,58 @@ namespace EscherTilier
 
         #endregion
 
+        /// <summary>
+        ///     Updates the scale matricies.
+        /// </summary>
         private void UpdateScale()
         {
-            int minDim = Math.Min(renderControl.Width, renderControl.Height);
+            int minDim = Math.Min(_renderControl.Width, _renderControl.Height);
 
-            _scale = Matrix3x2.CreateScale((minDim * _zoom) / 10000f);
-            _invScale = Matrix3x2.CreateScale(10000f / (minDim * _zoom));
+            Vector2 center = new Vector2(_renderControl.Width / 2f, _renderControl.Height / 2f);
+
+            _scale = Matrix3x2.CreateScale((minDim * _zoom) / 10000f, center);
+            _invScale = Matrix3x2.CreateScale(10000f / (minDim * _zoom), center);
 
             UpdateViewBounds();
         }
 
-        private void UpdateTranslation(float dx, float dy)
+        /// <summary>
+        ///     Updates the translation matricies.
+        /// </summary>
+        /// <param name="dp">The dp.</param>
+        private void UpdateTranslation(Vector2 dp)
         {
-            _translate *= Matrix3x2.CreateTranslation(dx, dy);
-            _invTranslate *= Matrix3x2.CreateTranslation(-dx, -dy);
+            int minDim = Math.Min(_renderControl.Width, _renderControl.Height);
+
+            float scale = (minDim * _zoom) / 10000f;
+
+            _translate *= Matrix3x2.CreateTranslation(dp / scale);
+            _invTranslate *= Matrix3x2.CreateTranslation(-dp / scale);
 
             UpdateViewBounds();
         }
 
+        /// <summary>
+        ///     Updates the view bounds.
+        /// </summary>
         private void UpdateViewBounds()
         {
             Vector2 tl = Vector2.Zero;
-            Vector2 br = new Vector2(renderControl.Width, renderControl.Height);
+            Vector2 br = new Vector2(_renderControl.Width, _renderControl.Height);
 
             tl = Vector2.Transform(tl, InverseViewMatrix);
             br = Vector2.Transform(br, InverseViewMatrix);
 
             _bounds = Numerics.Rectangle.ContainingPoints(tl, br);
-            if (_controller != null)
-                _controller.ScreenBounds = _bounds;
+            ViewBoundsChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        private void renderControl_MouseWheel(object sender, MouseEventArgs e)
+        /// <summary>
+        ///     Handles the MouseWheel event of the renderControl control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="MouseEventArgs" /> instance containing the event data.</param>
+        private void renderControl_MouseWheel(object sender, [NotNull] MouseEventArgs e)
         {
             int zoomDir = Math.Sign(e.Delta);
 
@@ -336,71 +470,123 @@ namespace EscherTilier
                 if (_zoom < _zoomLevels[0])
                     _zoom = _zoomLevels.Last(f => f > _zoom);
             }
-            zoomText.Text = (_zoom / 100f).ToString("0.##%");
+            _zoomText.Text = (_zoom / 100f).ToString("0.##%");
 
             UpdateScale();
-
-            UpdateSelected();
         }
 
         partial void renderControl_Render(SharpDX.Direct2D1.RenderTarget renderTarget, SharpDX.DXGI.SwapChain swapChain);
 
+        /// <summary>
+        ///     Handles the Layout event of the renderControl control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="LayoutEventArgs" /> instance containing the event data.</param>
         private void renderControl_Layout(object sender, LayoutEventArgs e)
         {
-            _centerTranslate = Matrix3x2.CreateTranslation(renderControl.Width / 2f, renderControl.Height / 2f);
-            _invCenterTranslate = Matrix3x2.CreateTranslation(-renderControl.Width / 2f, -renderControl.Height / 2f);
+            _centerTranslate = Matrix3x2.CreateTranslation(_renderControl.Width / 2f, _renderControl.Height / 2f);
+            _invCenterTranslate = Matrix3x2.CreateTranslation(-_renderControl.Width / 2f, -_renderControl.Height / 2f);
 
             UpdateViewBounds();
-            UpdateSelected();
         }
 
+        /// <summary>
+        ///     Handles the Leave event of the zoomText control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void zoomText_Leave(object sender, EventArgs e)
         {
             UpdateZoom();
         }
 
         /// <summary>
-        /// Processes a command key.
+        ///     Processes a command key.
         /// </summary>
         /// <returns>
-        /// true if the keystroke was processed and consumed by the control; otherwise, false to allow further processing.
+        ///     true if the keystroke was processed and consumed by the control; otherwise, false to allow further processing.
         /// </returns>
-        /// <param name="msg">A <see cref="T:System.Windows.Forms.Message"/>, passed by reference, that represents the Win32 message to process. </param><param name="keyData">One of the <see cref="T:System.Windows.Forms.Keys"/> values that represents the key to process. </param>
+        /// <param name="message">
+        ///     A <see cref="T:System.Windows.Forms.Message" />, passed by reference, that represents the Win32
+        ///     message to process.
+        /// </param>
+        /// <param name="keyData">One of the <see cref="T:System.Windows.Forms.Keys" /> values that represents the key to process. </param>
         protected override bool ProcessCmdKey(ref Message message, Keys keyData)
         {
-            if (zoomText.Focused)
+            if (_zoomText.Focused)
+            {
                 switch (keyData)
                 {
                     case Keys.Enter:
                         UpdateZoom();
                         return true;
                     case Keys.Escape:
-                        zoomText.Text = (_zoom / 100f).ToString("0.##%");
+                        _zoomText.Text = (_zoom / 100f).ToString("0.##%");
                         Unfocus();
                         return true;
                 }
+            }
             return false;
         }
 
-        private void renderControl_MouseMove(object sender, MouseEventArgs e)
+        private DragAction _dragAction;
+
+        /// <summary>
+        ///     Handles the MouseDown event of the renderControl control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="MouseEventArgs" /> instance containing the event data.</param>
+        private void renderControl_MouseDown(object sender, [NotNull] MouseEventArgs e)
         {
-            UpdateSelected();
+            if (_controller == null) return;
+
+            Vector2 loc = new Vector2(e.X, e.Y);
+
+            Action action = _controller.CurrentTool?.StartAction(loc);
+            _dragAction = action as DragAction;
         }
 
+        /// <summary>
+        ///     Handles the MouseMove event of the renderControl control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="MouseEventArgs" /> instance containing the event data.</param>
+        private void renderControl_MouseMove(object sender, [NotNull] MouseEventArgs e)
+            => _dragAction?.Update(new Vector2(e.X, e.Y));
+
+        /// <summary>
+        ///     Handles the MouseUp event of the renderControl control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="MouseEventArgs" /> instance containing the event data.</param>
+        private void renderControl_MouseUp(object sender, MouseEventArgs e)
+            => Interlocked.Exchange(ref _dragAction, null)?.Apply();
+
+        /// <summary>
+        ///     Handles the MouseLeave event of the renderControl control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        private void renderControl_MouseLeave(object sender, EventArgs e)
+            => Interlocked.Exchange(ref _dragAction, null)?.Apply();
+
+        /// <summary>
+        ///     Updates the zoom level.
+        /// </summary>
         private void UpdateZoom()
         {
-            string str = zoomText.Text.Trim();
+            string str = _zoomText.Text.Trim();
             if (str.EndsWith(CultureInfo.CurrentCulture.NumberFormat.PercentSymbol))
                 str = str.Substring(0, str.Length - CultureInfo.CurrentCulture.NumberFormat.PercentSymbol.Length);
             float zoom;
             if (!float.TryParse(str, out zoom))
             {
                 SystemSounds.Asterisk.Play();
-                zoomText.Focus();
+                _zoomText.Focus();
                 return;
             }
 
-            zoom = (float)Math.Round(zoom, 2);
+            zoom = (float) Math.Round(zoom, 2);
             if (zoom < _zoomLevels[_zoomLevels.Length - 1])
                 zoom = _zoomLevels[_zoomLevels.Length - 1];
             else if (zoom > _zoomLevels[0])
@@ -412,40 +598,16 @@ namespace EscherTilier
                 _zoom = zoom;
 
                 UpdateScale();
-
-                UpdateSelected();
             }
 
-            zoomText.Text = (_zoom / 100f).ToString("0.##%");
+            _zoomText.Text = (_zoom / 100f).ToString("0.##%");
 
             Unfocus();
         }
 
-        private void UpdateSelected()
-        {/*
-            if (_shape == null) return;
-
-            Matrix3x2 matrix = InverseViewMatrix;
-
-            Vector2 loc = Vector2.Transform(new Vector2(_mouseLocation.X, _mouseLocation.Y), matrix);
-
-            Vertex vertex = _shape.Vertices.OrderBy(v => Vector2.DistanceSquared(v.Location, loc)).First();
-            if (Vector2.DistanceSquared(vertex.Location, loc) < 25)
-            {
-                _selected = vertex;
-                return;
-            }
-
-            Edge edge = _shape.Edges.OrderBy(d => d.DistanceTo(loc)).First();
-            if (edge.DistanceTo(loc) < 5)
-            {
-                _selected = edge;
-                return;
-            }
-            _selected = null;
-            //*/
-        }
-
+        /// <summary>
+        ///     Unfocuses the currently focused control.
+        /// </summary>
         private void Unfocus()
         {
             IContainerControl container = this;
@@ -454,6 +616,199 @@ namespace EscherTilier
                 Control control = container.ActiveControl;
                 container.ActiveControl = null;
                 container = control as IContainerControl;
+            }
+        }
+
+        /// <summary>
+        ///     Handles the Click event of the tool button controls.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        private void toolBtn_Click(object sender, EventArgs e)
+        {
+            if (_controller == null) return;
+
+            Debug.Assert(sender is ToolStripButton);
+            ToolStripButton btn = (ToolStripButton) sender;
+
+            Debug.Assert(btn.Tag is Tool);
+            Tool tool = (Tool) btn.Tag;
+
+            if (_controller.CurrentTool != null)
+            {
+                ToolStripButton lastBtn;
+                if (_toolBtns.TryGetValue(_controller.CurrentTool, out lastBtn))
+                {
+                    Debug.Assert(lastBtn != null, "lastBtn != null");
+                    lastBtn.Checked = false;
+                }
+            }
+
+            _controller.CurrentTool = tool;
+            btn.Checked = true;
+        }
+
+        /// <summary>
+        ///     Updates the buttons for the current controllers tools.
+        /// </summary>
+        private void UpdateTools()
+        {
+            if (_controller == null) return;
+
+            _panToolBtn.Tag = _panTool;
+
+            foreach (Tool tool in _toolBtns.Keys.Where(t => t != _panTool).ToArray())
+            {
+                Debug.Assert(tool != null, "tool != null");
+
+                ToolStripButton btn = _toolBtns[tool];
+                if (!_controller.Tools.Contains(tool))
+                    _toolBtns.Remove(tool);
+
+                Debug.Assert(btn != null, "btn != null");
+                _operationToolStrip.Items.Remove(btn);
+            }
+
+            foreach (Tool tool in _controller.Tools.Except(_toolBtns.Keys))
+            {
+                Debug.Assert(tool != null, "tool != null");
+
+                ToolStripButton btn;
+                if (!_toolBtns.TryGetValue(tool, out btn))
+                {
+                    string toolName = Resources.ResourceManager.GetString(tool.Name + ":Name");
+                    Image toolImage = (Image) Resources.ResourceManager.GetObject(tool.Name + ":Icon");
+
+                    btn = new ToolStripButton(toolName, toolImage, toolBtn_Click, tool.Name)
+                    {
+                        AutoSize = false,
+                        Tag = tool,
+                        DisplayStyle = ToolStripItemDisplayStyle.Image,
+                        Size = new Size(20, 20)
+                    };
+                    _toolBtns.Add(tool, btn);
+                }
+
+                Debug.Assert(btn != null, "btn != null");
+                _operationToolStrip.Items.Add(btn);
+            }
+
+            _panToolBtn.PerformClick();
+        }
+
+        /// <summary>
+        ///     Tool used to pan around the tiling.
+        /// </summary>
+        /// <seealso cref="EscherTilier.Controllers.Tool" />
+        private class PanTool : Tool
+        {
+            [NotNull]
+            private readonly Main _form;
+
+            private Cursor _lastCursor;
+
+            /// <summary>
+            ///     Initializes a new instance of the <see cref="PanTool" /> class.
+            /// </summary>
+            /// <param name="controller">The controller.</param>
+            /// <param name="form">The form.</param>
+            public PanTool([NotNull] Controller controller, [NotNull] Main form)
+                : base(controller)
+            {
+                _form = form;
+            }
+
+            /// <summary>
+            ///     Called when this tool is selected as the current tool.
+            /// </summary>
+            public override void Selected()
+            {
+                base.Selected();
+                _lastCursor = _form._renderControl.Cursor;
+                _form._renderControl.Cursor = Cursors.SizeAll;
+            }
+
+            /// <summary>
+            ///     Called when this tool is deselected as the current tool.
+            /// </summary>
+            public override void Deselected()
+            {
+                base.Deselected();
+                _form._renderControl.Cursor = _lastCursor;
+            }
+
+            /// <summary>
+            ///     Starts the action associated with this tool at the location given.
+            /// </summary>
+            /// <param name="rawLocation">
+            ///     The raw location to start the action.
+            ///     Should be transformed by the <see cref="IView.InverseViewMatrix" /> for the
+            ///     <see cref="Controller">Controllers</see> <see cref="EscherTilier.Controllers.Controller.View" /> to get the
+            ///     location in the tiling itself.
+            /// </param>
+            /// <returns>
+            ///     The action that was performed, or null if no action was performed.
+            /// </returns>
+            public override Action StartAction(Vector2 rawLocation)
+            {
+                return new PanAction(rawLocation, _form);
+            }
+
+            /// <summary>
+            ///     Action used for panning.
+            /// </summary>
+            private class PanAction : DragAction
+            {
+                private Vector2 _last;
+
+                [NotNull]
+                private readonly Main _form;
+
+                private readonly Matrix3x2 _translate;
+                private readonly Matrix3x2 _invTranslate;
+
+                /// <summary>
+                ///     Initializes a new instance of the <see cref="PanAction" /> class.
+                /// </summary>
+                /// <param name="start">The start point of the action.</param>
+                /// <param name="form">The form.</param>
+                public PanAction(Vector2 start, [NotNull] Main form)
+                {
+                    _last = start;
+                    _form = form;
+
+                    _translate = form._translate;
+                    _invTranslate = form._invTranslate;
+                }
+
+                /// <summary>
+                ///     Updates the location of the action.
+                /// </summary>
+                /// <param name="rawLocation">
+                ///     The raw location that the action has been dragged to.
+                ///     Should be transformed by the <see cref="P:EscherTilier.IView.InverseViewMatrix" /> for the
+                ///     <see cref="P:EscherTilier.Controllers.Controller.View" /> to get the location in 1the tiling itself.
+                /// </param>
+                public override void Update(Vector2 rawLocation)
+                {
+                    _form.UpdateTranslation(rawLocation - _last);
+                    _last = rawLocation;
+                }
+
+                /// <summary>
+                ///     Cancels this action.
+                /// </summary>
+                public override void Cancel()
+                {
+                    _form._translate = _translate;
+                    _form._invTranslate = _invTranslate;
+                    _form.UpdateViewBounds();
+                }
+
+                /// <summary>
+                ///     Applies this action.
+                /// </summary>
+                public override void Apply() { }
             }
         }
     }

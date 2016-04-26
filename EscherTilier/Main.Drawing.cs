@@ -32,14 +32,14 @@ namespace EscherTilier
 
         private void InitializeGraphics()
         {
-            DependencyManger.ForTypeUse(() => renderControl.RenderTargetContainer, DependencyCacheFlags.CacheGlobal);
+            DependencyManger.ForTypeUse(() => _renderControl.RenderTargetContainer, DependencyCacheFlags.CacheGlobal);
 
             _miskResourceManager = DependencyManger.GetResourceManager();
             _miskResourceManager.Add(_whiteStyle);
             _miskResourceManager.Add(_grayStyle);
             _miskResourceManager.Add(_blackStyle);
 
-            RenderTargetContainer renderTargetContainer = renderControl.RenderTargetContainer;
+            RenderTargetContainer renderTargetContainer = _renderControl.RenderTargetContainer;
             DirectXGraphics graphics = new DirectXGraphics(
                 renderTargetContainer.RenderTarget,
                 _miskResourceManager,
@@ -63,7 +63,6 @@ namespace EscherTilier
             IGraphics graphics = _directXGraphics;
             Controller controller = _controller;
             if (graphics == null || controller == null) throw new ObjectDisposedException(nameof(Main));
-            
 
             renderTarget.BeginDraw();
             renderTarget.Transform = ViewMatrix.ToRawMatrix3x2();
@@ -129,7 +128,7 @@ namespace EscherTilier
                 }
             }
             //*/
-            
+
             controller.Draw(graphics);
 
             renderTarget.EndDraw();

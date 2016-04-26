@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using EscherTilier.Graphics;
-using EscherTilier.Numerics;
+using JetBrains.Annotations;
 
 namespace EscherTilier.Controllers
 {
@@ -11,34 +12,72 @@ namespace EscherTilier.Controllers
     /// <seealso cref="System.IDisposable" />
     public abstract class Controller : IDrawable, IDisposable
     {
-        private Rectangle _screenBounds;
+        [NotNull]
+        private IReadOnlyList<Tool> _tools;
 
-        protected Controller(Rectangle screenBounds)
+        private Tool _currentTool;
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Controller" /> class.
+        /// </summary>
+        /// <param name="view">The view.</param>
+        protected Controller([NotNull] IView view)
         {
-            ScreenBounds = screenBounds;
+            if (view == null) throw new ArgumentNullException(nameof(view));
+            View = view;
+            _tools = Array.Empty<Tool>();
         }
 
         /// <summary>
-        /// Occurs when the value of the <see cref="ScreenBounds"/> property changes.
-        /// </summary>
-        public event EventHandler ScreenBoundsChanged;
-
-        /// <summary>
-        /// Gets or sets the screen bounds.
+        ///     Gets the view that this controller uses.
         /// </summary>
         /// <value>
-        /// The screen bounds.
+        ///     The view.
         /// </value>
-        public Rectangle ScreenBounds
+        [NotNull]
+        public IView View { get; }
+
+        /// <summary>
+        ///     Occurs when the <see cref="Tools" /> property changes.
+        /// </summary>
+        public event EventHandler ToolsChanged;
+
+        /// <summary>
+        ///     Gets the tools for this controller.
+        /// </summary>
+        /// <value>
+        ///     The tools.
+        /// </value>
+        [NotNull]
+        [ItemNotNull]
+        public IReadOnlyList<Tool> Tools
         {
-            get { return _screenBounds; }
+            get { return _tools; }
+            protected set
+            {
+                if (ReferenceEquals(value, _tools)) return;
+                _tools = value;
+
+                ToolsChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        /// <summary>
+        ///     Gets or sets the currently active tool.
+        /// </summary>
+        /// <value>
+        ///     The current tool.
+        /// </value>
+        [CanBeNull]
+        public Tool CurrentTool
+        {
+            get { return _currentTool; }
             set
             {
-                if (_screenBounds == value)
-                    return;
-
-                _screenBounds = value;
-                OnScreenBoundsChanged(EventArgs.Empty);
+                if (value == _currentTool) return;
+                _currentTool?.Deselected();
+                _currentTool = value;
+                _currentTool?.Selected();
             }
         }
 
@@ -47,15 +86,6 @@ namespace EscherTilier.Controllers
         /// </summary>
         /// <param name="graphics">The graphics object to use to draw this object.</param>
         public abstract void Draw(IGraphics graphics);
-
-        /// <summary>
-        /// Raises the <see cref="E:ScreenBoundsChanged" /> event.
-        /// </summary>
-        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        protected virtual void OnScreenBoundsChanged(EventArgs e)
-        {
-            ScreenBoundsChanged?.Invoke(this, e);
-        }
 
         /// <summary>
         ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.

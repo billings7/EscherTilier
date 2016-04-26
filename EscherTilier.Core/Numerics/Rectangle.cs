@@ -75,7 +75,7 @@ namespace EscherTilier.Numerics
         }
 
         /// <summary>
-        /// Creates a rectangle that contains the points given.
+        ///     Creates a rectangle that contains the points given.
         /// </summary>
         /// <param name="point1">The first point.</param>
         /// <param name="point2">The second point.</param>
@@ -91,7 +91,7 @@ namespace EscherTilier.Numerics
         }
 
         /// <summary>
-        /// Creates a rectangle that contains the points given.
+        ///     Creates a rectangle that contains the points given.
         /// </summary>
         /// <param name="point1">The first point.</param>
         /// <param name="point2">The second point.</param>
@@ -108,7 +108,7 @@ namespace EscherTilier.Numerics
         }
 
         /// <summary>
-        /// Creates a rectangle that contains the points given.
+        ///     Creates a rectangle that contains the points given.
         /// </summary>
         /// <param name="point1">The first point.</param>
         /// <param name="point2">The second point.</param>
@@ -126,7 +126,7 @@ namespace EscherTilier.Numerics
         }
 
         /// <summary>
-        /// Creates a rectangle that contains all the points given.
+        ///     Creates a rectangle that contains all the points given.
         /// </summary>
         /// <param name="points">The points the rectangle should contain.</param>
         /// <returns></returns>
@@ -177,6 +177,14 @@ namespace EscherTilier.Numerics
         public float Bottom => Y + Height;
 
         /// <summary>
+        ///     Gets the center point of the rectangle.
+        /// </summary>
+        /// <value>
+        ///     The center.
+        /// </value>
+        public Vector2 Center => Location + (Size / 2);
+
+        /// <summary>
         ///     Determines whether this rectangle contains the given point.
         /// </summary>
         /// <param name="point">The point.</param>
@@ -184,7 +192,7 @@ namespace EscherTilier.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [System.Diagnostics.Contracts.Pure]
         public bool Contains(Vector2 point)
-            => Left >= point.X && point.X >= Right && Top >= point.Y && point.Y >= Bottom;
+            => Left <= point.X && point.X <= Right && Top <= point.Y && point.Y <= Bottom;
 
         /// <summary>
         ///     Determines if this rectangle intersects with <paramref name="rect" />.
@@ -202,11 +210,11 @@ namespace EscherTilier.Numerics
         }
 
         /// <summary>
-        /// Gets a <see cref="Rectangle"/> structure that contains the union of two <see cref="Rectangle"/> structures.
+        ///     Gets a <see cref="Rectangle" /> structure that contains the union of two <see cref="Rectangle" /> structures.
         /// </summary>
         /// <param name="a">A rectangle to union.</param>
         /// <param name="b">A rectangle to union.</param>
-        /// <returns>A <see cref="Rectangle"/> structure that bounds the union of the two <see cref="Rectangle"/> structures.</returns>
+        /// <returns>A <see cref="Rectangle" /> structure that bounds the union of the two <see cref="Rectangle" /> structures.</returns>
         [System.Diagnostics.Contracts.Pure]
         public static Rectangle Union(Rectangle a, Rectangle b)
         {
@@ -219,11 +227,11 @@ namespace EscherTilier.Numerics
         }
 
         /// <summary>
-        /// Gets a copy of this <see cref="Rectangle" /> structure that contains the point given.
+        ///     Gets a copy of this <see cref="Rectangle" /> structure that contains the point given.
         /// </summary>
         /// <param name="point">The point the rectangle should be expanded to include.</param>
         /// <returns>
-        /// A <see cref="Rectangle" /> structure that contains both this rectangle and the point given.
+        ///     A <see cref="Rectangle" /> structure that contains both this rectangle and the point given.
         /// </returns>
         [System.Diagnostics.Contracts.Pure]
         public Rectangle Expand(Vector2 point)
@@ -237,10 +245,10 @@ namespace EscherTilier.Numerics
         }
 
         /// <summary>
-        /// Indicates whether the current object is equal to another object of the same type.
+        ///     Indicates whether the current object is equal to another object of the same type.
         /// </summary>
         /// <returns>
-        /// true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
+        ///     true if the current object is equal to the <paramref name="other" /> parameter; otherwise, false.
         /// </returns>
         /// <param name="other">An object to compare with this object.</param>
         public bool Equals(Rectangle other)
@@ -249,10 +257,10 @@ namespace EscherTilier.Numerics
         }
 
         /// <summary>
-        /// Indicates whether this instance and a specified object are equal.
+        ///     Indicates whether this instance and a specified object are equal.
         /// </summary>
         /// <returns>
-        /// true if <paramref name="obj"/> and this instance are the same type and represent the same value; otherwise, false.
+        ///     true if <paramref name="obj" /> and this instance are the same type and represent the same value; otherwise, false.
         /// </returns>
         /// <param name="obj">The object to compare with the current instance. </param>
         public override bool Equals(object obj)
@@ -262,10 +270,10 @@ namespace EscherTilier.Numerics
         }
 
         /// <summary>
-        /// Returns the hash code for this instance.
+        ///     Returns the hash code for this instance.
         /// </summary>
         /// <returns>
-        /// A 32-bit signed integer that is the hash code for this instance.
+        ///     A 32-bit signed integer that is the hash code for this instance.
         /// </returns>
         public override int GetHashCode()
         {
