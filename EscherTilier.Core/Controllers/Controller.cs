@@ -62,6 +62,8 @@ namespace EscherTilier.Controllers
             }
         }
 
+        public event EventHandler<CurrentToolChangedEventArgs> CurrentToolChanged;
+
         /// <summary>
         ///     Gets or sets the currently active tool.
         /// </summary>
@@ -75,9 +77,14 @@ namespace EscherTilier.Controllers
             set
             {
                 if (value == _currentTool) return;
+
+                var oldTool = _currentTool;
+
                 _currentTool?.Deselected();
                 _currentTool = value;
                 _currentTool?.Selected();
+
+                CurrentToolChanged?.Invoke(this, new CurrentToolChangedEventArgs(oldTool, value));
             }
         }
 
@@ -104,5 +111,17 @@ namespace EscherTilier.Controllers
         ///     <see langword="false" /> to release only unmanaged resources.
         /// </param>
         protected virtual void Dispose(bool disposing) { }
+    }
+
+    public class CurrentToolChangedEventArgs : EventArgs
+    {
+        public readonly Tool OldTool;
+        public readonly Tool NewTool;
+
+        public CurrentToolChangedEventArgs(Tool oldTool, Tool newTool)
+        {
+            OldTool = oldTool;
+            NewTool = newTool;
+        }
     }
 }

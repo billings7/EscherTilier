@@ -27,5 +27,7 @@ namespace EscherTilier
             Position = pos;
             Distance = distance;
         }
+
+        public override string ToString() => $"{Distance:P1} - {Position}";
     }
 }

@@ -587,6 +587,7 @@ namespace EscherTilier.Graphics.DirectX
             /// <returns>This <see cref="IGraphicsPath" />.</returns>
             public IGraphicsPath AddLine(Vector2 to)
             {
+                Debug.WriteLine(to);
                 _sink?.AddLine(to.ToRawVector2());
                 return this;
             }

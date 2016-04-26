@@ -249,9 +249,9 @@ namespace EscherTilier
                     new[]
                     {
                         new EdgePattern("a", new[] { pa = new EdgePart(1, 1, true) }),
-                        new EdgePattern("b", new[] { pb = new EdgePart(2, 1, true) }),
+                        new EdgePattern("b", new[] { pb = new EdgePart(1, 1, true) }),
                         new EdgePattern("c", new[] { pc = new EdgePart(1, 1, false) }),
-                        new EdgePattern("d", new[] { pd = new EdgePart(2, 1, false) })
+                        new EdgePattern("d", new[] { pd = new EdgePart(1, 1, false) })
                     },
                     new EdgePartAdjacencies
                     {
@@ -282,12 +282,13 @@ namespace EscherTilier
                 template.CreateTiling(template.Tilings[0], sc.Shapes, randomStyleManager),
                 randomStyleManager,
                 this);
+            _controller.CurrentToolChanged += _controller_CurrentToolChanged;
             _panTool = new PanTool(_controller, this);
 
             _toolBtns.Add(_panTool, _panToolBtn);
 
             UpdateTools();
-
+            
             _renderControl.Start();
         }
 
@@ -552,8 +553,11 @@ namespace EscherTilier
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs" /> instance containing the event data.</param>
         private void renderControl_MouseMove(object sender, [NotNull] MouseEventArgs e)
-            => _dragAction?.Update(new Vector2(e.X, e.Y));
-
+        {
+            _controller.CurrentTool?.UpdateLocation(new Vector2(e.X, e.Y));
+            _dragAction?.Update(new Vector2(e.X, e.Y));
+        }
+        
         /// <summary>
         ///     Handles the MouseUp event of the renderControl control.
         /// </summary>
@@ -616,6 +620,29 @@ namespace EscherTilier
                 Control control = container.ActiveControl;
                 container.ActiveControl = null;
                 container = control as IContainerControl;
+            }
+        }
+        
+        private void _controller_CurrentToolChanged(object sender, CurrentToolChangedEventArgs e)
+        {
+            if (e.OldTool != null)
+            {
+                ToolStripButton lastBtn;
+                if (_toolBtns.TryGetValue(e.OldTool, out lastBtn))
+                {
+                    Debug.Assert(lastBtn != null, "lastBtn != null");
+                    lastBtn.Checked = false;
+                }
+            }
+
+            if (e.NewTool != null)
+            {
+                ToolStripButton newBtn;
+                if (_toolBtns.TryGetValue(e.NewTool, out newBtn))
+                {
+                    Debug.Assert(newBtn != null, "newBtn != null");
+                    newBtn.Checked = true;
+                }
             }
         }
 

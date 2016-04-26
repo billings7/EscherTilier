@@ -94,11 +94,12 @@ namespace EscherTilier
         /// </summary>
         /// <param name="path">The path to add the line to.</param>
         /// <param name="transform">The transform.</param>
-        public void AddToPath(IGraphicsPath path, Matrix3x2 transform)
+        /// <param name="reverse">If set to <see langword="true"/>, add the line from <see cref="Start"/> to <see cref="End"/>.</param>
+        public void AddToPath(IGraphicsPath path, Matrix3x2 transform, bool reverse)
         {
             path.AddQuadraticBezier(
                 Vector2.Transform(ControlPoint, transform),
-                Vector2.Transform(End, transform));
+                Vector2.Transform(reverse ? Start : End, transform));
         }
 
         /// <summary>
@@ -132,16 +133,19 @@ namespace EscherTilier
             Vector2 a = Vector2.Transform(Start, transform);
             Vector2 b = Vector2.Transform(ControlPoint, transform);
             Vector2 c = Vector2.Transform(End, transform);
+            
+            if (!float.IsPositiveInfinity(tolerance))
+            {
+                Rectangle bounds = Rectangle.ContainingPoints(a, b, c);
+                bounds = new Rectangle(
+                    bounds.X - tolerance,
+                    bounds.Y - tolerance,
+                    bounds.Width + tolerance * 2,
+                    bounds.Height + tolerance * 2);
 
-            Rectangle bounds = Rectangle.ContainingPoints(a, b, c);
-            bounds = new Rectangle(
-                bounds.X - tolerance,
-                bounds.Y - tolerance,
-                bounds.Width + tolerance * 2,
-                bounds.Height + tolerance * 2);
-
-            if (!bounds.Contains(point))
-                return null;
+                if (!bounds.Contains(point))
+                    return null;
+            }
 
             float approxLen =
                 Vector2.Distance(a, b) +

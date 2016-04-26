@@ -51,6 +51,8 @@ namespace EscherTilier
             }
         }
 
+        public override string ToString() => Vector.ToString() + (_isFixed ? " (fixed)" : string.Empty);
+
         /// <summary>
         ///     Performs an implicit conversion from <see cref="LineVector" /> to <see cref="Vector2" />.
         /// </summary>

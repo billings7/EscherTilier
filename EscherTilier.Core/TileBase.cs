@@ -7,6 +7,7 @@ using EscherTilier.Graphics;
 using EscherTilier.Numerics;
 using EscherTilier.Styles;
 using JetBrains.Annotations;
+using System.Diagnostics;
 
 namespace EscherTilier
 {
@@ -106,32 +107,35 @@ namespace EscherTilier
 
             bool first = true;
 
+            Debug.WriteLine("New path");
+
             Matrix3x2 lastTransform = Matrix3x2.Identity;
             Edge lastEdge = null;
             foreach (EdgePartShape partShape in PartShapes)
             {
                 Matrix3x2 edgeTransform = partShape.Edge == lastEdge
                     ? lastTransform
-                    : Matrix.GetTransform(
-                        new Vector2(0, 0),
-                        new Vector2(1, 0),
-                        partShape.Edge.Start.Location,
-                        partShape.Edge.End.Location) * Transform;
+                    : partShape.GetLineTransform() * Transform;
 
                 lastTransform = edgeTransform;
                 lastEdge = partShape.Edge;
 
-                foreach (ILine line in partShape.Lines)
+                Debug.WriteLine("New edge part");
+
+                IEnumerable<ILine> lines = partShape.Lines;
+                foreach (ILine line in partShape.Part.IsClockwise ? lines : lines.Reverse())
                 {
                     if (first)
                     {
                         first = false;
-                        path.Start(Vector2.Transform(line.Start, edgeTransform));
+                        path.Start(Vector2.Transform(partShape.Part.IsClockwise ? line.Start : line.End, edgeTransform));
                     }
 
-                    line.AddToPath(path, edgeTransform);
+                    line.AddToPath(path, edgeTransform, !partShape.Part.IsClockwise);
                 }
             }
+
+            Debug.WriteLine("Path done");
 
             path.End();
         }
@@ -167,11 +171,7 @@ namespace EscherTilier
             {
                 Matrix3x2 edgeTransform = partShape.Edge == lastEdge
                     ? lastTransform
-                    : Matrix.GetTransform(
-                        new Vector2(0, 0),
-                        new Vector2(1, 0),
-                        partShape.Edge.Start.Location,
-                        partShape.Edge.End.Location) * Transform;
+                    : partShape.GetLineTransform() * Transform;
 
                 lastTransform = edgeTransform;
                 lastEdge = partShape.Edge;

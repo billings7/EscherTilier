@@ -236,5 +236,15 @@ namespace EscherTilier
                 new Line(new LineVector(Vector2.Zero, true), new LineVector(new Vector2(1, 0), true))
             };
         }
+
+        public bool Replace(ILine line, params ILine[] newLines)
+        {
+            int index = IndexOf(line);
+            if (index < 0) return false;
+
+            RemoveAt(index);
+            InsertRange(index, newLines);
+            return true;
+        }
     }
 }

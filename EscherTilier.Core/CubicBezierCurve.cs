@@ -106,14 +106,15 @@ namespace EscherTilier
         /// </summary>
         /// <param name="path">The path to add the line to.</param>
         /// <param name="transform">The transform.</param>
-        public void AddToPath(IGraphicsPath path, Matrix3x2 transform)
+        /// <param name="reverse">If set to <see langword="true"/>, add the line from <see cref="Start"/> to <see cref="End"/>.</param>
+        public void AddToPath(IGraphicsPath path, Matrix3x2 transform, bool reverse)
         {
             if (path == null) throw new ArgumentNullException(nameof(path));
 
             path.AddCubicBezier(
-                Vector2.Transform(ControlPointA, transform),
-                Vector2.Transform(ControlPointB, transform),
-                Vector2.Transform(End, transform));
+                Vector2.Transform(reverse ? ControlPointB : ControlPointA, transform),
+                Vector2.Transform(reverse ? ControlPointA : ControlPointB, transform),
+                Vector2.Transform(reverse ? Start : End, transform));
         }
 
         /// <summary>
@@ -151,16 +152,19 @@ namespace EscherTilier
             Vector2 b = Vector2.Transform(ControlPointA, transform);
             Vector2 c = Vector2.Transform(ControlPointB, transform);
             Vector2 d = Vector2.Transform(End, transform);
+            
+            if (!float.IsPositiveInfinity(tolerance))
+            {
+                Rectangle bounds = Rectangle.ContainingPoints(a, b, c, d);
+                bounds = new Rectangle(
+                    bounds.X - tolerance,
+                    bounds.Y - tolerance,
+                    bounds.Width + tolerance * 2,
+                    bounds.Height + tolerance * 2);
 
-            Rectangle bounds = Rectangle.ContainingPoints(a, b, c, d);
-            bounds = new Rectangle(
-                bounds.X - tolerance,
-                bounds.Y - tolerance,
-                bounds.Width + tolerance * 2,
-                bounds.Height + tolerance * 2);
-
-            if (!bounds.Contains(point))
-                return null;
+                if (!bounds.Contains(point))
+                    return null;
+            }
 
             float approxLen =
                 Vector2.Distance(a, b) +
