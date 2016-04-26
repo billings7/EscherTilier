@@ -78,7 +78,7 @@ namespace EscherTilier.Controllers
             {
                 if (value == _currentTool) return;
 
-                var oldTool = _currentTool;
+                Tool oldTool = _currentTool;
 
                 _currentTool?.Deselected();
                 _currentTool = value;

@@ -10,6 +10,9 @@ using JetBrains.Annotations;
 
 namespace EscherTilier
 {
+    /// <summary>
+    ///     Class that manages a tiling of a number of tiles.
+    /// </summary>
     public class Tiling
     {
         [NotNull]
@@ -19,7 +22,7 @@ namespace EscherTilier
         private StyleManager _styleManager;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Tiling"/> class.
+        ///     Initializes a new instance of the <see cref="Tiling" /> class.
         /// </summary>
         /// <param name="template">The template.</param>
         /// <param name="definition">The definition.</param>
@@ -44,33 +47,35 @@ namespace EscherTilier
             Tiles = tiles;
 
             foreach (Tile tile in tiles)
+            {
                 foreach (EdgePartShape part in tile.PartShapes)
                     _tileByEdgePart.Add(part.Part, tile);
+            }
         }
 
         /// <summary>
-        /// Gets the template this tiling is created from.
+        ///     Gets the template this tiling is created from.
         /// </summary>
         /// <value>
-        /// The template.
+        ///     The template.
         /// </value>
         [NotNull]
         public Template Template { get; }
 
         /// <summary>
-        /// Gets the tiling definition this tiling is created from.
+        ///     Gets the tiling definition this tiling is created from.
         /// </summary>
         /// <value>
-        /// The definition.
+        ///     The definition.
         /// </value>
         [NotNull]
         public TilingDefinition Definition { get; }
 
         /// <summary>
-        /// Gets the root tiles that all other tiles are based on.
+        ///     Gets the root tiles that all other tiles are based on.
         /// </summary>
         /// <value>
-        /// The tiles.
+        ///     The tiles.
         /// </value>
         [NotNull]
         [ItemNotNull]
@@ -86,7 +91,7 @@ namespace EscherTilier
         public StyleManager StyleManager => _styleManager;
 
         /// <summary>
-        /// Sets the style manager for the tiling and updates the styles for the given tiles.
+        ///     Sets the style manager for the tiling and updates the styles for the given tiles.
         /// </summary>
         /// <param name="manager">The new style manager manager.</param>
         /// <param name="tiles">The tiles.</param>

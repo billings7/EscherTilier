@@ -44,7 +44,6 @@ namespace EscherTilier.Styles
         ///     Initializes a new instance of the <see cref="ImageStyle" /> class.
         /// </summary>
         /// <param name="image">The image.</param>
-        /// <param name="transform">The transform.</param>
         /// <exception cref="System.ArgumentNullException"></exception>
         public ImageStyle([NotNull] IImage image)
         {

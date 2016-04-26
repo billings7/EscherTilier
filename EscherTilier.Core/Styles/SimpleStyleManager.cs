@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using EscherTilier.Graphics;
 using EscherTilier.Graphics.Resources;
-using EscherTilier.Utilities;
 using JetBrains.Annotations;
 
 namespace EscherTilier.Styles
@@ -13,9 +8,7 @@ namespace EscherTilier.Styles
     {
         public SimpleStyleManager(
             [CanBeNull] IResourceManager resourceManager)
-            : base(resourceManager)
-        {
-        }
+            : base(resourceManager) { }
 
         protected override IStyle GetStyle(TileBase tile, IStyle[] styles)
         {

@@ -10,10 +10,11 @@ namespace EscherTilier.Styles
     public class RandomColourStyle : IStyle
     {
         /// <summary>
-        ///     Initializes a new instance of the <see cref="RandomColourStyle" /> class.
+        /// Initializes a new instance of the <see cref="RandomColourStyle" /> class.
         /// </summary>
         /// <param name="from">The first colour to interpolate from.</param>
         /// <param name="to">The second colour to interpolate to.</param>
+        /// <param name="position">The position.</param>
         public RandomColourStyle(Colour @from, Colour to, Vector2 position = default(Vector2))
         {
             From = @from;

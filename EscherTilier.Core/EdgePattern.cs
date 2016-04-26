@@ -7,7 +7,7 @@ using JetBrains.Annotations;
 namespace EscherTilier
 {
     /// <summary>
-    /// Defines the parts that make up a given edge for a tiling.
+    ///     Defines the parts that make up a given edge for a tiling.
     /// </summary>
     public class EdgePattern
     {
@@ -23,7 +23,9 @@ namespace EscherTilier
             }
             set
             {
-                Debug.Assert(_tilingDefinition == null || _tilingDefinition == value, "The pattern is already used by another definition.");
+                Debug.Assert(
+                    _tilingDefinition == null || _tilingDefinition == value,
+                    "The pattern is already used by another definition.");
                 _tilingDefinition = value;
             }
         }
@@ -40,13 +42,15 @@ namespace EscherTilier
             }
             set
             {
-                Debug.Assert(_shapeTemplate == null || _shapeTemplate == value, "The pattern is already used by another shape template.");
+                Debug.Assert(
+                    _shapeTemplate == null || _shapeTemplate == value,
+                    "The pattern is already used by another shape template.");
                 _shapeTemplate = value;
             }
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EdgePattern"/> class.
+        ///     Initializes a new instance of the <see cref="EdgePattern" /> class.
         /// </summary>
         /// <param name="edgeName">Name of the edge.</param>
         /// <param name="parts">The parts.</param>
@@ -55,7 +59,7 @@ namespace EscherTilier
         /// <exception cref="System.ArgumentException"></exception>
         public EdgePattern(
             [NotNull] string edgeName,
-            [NotNull][ItemNotNull] IReadOnlyList<EdgePart> parts)
+            [NotNull] [ItemNotNull] IReadOnlyList<EdgePart> parts)
         {
             if (edgeName == null) throw new ArgumentNullException(nameof(edgeName));
             if (parts == null) throw new ArgumentNullException(nameof(parts));
@@ -78,19 +82,19 @@ namespace EscherTilier
         }
 
         /// <summary>
-        /// Gets the name of the edge that this is the pattern for.
+        ///     Gets the name of the edge that this is the pattern for.
         /// </summary>
         /// <value>
-        /// The name of the edge.
+        ///     The name of the edge.
         /// </value>
         [NotNull]
         public string EdgeName { get; }
 
         /// <summary>
-        /// Gets the parts that make up the pattern.
+        ///     Gets the parts that make up the pattern.
         /// </summary>
         /// <value>
-        /// The parts.
+        ///     The parts.
         /// </value>
         [NotNull]
         public IReadOnlyList<EdgePart> Parts { get; }

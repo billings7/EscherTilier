@@ -1,18 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using EscherTilier.Styles;
 using JetBrains.Annotations;
 
 namespace EscherTilier
 {
+    /// <summary>
+    ///     Defines a tile based on an existing transformed <see cref="Tile" />.
+    /// </summary>
     public class TileInstance : TileBase
     {
+        /// <summary>
+        ///     The <see cref="Tile" /> this tile is based on.
+        /// </summary>
         [NotNull]
         public readonly Tile Tile;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TileBase" /> class.
+        ///     Initializes a new instance of the <see cref="TileBase" /> class.
         /// </summary>
         /// <param name="tile">The base tile.</param>
         /// <param name="label">The tile label.</param>
@@ -26,7 +31,7 @@ namespace EscherTilier
         }
 
         /// <summary>
-        ///     Gets the shapes of the parts of this tiles edges..
+        ///     Gets the shapes of the parts of this tiles edges.
         /// </summary>
         /// <value>
         ///     The part shapes.

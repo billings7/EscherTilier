@@ -18,14 +18,12 @@ namespace EscherTilier
         private readonly Dictionary<EPPos, AdjTiles> _tilesByPos = new Dictionary<EPPos, AdjTiles>();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TileSet"/> class.
+        ///     Initializes a new instance of the <see cref="TileSet" /> class.
         /// </summary>
-        public TileSet()
-        {
-        }
+        public TileSet() { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TileSet"/> class.
+        ///     Initializes a new instance of the <see cref="TileSet" /> class.
         /// </summary>
         /// <param name="tiles">The tiles.</param>
         /// <exception cref="System.ArgumentNullException"></exception>
@@ -40,7 +38,7 @@ namespace EscherTilier
         public int Count => _tiles.Count;
 
         /// <summary>
-        /// Adds the specified tile.
+        ///     Adds the specified tile.
         /// </summary>
         /// <param name="tile">The tile.</param>
         public void Add(TileBase tile)
@@ -59,42 +57,42 @@ namespace EscherTilier
         }
 
         /// <summary>
-        /// Determines whether this set contains the tile.
+        ///     Determines whether this set contains the tile.
         /// </summary>
         /// <param name="tile">The tile.</param>
         /// <returns></returns>
         public bool Contains(TileBase tile) => _tiles.Contains(tile);
 
         /// <summary>
-        /// Returns an enumerator that iterates through the collection.
+        ///     Returns an enumerator that iterates through the collection.
         /// </summary>
         /// <returns>
-        /// An enumerator that can be used to iterate through the collection.
+        ///     An enumerator that can be used to iterate through the collection.
         /// </returns>
         public IEnumerator<TileBase> GetEnumerator() => _tiles.GetEnumerator();
 
         /// <summary>
-        /// Returns an enumerator that iterates through a collection.
+        ///     Returns an enumerator that iterates through a collection.
         /// </summary>
         /// <returns>
-        /// An <see cref="T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.
+        ///     An <see cref="T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.
         /// </returns>
         IEnumerator IEnumerable.GetEnumerator() => _tiles.GetEnumerator();
 
         private struct EPPos : IEquatable<EPPos>
         {
             /// <summary>
-            /// The start
+            ///     The start
             /// </summary>
             public readonly Vector2 Start;
 
             /// <summary>
-            /// The end
+            ///     The end
             /// </summary>
             public readonly Vector2 End;
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="EPPos"/> struct.
+            ///     Initializes a new instance of the <see cref="EPPos" /> struct.
             /// </summary>
             /// <param name="start">The start.</param>
             /// <param name="end">The end.</param>
@@ -126,10 +124,10 @@ namespace EscherTilier
             }
 
             /// <summary>
-            /// Indicates whether the current object is equal to another object of the same type.
+            ///     Indicates whether the current object is equal to another object of the same type.
             /// </summary>
             /// <returns>
-            /// true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
+            ///     true if the current object is equal to the <paramref name="other" /> parameter; otherwise, false.
             /// </returns>
             /// <param name="other">An object to compare with this object.</param>
             public bool Equals(EPPos other)
@@ -138,10 +136,10 @@ namespace EscherTilier
             }
 
             /// <summary>
-            /// Indicates whether this instance and a specified object are equal.
+            ///     Indicates whether this instance and a specified object are equal.
             /// </summary>
             /// <returns>
-            /// true if <paramref name="obj"/> and this instance are the same type and represent the same value; otherwise, false.
+            ///     true if <paramref name="obj" /> and this instance are the same type and represent the same value; otherwise, false.
             /// </returns>
             /// <param name="obj">The object to compare with the current instance. </param>
             public override bool Equals(object obj)
@@ -151,10 +149,10 @@ namespace EscherTilier
             }
 
             /// <summary>
-            /// Returns the hash code for this instance.
+            ///     Returns the hash code for this instance.
             /// </summary>
             /// <returns>
-            /// A 32-bit signed integer that is the hash code for this instance.
+            ///     A 32-bit signed integer that is the hash code for this instance.
             /// </returns>
             public override int GetHashCode()
             {
@@ -165,12 +163,12 @@ namespace EscherTilier
             }
 
             /// <summary>
-            /// Implements the operator ==.
+            ///     Implements the operator ==.
             /// </summary>
             /// <param name="left">The left.</param>
             /// <param name="right">The right.</param>
             /// <returns>
-            /// The result of the operator.
+            ///     The result of the operator.
             /// </returns>
             public static bool operator ==(EPPos left, EPPos right)
             {
@@ -178,12 +176,12 @@ namespace EscherTilier
             }
 
             /// <summary>
-            /// Implements the operator !=.
+            ///     Implements the operator !=.
             /// </summary>
             /// <param name="left">The left.</param>
             /// <param name="right">The right.</param>
             /// <returns>
-            /// The result of the operator.
+            ///     The result of the operator.
             /// </returns>
             public static bool operator !=(EPPos left, EPPos right)
             {
@@ -191,10 +189,10 @@ namespace EscherTilier
             }
 
             /// <summary>
-            /// Returns the fully qualified type name of this instance.
+            ///     Returns the fully qualified type name of this instance.
             /// </summary>
             /// <returns>
-            /// A <see cref="T:System.String"/> containing a fully qualified type name.
+            ///     A <see cref="T:System.String" /> containing a fully qualified type name.
             /// </returns>
             public override string ToString() => $"{Start} - {End}";
         }

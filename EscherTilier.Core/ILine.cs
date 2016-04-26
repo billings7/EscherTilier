@@ -54,7 +54,7 @@ namespace EscherTilier
         /// </summary>
         /// <param name="path">The path to add the line to.</param>
         /// <param name="transform">The transform to apply to the line.</param>
-        /// <param name="reverse">If set to <see langword="true"/>, add the line from <see cref="Start"/> to <see cref="End"/>.</param>
+        /// <param name="reverse">If set to <see langword="true" />, add the line from <see cref="Start" /> to <see cref="End" />.</param>
         void AddToPath([NotNull] IGraphicsPath path, Matrix3x2 transform, bool reverse);
 
         /// <summary>

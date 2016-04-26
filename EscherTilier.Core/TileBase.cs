@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -7,10 +8,12 @@ using EscherTilier.Graphics;
 using EscherTilier.Numerics;
 using EscherTilier.Styles;
 using JetBrains.Annotations;
-using System.Diagnostics;
 
 namespace EscherTilier
 {
+    /// <summary>
+    ///     Base class for tiles.
+    /// </summary>
     public abstract class TileBase
     {
         [NotNull]
@@ -88,7 +91,7 @@ namespace EscherTilier
         public IReadOnlyDictionary<EdgePart, TileBase> AdjacentTiles => _adjacentTiles;
 
         /// <summary>
-        ///     Gets the shapes of the parts of this tiles edges..
+        ///     Gets the shapes of the parts of this tiles edges.
         /// </summary>
         /// <value>
         ///     The part shapes.
@@ -98,7 +101,7 @@ namespace EscherTilier
         public abstract IReadOnlyList<EdgePartShape> PartShapes { get; }
 
         /// <summary>
-        /// Populates the graphics path given from this tile.
+        ///     Populates the graphics path given from this tile.
         /// </summary>
         /// <param name="path">The path.</param>
         public void PopulateGraphicsPath([NotNull] IGraphicsPath path)
@@ -106,8 +109,6 @@ namespace EscherTilier
             if (path == null) throw new ArgumentNullException(nameof(path));
 
             bool first = true;
-
-            Debug.WriteLine("New path");
 
             Matrix3x2 lastTransform = Matrix3x2.Identity;
             Edge lastEdge = null;
@@ -119,8 +120,6 @@ namespace EscherTilier
 
                 lastTransform = edgeTransform;
                 lastEdge = partShape.Edge;
-
-                Debug.WriteLine("New edge part");
 
                 IEnumerable<ILine> lines = partShape.Lines;
                 foreach (ILine line in partShape.Part.IsClockwise ? lines : lines.Reverse())
@@ -134,8 +133,6 @@ namespace EscherTilier
                     line.AddToPath(path, edgeTransform, !partShape.Part.IsClockwise);
                 }
             }
-
-            Debug.WriteLine("Path done");
 
             path.End();
         }

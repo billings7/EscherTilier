@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.Numerics;
-using EscherTilier.Numerics;
 using JetBrains.Annotations;
 
 namespace EscherTilier
@@ -139,7 +138,7 @@ namespace EscherTilier
         ///     The amount, in the range 0-1. 0 returns the <see cref="Start" /> location, 1 returns the
         ///     <see cref="End" /> location.
         /// </param>
-        /// <remarks>The <paramref name="amount"/> will be clamped to the range 0-1.</remarks>
+        /// <remarks>The <paramref name="amount" /> will be clamped to the range 0-1.</remarks>
         /// <returns></returns>
         public Vector2 GetPointOnEdge(float amount)
         {

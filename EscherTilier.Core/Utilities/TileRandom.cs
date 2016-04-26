@@ -1,5 +1,4 @@
-﻿using System;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using JetBrains.Annotations;
 
 namespace EscherTilier.Utilities
@@ -27,7 +26,7 @@ namespace EscherTilier.Utilities
                 U* uptr = (U*) ptr;
                 *uptr = new U(seed, x, y);
             }
-            
+
             bytes = _md5.ComputeHash(bytes);
 
             fixed (byte* ptr = bytes)

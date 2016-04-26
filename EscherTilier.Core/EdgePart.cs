@@ -20,7 +20,9 @@ namespace EscherTilier
             }
             set
             {
-                Debug.Assert(_edgePattern == null || _edgePattern == value, "The part is already used in another pattern.");
+                Debug.Assert(
+                    _edgePattern == null || _edgePattern == value,
+                    "The part is already used in another pattern.");
                 _edgePattern = value;
             }
         }
@@ -28,15 +30,15 @@ namespace EscherTilier
         internal ShapeTemplate ShapeTemplate => EdgePattern.ShapeTemplate;
 
         /// <summary>
-        /// Gets the distance along the edge that the part starts, if this part has been added to a pattern.
+        ///     Gets the distance along the edge that the part starts, if this part has been added to a pattern.
         /// </summary>
         /// <value>
-        /// The start amount.
+        ///     The start amount.
         /// </value>
         internal float StartAmount { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EdgePart" /> class.
+        ///     Initializes a new instance of the <see cref="EdgePart" /> class.
         /// </summary>
         /// <param name="id">The part identifier.</param>
         /// <param name="amount">The amount.</param>
@@ -58,10 +60,10 @@ namespace EscherTilier
         public int ID { get; }
 
         /// <summary>
-        /// Gets a value indicating whether this part is oriented in a clockwise direction.
+        ///     Gets a value indicating whether this part is oriented in a clockwise direction.
         /// </summary>
         /// <value>
-        /// <see langword="true" /> if this part is clockwise; otherwise, <see langword="false" />.
+        ///     <see langword="true" /> if this part is clockwise; otherwise, <see langword="false" />.
         /// </value>
         public bool IsClockwise { get; }
 

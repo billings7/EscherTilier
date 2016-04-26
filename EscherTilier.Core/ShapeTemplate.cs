@@ -25,7 +25,9 @@ namespace EscherTilier
             }
             set
             {
-                Debug.Assert(_template == null || _template == value, "The shape template is already used by another template.");
+                Debug.Assert(
+                    _template == null || _template == value,
+                    "The shape template is already used by another template.");
                 _template = value;
             }
         }
@@ -42,7 +44,9 @@ namespace EscherTilier
             }
             set
             {
-                Debug.Assert(_edgePatterns == null || _edgePatterns == value, "The shape template is already used by a set of edge patterns.");
+                Debug.Assert(
+                    _edgePatterns == null || _edgePatterns == value,
+                    "The shape template is already used by a set of edge patterns.");
                 _edgePatterns = value;
             }
         }
@@ -59,7 +63,9 @@ namespace EscherTilier
             }
             set
             {
-                Debug.Assert(_edgeParts == null || _edgeParts == value, "The shape template is already used by a set of edge parts.");
+                Debug.Assert(
+                    _edgeParts == null || _edgeParts == value,
+                    "The shape template is already used by a set of edge parts.");
                 _edgeParts = value;
             }
         }

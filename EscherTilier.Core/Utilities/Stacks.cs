@@ -1,8 +1,7 @@
-﻿ 
-#region © Copyright Web Applications (UK) Ltd, 2015.  All rights reserved.
+﻿#region © Copyright Web Applications (UK) Ltd, 2015.  All rights reserved.
 // Copyright (c) 2015, Web Applications UK Ltd
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 //     * Redistributions of source code must retain the above copyright
@@ -13,7 +12,7 @@
 //     * Neither the name of Web Applications UK Ltd nor the
 //       names of its contributors may be used to endorse or promote products
 //       derived from this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 // ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 // WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -34,7 +33,7 @@ namespace EscherTilier.Utilities
 {
     #region Stack with 2 items.
     /// <summary>
-    /// A stack of <c>Tuple&lt;T1, T2&gt;</c>.
+    ///     A stack of <c>Tuple&lt;T1, T2&gt;</c>.
     /// </summary>
     /// <typeparam name="T1">The type of item 1.</typeparam>
     /// <typeparam name="T2">The type of item 2.</typeparam>
@@ -42,26 +41,24 @@ namespace EscherTilier.Utilities
     public class Stack<T1, T2> : Stack<Tuple<T1, T2>>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Stack{T1, T2}"/> class that is empty 
-        /// and has the specified initial capacity or the default initial capacity, whichever is greater.
+        ///     Initializes a new instance of the <see cref="Stack{T1, T2}" /> class that is empty
+        ///     and has the specified initial capacity or the default initial capacity, whichever is greater.
         /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than zero.</exception>
-        public Stack(int capacity = 4) : base(capacity)
-        {
-        }
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity" /> is less than zero.</exception>
+        public Stack(int capacity = 4)
+            : base(capacity) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Stack{T1, T2}"/> class that contains elements copied 
-        /// from the specified collection and has sufficient capacity to accommodate the number of elements copied.
+        ///     Initializes a new instance of the <see cref="Stack{T1, T2}" /> class that contains elements copied
+        ///     from the specified collection and has sufficient capacity to accommodate the number of elements copied.
         /// </summary>
         /// <param name="collection">The collection to copy elements from.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="collection"/> is null.</exception>
-        public Stack([NotNull] IEnumerable<Tuple<T1, T2>> collection) : base(collection)
-        {
-        }
+        /// <exception cref="ArgumentNullException"><paramref name="collection" /> is null.</exception>
+        public Stack([NotNull] IEnumerable<Tuple<T1, T2>> collection)
+            : base(collection) { }
 
         /// <summary>
-        /// Inserts an object at the top of the <see cref="Stack{T1, T2}" />.
+        ///     Inserts an object at the top of the <see cref="Stack{T1, T2}" />.
         /// </summary>
         /// <param name="item1">Item 1 of the tuple.</param>
         /// <param name="item2">Item 2 of the tuple.</param>
@@ -71,9 +68,9 @@ namespace EscherTilier.Utilities
         {
             Push(new Tuple<T1, T2>(item1, item2));
         }
-        
+
         /// <summary>
-        /// Removes and returns the object at the top of the <see cref="Stack{T1, T2}"/>.
+        ///     Removes and returns the object at the top of the <see cref="Stack{T1, T2}" />.
         /// </summary>
         /// <param name="item1">Item 1 of the tuple.</param>
         /// <param name="item2">Item 2 of the tuple.</param>
@@ -86,9 +83,9 @@ namespace EscherTilier.Utilities
             item1 = tuple.Item1;
             item2 = tuple.Item2;
         }
-        
+
         /// <summary>
-        /// Returns the object at the top of the <see cref="Stack{T1, T2}"/> without removing it.
+        ///     Returns the object at the top of the <see cref="Stack{T1, T2}" /> without removing it.
         /// </summary>
         /// <param name="item1">Item 1 of the tuple.</param>
         /// <param name="item2">Item 2 of the tuple.</param>
@@ -101,18 +98,18 @@ namespace EscherTilier.Utilities
             item1 = tuple.Item1;
             item2 = tuple.Item2;
         }
-        
+
         /// <summary>
-        /// Removes and returns the object at the top of the <see cref="Stack{T1, T2}"/>.
+        ///     Removes and returns the object at the top of the <see cref="Stack{T1, T2}" />.
         /// </summary>
         /// <param name="item1">Item 1 of the tuple.</param>
         /// <param name="item2">Item 2 of the tuple.</param>
-        /// <returns><see langword="true"/> if the stack was not empty; otherwise <see langword="false"/>.</returns>
+        /// <returns><see langword="true" /> if the stack was not empty; otherwise <see langword="false" />.</returns>
         public bool TryPop(
             out T1 item1,
             out T2 item2)
         {
-            if (Count < 1) 
+            if (Count < 1)
             {
                 item1 = default(T1);
                 item2 = default(T2);
@@ -124,18 +121,18 @@ namespace EscherTilier.Utilities
             item2 = tuple.Item2;
             return true;
         }
-        
+
         /// <summary>
-        /// Returns the object at the top of the <see cref="Stack{T1, T2}"/> without removing it.
+        ///     Returns the object at the top of the <see cref="Stack{T1, T2}" /> without removing it.
         /// </summary>
         /// <param name="item1">Item 1 of the tuple.</param>
         /// <param name="item2">Item 2 of the tuple.</param>
-        /// <returns><see langword="true"/> if the stack was not empty; otherwise <see langword="false"/>.</returns>
+        /// <returns><see langword="true" /> if the stack was not empty; otherwise <see langword="false" />.</returns>
         public bool TryPeek(
             out T1 item1,
             out T2 item2)
         {
-            if (Count < 1) 
+            if (Count < 1)
             {
                 item1 = default(T1);
                 item2 = default(T2);
@@ -148,11 +145,13 @@ namespace EscherTilier.Utilities
             return true;
         }
     }
+
     #endregion
 
     #region Stack with 3 items.
+
     /// <summary>
-    /// A stack of <c>Tuple&lt;T1, T2, T3&gt;</c>.
+    ///     A stack of <c>Tuple&lt;T1, T2, T3&gt;</c>.
     /// </summary>
     /// <typeparam name="T1">The type of item 1.</typeparam>
     /// <typeparam name="T2">The type of item 2.</typeparam>
@@ -161,26 +160,24 @@ namespace EscherTilier.Utilities
     public class Stack<T1, T2, T3> : Stack<Tuple<T1, T2, T3>>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Stack{T1, T2, T3}"/> class that is empty 
-        /// and has the specified initial capacity or the default initial capacity, whichever is greater.
+        ///     Initializes a new instance of the <see cref="Stack{T1, T2, T3}" /> class that is empty
+        ///     and has the specified initial capacity or the default initial capacity, whichever is greater.
         /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than zero.</exception>
-        public Stack(int capacity = 4) : base(capacity)
-        {
-        }
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity" /> is less than zero.</exception>
+        public Stack(int capacity = 4)
+            : base(capacity) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Stack{T1, T2, T3}"/> class that contains elements copied 
-        /// from the specified collection and has sufficient capacity to accommodate the number of elements copied.
+        ///     Initializes a new instance of the <see cref="Stack{T1, T2, T3}" /> class that contains elements copied
+        ///     from the specified collection and has sufficient capacity to accommodate the number of elements copied.
         /// </summary>
         /// <param name="collection">The collection to copy elements from.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="collection"/> is null.</exception>
-        public Stack([NotNull] IEnumerable<Tuple<T1, T2, T3>> collection) : base(collection)
-        {
-        }
+        /// <exception cref="ArgumentNullException"><paramref name="collection" /> is null.</exception>
+        public Stack([NotNull] IEnumerable<Tuple<T1, T2, T3>> collection)
+            : base(collection) { }
 
         /// <summary>
-        /// Inserts an object at the top of the <see cref="Stack{T1, T2, T3}" />.
+        ///     Inserts an object at the top of the <see cref="Stack{T1, T2, T3}" />.
         /// </summary>
         /// <param name="item1">Item 1 of the tuple.</param>
         /// <param name="item2">Item 2 of the tuple.</param>
@@ -192,9 +189,9 @@ namespace EscherTilier.Utilities
         {
             Push(new Tuple<T1, T2, T3>(item1, item2, item3));
         }
-        
+
         /// <summary>
-        /// Removes and returns the object at the top of the <see cref="Stack{T1, T2, T3}"/>.
+        ///     Removes and returns the object at the top of the <see cref="Stack{T1, T2, T3}" />.
         /// </summary>
         /// <param name="item1">Item 1 of the tuple.</param>
         /// <param name="item2">Item 2 of the tuple.</param>
@@ -210,9 +207,9 @@ namespace EscherTilier.Utilities
             item2 = tuple.Item2;
             item3 = tuple.Item3;
         }
-        
+
         /// <summary>
-        /// Returns the object at the top of the <see cref="Stack{T1, T2, T3}"/> without removing it.
+        ///     Returns the object at the top of the <see cref="Stack{T1, T2, T3}" /> without removing it.
         /// </summary>
         /// <param name="item1">Item 1 of the tuple.</param>
         /// <param name="item2">Item 2 of the tuple.</param>
@@ -228,20 +225,20 @@ namespace EscherTilier.Utilities
             item2 = tuple.Item2;
             item3 = tuple.Item3;
         }
-        
+
         /// <summary>
-        /// Removes and returns the object at the top of the <see cref="Stack{T1, T2, T3}"/>.
+        ///     Removes and returns the object at the top of the <see cref="Stack{T1, T2, T3}" />.
         /// </summary>
         /// <param name="item1">Item 1 of the tuple.</param>
         /// <param name="item2">Item 2 of the tuple.</param>
         /// <param name="item3">Item 3 of the tuple.</param>
-        /// <returns><see langword="true"/> if the stack was not empty; otherwise <see langword="false"/>.</returns>
+        /// <returns><see langword="true" /> if the stack was not empty; otherwise <see langword="false" />.</returns>
         public bool TryPop(
             out T1 item1,
             out T2 item2,
             out T3 item3)
         {
-            if (Count < 1) 
+            if (Count < 1)
             {
                 item1 = default(T1);
                 item2 = default(T2);
@@ -255,20 +252,20 @@ namespace EscherTilier.Utilities
             item3 = tuple.Item3;
             return true;
         }
-        
+
         /// <summary>
-        /// Returns the object at the top of the <see cref="Stack{T1, T2, T3}"/> without removing it.
+        ///     Returns the object at the top of the <see cref="Stack{T1, T2, T3}" /> without removing it.
         /// </summary>
         /// <param name="item1">Item 1 of the tuple.</param>
         /// <param name="item2">Item 2 of the tuple.</param>
         /// <param name="item3">Item 3 of the tuple.</param>
-        /// <returns><see langword="true"/> if the stack was not empty; otherwise <see langword="false"/>.</returns>
+        /// <returns><see langword="true" /> if the stack was not empty; otherwise <see langword="false" />.</returns>
         public bool TryPeek(
             out T1 item1,
             out T2 item2,
             out T3 item3)
         {
-            if (Count < 1) 
+            if (Count < 1)
             {
                 item1 = default(T1);
                 item2 = default(T2);
@@ -283,11 +280,13 @@ namespace EscherTilier.Utilities
             return true;
         }
     }
+
     #endregion
 
     #region Stack with 4 items.
+
     /// <summary>
-    /// A stack of <c>Tuple&lt;T1, T2, T3, T4&gt;</c>.
+    ///     A stack of <c>Tuple&lt;T1, T2, T3, T4&gt;</c>.
     /// </summary>
     /// <typeparam name="T1">The type of item 1.</typeparam>
     /// <typeparam name="T2">The type of item 2.</typeparam>
@@ -297,26 +296,24 @@ namespace EscherTilier.Utilities
     public class Stack<T1, T2, T3, T4> : Stack<Tuple<T1, T2, T3, T4>>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Stack{T1, T2, T3, T4}"/> class that is empty 
-        /// and has the specified initial capacity or the default initial capacity, whichever is greater.
+        ///     Initializes a new instance of the <see cref="Stack{T1, T2, T3, T4}" /> class that is empty
+        ///     and has the specified initial capacity or the default initial capacity, whichever is greater.
         /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than zero.</exception>
-        public Stack(int capacity = 4) : base(capacity)
-        {
-        }
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity" /> is less than zero.</exception>
+        public Stack(int capacity = 4)
+            : base(capacity) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Stack{T1, T2, T3, T4}"/> class that contains elements copied 
-        /// from the specified collection and has sufficient capacity to accommodate the number of elements copied.
+        ///     Initializes a new instance of the <see cref="Stack{T1, T2, T3, T4}" /> class that contains elements copied
+        ///     from the specified collection and has sufficient capacity to accommodate the number of elements copied.
         /// </summary>
         /// <param name="collection">The collection to copy elements from.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="collection"/> is null.</exception>
-        public Stack([NotNull] IEnumerable<Tuple<T1, T2, T3, T4>> collection) : base(collection)
-        {
-        }
+        /// <exception cref="ArgumentNullException"><paramref name="collection" /> is null.</exception>
+        public Stack([NotNull] IEnumerable<Tuple<T1, T2, T3, T4>> collection)
+            : base(collection) { }
 
         /// <summary>
-        /// Inserts an object at the top of the <see cref="Stack{T1, T2, T3, T4}" />.
+        ///     Inserts an object at the top of the <see cref="Stack{T1, T2, T3, T4}" />.
         /// </summary>
         /// <param name="item1">Item 1 of the tuple.</param>
         /// <param name="item2">Item 2 of the tuple.</param>
@@ -330,9 +327,9 @@ namespace EscherTilier.Utilities
         {
             Push(new Tuple<T1, T2, T3, T4>(item1, item2, item3, item4));
         }
-        
+
         /// <summary>
-        /// Removes and returns the object at the top of the <see cref="Stack{T1, T2, T3, T4}"/>.
+        ///     Removes and returns the object at the top of the <see cref="Stack{T1, T2, T3, T4}" />.
         /// </summary>
         /// <param name="item1">Item 1 of the tuple.</param>
         /// <param name="item2">Item 2 of the tuple.</param>
@@ -351,9 +348,9 @@ namespace EscherTilier.Utilities
             item3 = tuple.Item3;
             item4 = tuple.Item4;
         }
-        
+
         /// <summary>
-        /// Returns the object at the top of the <see cref="Stack{T1, T2, T3, T4}"/> without removing it.
+        ///     Returns the object at the top of the <see cref="Stack{T1, T2, T3, T4}" /> without removing it.
         /// </summary>
         /// <param name="item1">Item 1 of the tuple.</param>
         /// <param name="item2">Item 2 of the tuple.</param>
@@ -372,22 +369,22 @@ namespace EscherTilier.Utilities
             item3 = tuple.Item3;
             item4 = tuple.Item4;
         }
-        
+
         /// <summary>
-        /// Removes and returns the object at the top of the <see cref="Stack{T1, T2, T3, T4}"/>.
+        ///     Removes and returns the object at the top of the <see cref="Stack{T1, T2, T3, T4}" />.
         /// </summary>
         /// <param name="item1">Item 1 of the tuple.</param>
         /// <param name="item2">Item 2 of the tuple.</param>
         /// <param name="item3">Item 3 of the tuple.</param>
         /// <param name="item4">Item 4 of the tuple.</param>
-        /// <returns><see langword="true"/> if the stack was not empty; otherwise <see langword="false"/>.</returns>
+        /// <returns><see langword="true" /> if the stack was not empty; otherwise <see langword="false" />.</returns>
         public bool TryPop(
             out T1 item1,
             out T2 item2,
             out T3 item3,
             out T4 item4)
         {
-            if (Count < 1) 
+            if (Count < 1)
             {
                 item1 = default(T1);
                 item2 = default(T2);
@@ -403,22 +400,22 @@ namespace EscherTilier.Utilities
             item4 = tuple.Item4;
             return true;
         }
-        
+
         /// <summary>
-        /// Returns the object at the top of the <see cref="Stack{T1, T2, T3, T4}"/> without removing it.
+        ///     Returns the object at the top of the <see cref="Stack{T1, T2, T3, T4}" /> without removing it.
         /// </summary>
         /// <param name="item1">Item 1 of the tuple.</param>
         /// <param name="item2">Item 2 of the tuple.</param>
         /// <param name="item3">Item 3 of the tuple.</param>
         /// <param name="item4">Item 4 of the tuple.</param>
-        /// <returns><see langword="true"/> if the stack was not empty; otherwise <see langword="false"/>.</returns>
+        /// <returns><see langword="true" /> if the stack was not empty; otherwise <see langword="false" />.</returns>
         public bool TryPeek(
             out T1 item1,
             out T2 item2,
             out T3 item3,
             out T4 item4)
         {
-            if (Count < 1) 
+            if (Count < 1)
             {
                 item1 = default(T1);
                 item2 = default(T2);
@@ -435,7 +432,6 @@ namespace EscherTilier.Utilities
             return true;
         }
     }
-    #endregion
 
+    #endregion
 }
- 

@@ -227,7 +227,7 @@ namespace EscherTilier.Expressions
             }
 
             return result == null
-                ? (Expression)Expression.Constant(true)
+                ? (Expression) Expression.Constant(true)
                 : Expression.Block(typeof(bool), vars, body);
         }
     }

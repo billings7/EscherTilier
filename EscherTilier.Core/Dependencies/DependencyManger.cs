@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using EscherTilier.Graphics;
 using EscherTilier.Graphics.Resources;
 using EscherTilier.Styles;
 using JetBrains.Annotations;
@@ -43,12 +42,14 @@ namespace EscherTilier.Dependencies
                 _ => new DependencyCache<TDependancy, TArgs>(factory, flags),
                 (_, old) =>
                 {
-                    Debug.Assert(old is DependencyCache<TDependancy, TArgs>, "old is DependencyCache<TDependancy, TArgs>");
+                    Debug.Assert(
+                        old is DependencyCache<TDependancy, TArgs>,
+                        "old is DependencyCache<TDependancy, TArgs>");
                     ((DependencyCache<TDependancy, TArgs>) old).Dispose();
                     return new DependencyCache<TDependancy, TArgs>(factory, flags);
                 });
         }
-        
+
         /// <summary>
         ///     Sets the factory that should be used for creating instances of type <see cref="TDependancy" />.
         /// </summary>
@@ -63,7 +64,7 @@ namespace EscherTilier.Dependencies
 
             AddOrUpdateCache((NoArgs _) => factory(), flags);
         }
-        
+
         /// <summary>
         ///     Sets the factory that should be used for creating instances of type <see cref="TDependancy" />.
         /// </summary>
@@ -78,7 +79,7 @@ namespace EscherTilier.Dependencies
 
             AddOrUpdateCache(factory, flags);
         }
-        
+
         /// <summary>
         ///     Sets the factory that should be used for creating instances of <see cref="IResourceManager" />.
         /// </summary>
@@ -93,7 +94,7 @@ namespace EscherTilier.Dependencies
 
             AddOrUpdateCache(factory, flags);
         }
-        
+
         /// <summary>
         ///     Gets a resource manager.
         /// </summary>
@@ -120,15 +121,16 @@ namespace EscherTilier.Dependencies
                 throw new InvalidOperationException("The factory returned a null resource manager.");
             return resourceManager;
         }
-        
+
         /// <summary>
-        /// Releases the resource manager given.
+        ///     Releases the resource manager given.
         /// </summary>
         /// <param name="resourceManager">The resource manager.</param>
         /// <param name="styleManager">The style manager that was used to get the resource manager. Can be null.</param>
         public static void ReleaseResourceManager(ref IResourceManager resourceManager, StyleManager styleManager)
         {
-            GetCache<IResourceManager, StyleManager>().Release(Interlocked.Exchange(ref resourceManager, null), styleManager);
+            GetCache<IResourceManager, StyleManager>()
+                .Release(Interlocked.Exchange(ref resourceManager, null), styleManager);
         }
 
         [NotNull]
@@ -140,7 +142,7 @@ namespace EscherTilier.Dependencies
         private static readonly object[] _defaultArgs = { null };
 
         /// <summary>
-        /// Gets a dependency of a paticular type with no arguments specified.
+        ///     Gets a dependency of a paticular type with no arguments specified.
         /// </summary>
         /// <typeparam name="TDependancy">The type of the dependancy.</typeparam>
         /// <returns></returns>
@@ -149,8 +151,8 @@ namespace EscherTilier.Dependencies
         public static TDependancy Get<TDependancy>()
         {
             Tuple<Type, Type> types = null;
-            foreach (KeyValuePair<Tuple<Type, Type>, object> kvp in _caches.Where(k => k.Key.Item1 == typeof(TDependancy))
-                )
+            foreach (KeyValuePair<Tuple<Type, Type>, object> kvp
+                in _caches.Where(k => k.Key.Item1 == typeof(TDependancy)))
             {
                 if (types != null)
                 {
@@ -162,11 +164,13 @@ namespace EscherTilier.Dependencies
             if (types == null)
                 throw new ArgumentException("There are no dependencies for the resource type given.");
 
-            return (TDependancy) _getMiscMethodInfo.MakeGenericMethod(types.Item1, types.Item2).Invoke(null, _defaultArgs);
+            return (TDependancy) _getMiscMethodInfo
+                .MakeGenericMethod(types.Item1, types.Item2)
+                .Invoke(null, _defaultArgs);
         }
 
         /// <summary>
-        /// Gets a dependency of a paticular type with specific arguments.
+        ///     Gets a dependency of a paticular type with specific arguments.
         /// </summary>
         /// <typeparam name="TDependancy">The type of the dependancy.</typeparam>
         /// <typeparam name="TArgs">The type of the arguments.</typeparam>
@@ -178,11 +182,9 @@ namespace EscherTilier.Dependencies
         }
 
         /// <summary>
-        /// Structure type used to represent that no argument type was specified
+        ///     Structure type used to represent that no argument type was specified
         /// </summary>
-        private struct NoArgs
-        {
-        }
+        private struct NoArgs { }
 
         private class DependencyCache<TDependancy, TArgs> : IDisposable
         {

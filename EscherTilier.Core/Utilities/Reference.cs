@@ -7,17 +7,17 @@ using JetBrains.Annotations;
 namespace EscherTilier.Utilities
 {
     /// <summary>
-    /// Provides methods for creating instances of <see cref="Reference{T}"/>.
+    ///     Provides methods for creating instances of <see cref="Reference{T}" />.
     /// </summary>
     public static class Reference
     {
         /// <summary>
-        /// Gets a <see cref="Reference{T}"/> to the property or field in the given expression.
+        ///     Gets a <see cref="Reference{T}" /> to the property or field in the given expression.
         /// </summary>
         /// <typeparam name="T">The type of the value being referenced.</typeparam>
         /// <param name="refExp">The expression specifying the property or field to reference.</param>
-        /// <returns>A <see cref="Reference{T}"/> to the property or field.</returns>
-        /// <exception cref="System.ArgumentNullException"><paramref name="refExp"/> was <see langword="null"/>.</exception>
+        /// <returns>A <see cref="Reference{T}" /> to the property or field.</returns>
+        /// <exception cref="System.ArgumentNullException"><paramref name="refExp" /> was <see langword="null" />.</exception>
         /// <exception cref="System.NotSupportedException">The specified expression is not supported by this method.</exception>
         public static Reference<T> To<T>([NotNull] Expression<Func<T>> refExp)
         {
@@ -56,17 +56,18 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// Creates a <see cref="Reference{T}"/> with the specified getter and setter..
+        ///     Creates a <see cref="Reference{T}" /> with the specified getter and setter..
         /// </summary>
         /// <typeparam name="T">The type of the value being referenced.</typeparam>
         /// <param name="getter">The getter function.</param>
         /// <param name="setter">The setter action.</param>
-        /// <returns>A <see cref="Reference{T}"/> with the getter and setter given.</returns>
-        public static Reference<T> Create<T>([NotNull] Func<T> getter, [NotNull] Action<T> setter) => new Reference<T>(getter, setter);
+        /// <returns>A <see cref="Reference{T}" /> with the getter and setter given.</returns>
+        public static Reference<T> Create<T>([NotNull] Func<T> getter, [NotNull] Action<T> setter)
+            => new Reference<T>(getter, setter);
     }
 
     /// <summary>
-    /// Defines a reference to some value.
+    ///     Defines a reference to some value.
     /// </summary>
     public class Reference<T>
     {
@@ -77,7 +78,7 @@ namespace EscherTilier.Utilities
         private readonly Action<T> _setter;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Reference{T}" /> class.
+        ///     Initializes a new instance of the <see cref="Reference{T}" /> class.
         /// </summary>
         /// <param name="getter">The getter function.</param>
         /// <param name="setter">The setter action.</param>
@@ -90,10 +91,10 @@ namespace EscherTilier.Utilities
         }
 
         /// <summary>
-        /// Gets or sets the value.
+        ///     Gets or sets the value.
         /// </summary>
         /// <value>
-        /// The value.
+        ///     The value.
         /// </value>
         public T Value
         {

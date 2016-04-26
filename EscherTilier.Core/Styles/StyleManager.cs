@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -43,24 +42,29 @@ namespace EscherTilier.Styles
         public IResourceManager ResourceManager => _resourceManager;
 
         /// <summary>
-        /// Gets the style for the given tile.
+        ///     Gets the style for the given tile.
         /// </summary>
         /// <param name="tile">The tile.</param>
         /// <returns>The style for the tile.</returns>
-        [CanBeNull]
+        [NotNull]
         public IStyle GetStyle([NotNull] TileBase tile)
         {
             if (tile == null) throw new ArgumentNullException(nameof(tile));
-            return GetStyle(tile, _styles.Where(s => s.Shapes.Contains(tile.Shape)).Select(s => s.Style).ToArray());
+
+            IStyle style = GetStyle(tile, _styles.Where(s => s.Shapes.Contains(tile.Shape)).Select(s => s.Style).ToArray());
+            if (style == null) throw new InvalidOperationException();
+
+            style = style.Transform(tile.Transform);
+            return style;
         }
 
         /// <summary>
-        /// Gets the style for the given tile.
+        ///     Gets the style for the given tile.
         /// </summary>
         /// <param name="tile">The tile.</param>
         /// <param name="styles">The styles to choose from.</param>
         /// <returns></returns>
-        [CanBeNull]
+        [NotNull]
         protected abstract IStyle GetStyle([NotNull] TileBase tile, [NotNull] IStyle[] styles);
 
         /// <summary>

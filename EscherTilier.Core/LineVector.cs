@@ -51,7 +51,13 @@ namespace EscherTilier
             }
         }
 
-        public override string ToString() => Vector.ToString() + (_isFixed ? " (fixed)" : string.Empty);
+        /// <summary>
+        ///     Returns a <see cref="System.String" /> that represents this instance.
+        /// </summary>
+        /// <returns>
+        ///     A <see cref="System.String" /> that represents this instance.
+        /// </returns>
+        public override string ToString() => Vector + (_isFixed ? " (fixed)" : string.Empty);
 
         /// <summary>
         ///     Performs an implicit conversion from <see cref="LineVector" /> to <see cref="Vector2" />.

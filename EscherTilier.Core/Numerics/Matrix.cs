@@ -69,7 +69,7 @@ namespace EscherTilier.Numerics
             float sin = vector1.X * vector2.Y - vector2.X * vector1.Y;
             float cos = vector1.X * vector2.X + vector2.Y * vector1.Y;
 
-            return (float)Math.Atan2(sin, cos);
+            return (float) Math.Atan2(sin, cos);
         }
     }
 }

@@ -116,7 +116,7 @@ namespace EscherTilier.Controllers
         public virtual void Deselected() { }
 
         /// <summary>
-        /// Called when the highlighted location (ie the cursor location) changes.
+        ///     Called when the highlighted location (ie the cursor location) changes.
         /// </summary>
         /// <param name="rawLocation">
         ///     The raw location.

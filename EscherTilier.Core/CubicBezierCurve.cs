@@ -106,7 +106,7 @@ namespace EscherTilier
         /// </summary>
         /// <param name="path">The path to add the line to.</param>
         /// <param name="transform">The transform.</param>
-        /// <param name="reverse">If set to <see langword="true"/>, add the line from <see cref="Start"/> to <see cref="End"/>.</param>
+        /// <param name="reverse">If set to <see langword="true" />, add the line from <see cref="Start" /> to <see cref="End" />.</param>
         public void AddToPath(IGraphicsPath path, Matrix3x2 transform, bool reverse)
         {
             if (path == null) throw new ArgumentNullException(nameof(path));
@@ -152,7 +152,7 @@ namespace EscherTilier
             Vector2 b = Vector2.Transform(ControlPointA, transform);
             Vector2 c = Vector2.Transform(ControlPointB, transform);
             Vector2 d = Vector2.Transform(End, transform);
-            
+
             if (!float.IsPositiveInfinity(tolerance))
             {
                 Rectangle bounds = Rectangle.ContainingPoints(a, b, c, d);

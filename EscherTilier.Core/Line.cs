@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using EscherTilier.Graphics;
 using EscherTilier.Numerics;
@@ -76,7 +75,7 @@ namespace EscherTilier
         /// </summary>
         /// <param name="path">The path to add the line to.</param>
         /// <param name="transform">The transform.</param>
-        /// <param name="reverse">If set to <see langword="true"/>, add the line from <see cref="Start"/> to <see cref="End"/>.</param>
+        /// <param name="reverse">If set to <see langword="true" />, add the line from <see cref="Start" /> to <see cref="End" />.</param>
         public void AddToPath(IGraphicsPath path, Matrix3x2 transform, bool reverse)
         {
             path.AddLine(Vector2.Transform(reverse ? Start : End, transform));

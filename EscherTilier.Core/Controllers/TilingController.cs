@@ -7,16 +7,18 @@ using System.Runtime.CompilerServices;
 using EscherTilier.Dependencies;
 using EscherTilier.Graphics;
 using EscherTilier.Graphics.Resources;
-using EscherTilier.Numerics;
 using EscherTilier.Styles;
 using JetBrains.Annotations;
 
 namespace EscherTilier.Controllers
 {
+    /// <summary>
+    ///     Controls editing of a <see cref="Tiling" />.
+    /// </summary>
     public class TilingController : Controller
     {
         // TODO settings?
-        private static readonly float _tolerance = 5;
+        private static readonly float _tolerance = 10;
 
         [NotNull]
         private readonly Tiling _tiling;
@@ -30,6 +32,15 @@ namespace EscherTilier.Controllers
         [CanBeNull]
         private IResourceManager _resourceManager;
 
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="TilingController" /> class.
+        /// </summary>
+        /// <param name="tiling">The tiling.</param>
+        /// <param name="styleManager">The style manager.</param>
+        /// <param name="view">The view.</param>
+        /// <exception cref="System.ArgumentNullException">
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException"></exception>
         public TilingController([NotNull] Tiling tiling, [NotNull] StyleManager styleManager, [NotNull] IView view)
             : base(view)
         {
@@ -59,9 +70,21 @@ namespace EscherTilier.Controllers
             view.ViewBoundsChanged += View_ViewBoundsChanged;
         }
 
+        /// <summary>
+        ///     Gets the edit line tool.
+        /// </summary>
+        /// <value>
+        ///     The edit line tool.
+        /// </value>
         [NotNull]
         public EditLineTool EditLine { get; }
 
+        /// <summary>
+        ///     Gets the split line tool.
+        /// </summary>
+        /// <value>
+        ///     The split line tool.
+        /// </value>
         [NotNull]
         public SplitLineTool SplitLine { get; }
 
@@ -207,7 +230,7 @@ namespace EscherTilier.Controllers
         }
 
         /// <summary>
-        /// Gets the line selected at the locaiton given.
+        ///     Gets the line selected at the locaiton given.
         /// </summary>
         private SelectedLine GetSelected(Vector2 rawLocation, float tolerance)
         {
@@ -216,7 +239,7 @@ namespace EscherTilier.Controllers
         }
 
         /// <summary>
-        /// Gets the line selected at the locaiton given.
+        ///     Gets the line selected at the locaiton given.
         /// </summary>
         private SelectedLine GetSelected(Vector2 rawLocation, float tolerance, out LinePoint loc)
         {
@@ -304,6 +327,9 @@ namespace EscherTilier.Controllers
 
             private float _tolerance;
 
+            [CanBeNull]
+            private SelectedLine _hoverLine;
+
             /// <summary>
             ///     Gets or sets the tolerance for how close the point has to be to the line to select it.
             /// </summary>
@@ -340,8 +366,11 @@ namespace EscherTilier.Controllers
             ///     The controller.
             /// </value>
             [NotNull]
-            public new TilingController Controller => (TilingController) base.Controller;
+            public new TilingController Controller => (TilingController)base.Controller;
 
+            /// <summary>
+            ///     Called when this tool is selected as the current tool.
+            /// </summary>
             public override void Selected()
             {
                 base.Selected();
@@ -351,6 +380,22 @@ namespace EscherTilier.Controllers
                     if (!_selectedLine.EdgePart.Lines.Contains(_selectedLine.Line))
                         _selectedLine = null;
                 }
+            }
+
+            /// <summary>
+            ///     Called when the highlighted location (ie the cursor location) changes.
+            /// </summary>
+            /// <param name="rawLocation">
+            ///     The raw location.
+            ///     Should be transformed by the <see cref="IView.InverseViewMatrix" /> for the
+            ///     <see cref="Controller">Controllers</see> <see cref="EscherTilier.Controllers.Controller.View" /> to get the
+            ///     location in the tiling itself.
+            /// </param>
+            public override void UpdateLocation(Vector2 rawLocation)
+            {
+                base.UpdateLocation(rawLocation);
+
+                _hoverLine = Controller.GetSelected(rawLocation, _tolerance);
             }
 
             /// <summary>
@@ -431,18 +476,29 @@ namespace EscherTilier.Controllers
             {
                 base.Draw(graphics);
 
-                if (_selectedLine == null) return;
+                graphics.LineWidth = Controller._styleManager.LineStyle.Width;
+
+                SelectedLine hoverLine = _hoverLine;
+                if (hoverLine != null)
+                {
+                    graphics.LineStyle = SolidColourStyle.CornflowerBlue;
+                    hoverLine.Line.Draw(
+                        graphics,
+                        hoverLine.EdgePart.GetLineTransform() * hoverLine.Tile.Transform);
+                }
+
+                SelectedLine selectedLine = _selectedLine;
+                if (selectedLine == null) return;
 
                 float radius = Controller._styleManager.LineStyle.Width * 2;
 
                 Matrix3x2 transform =
-                    _selectedLine.EdgePart.GetLineTransform()
-                    * _selectedLine.Tile.Transform;
+                    selectedLine.EdgePart.GetLineTransform()
+                    * selectedLine.Tile.Transform;
 
                 graphics.LineStyle = SolidColourStyle.Black;
-                graphics.LineWidth = radius / 3;
 
-                foreach (LineVector point in _selectedLine.Line.Points)
+                foreach (LineVector point in selectedLine.Line.Points)
                 {
                     if (point.IsFixed) graphics.FillStyle = SolidColourStyle.Gray;
                     else if (point == _selectedVector) graphics.FillStyle = SolidColourStyle.CornflowerBlue;
@@ -566,7 +622,7 @@ namespace EscherTilier.Controllers
             private bool _drawSplit;
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="SplitLineTool"/> class.
+            ///     Initializes a new instance of the <see cref="SplitLineTool" /> class.
             /// </summary>
             /// <param name="controller">The controller.</param>
             public SplitLineTool([NotNull] TilingController controller, float tolerance)
@@ -575,7 +631,7 @@ namespace EscherTilier.Controllers
                 if (tolerance <= 0) throw new ArgumentOutOfRangeException(nameof(tolerance));
                 _tolerance = tolerance;
             }
-            
+
             /// <summary>
             ///     Gets the controller the tool belongs to.
             /// </summary>
@@ -584,9 +640,9 @@ namespace EscherTilier.Controllers
             /// </value>
             [NotNull]
             public new TilingController Controller => (TilingController)base.Controller;
-            
+
             /// <summary>
-            /// Called when the highlighted location (ie the cursor location) changes.
+            ///     Called when the highlighted location (ie the cursor location) changes.
             /// </summary>
             /// <param name="rawLocation">
             ///     The raw location.
@@ -685,11 +741,13 @@ namespace EscherTilier.Controllers
 
                 public override void Update(Vector2 rawLocation)
                 {
-                    var hit = _line.Line.HitTest(rawLocation, float.PositiveInfinity, _line.LineTransform);
-                    var dist = hit.Distance < 0 ? 0 : (hit.Distance > 1 ? 1 : hit.Distance);
-                    
-                    if (hit.Distance < 0) _point = new LinePoint(Vector2.Transform(_line.Line.Start, _line.LineTransform), 0);
-                    else if (hit.Distance > 1) _point = new LinePoint(Vector2.Transform(_line.Line.End, _line.LineTransform), 1);
+                    LinePoint hit = _line.Line.HitTest(rawLocation, float.PositiveInfinity, _line.LineTransform);
+                    Debug.Assert(hit != null, "hit != null");
+
+                    if (hit.Distance < 0)
+                        _point = new LinePoint(Vector2.Transform(_line.Line.Start, _line.LineTransform), 0);
+                    else if (hit.Distance > 1)
+                        _point = new LinePoint(Vector2.Transform(_line.Line.End, _line.LineTransform), 1);
                     else _point = hit;
 
                     _tool.SetSplitLineLoc(_line, _point);

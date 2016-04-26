@@ -29,9 +29,9 @@ namespace EscherTilier
         /// </exception>
         /// TODO Exceptions
         public Template(
-            [NotNull][ItemNotNull] IReadOnlyList<ShapeTemplate> shapeTemplates,
-            [NotNull][ItemNotNull] IReadOnlyList<IExpression<bool>> shapeConstraints,
-            [NotNull][ItemNotNull] IReadOnlyList<TilingDefinition> tilings)
+            [NotNull] [ItemNotNull] IReadOnlyList<ShapeTemplate> shapeTemplates,
+            [NotNull] [ItemNotNull] IReadOnlyList<IExpression<bool>> shapeConstraints,
+            [NotNull] [ItemNotNull] IReadOnlyList<TilingDefinition> tilings)
         {
             if (shapeTemplates == null) throw new ArgumentNullException(nameof(shapeTemplates));
             if (shapeConstraints == null) throw new ArgumentNullException(nameof(shapeConstraints));
@@ -134,7 +134,7 @@ namespace EscherTilier
         public ShapeSet CreateShapes() => new ShapeSet(ShapeTemplates.Select(s => new Shape(s)).ToArray());
 
         /// <summary>
-        /// Creates a tiling from this template.
+        ///     Creates a tiling from this template.
         /// </summary>
         /// <param name="tilingDefinition">The tiling definition.</param>
         /// <param name="shapes">The shapes.</param>

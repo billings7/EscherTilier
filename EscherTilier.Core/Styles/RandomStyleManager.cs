@@ -9,7 +9,7 @@ namespace EscherTilier.Styles
     public class RandomStyleManager : StyleManager
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="RandomStyleManager"/> class.
+        ///     Initializes a new instance of the <see cref="RandomStyleManager" /> class.
         /// </summary>
         /// <param name="resourceManager">The resource manager.</param>
         /// <param name="seed">The seed.</param>
@@ -22,20 +22,20 @@ namespace EscherTilier.Styles
         }
 
         /// <summary>
-        /// Gets the seed of the random number generator.
+        ///     Gets the seed of the random number generator.
         /// </summary>
         /// <value>
-        /// The seed.
+        ///     The seed.
         /// </value>
         public int Seed { get; }
 
         /// <summary>
-        /// Gets the style.
+        ///     Gets the style.
         /// </summary>
         /// <param name="tile">The tile.</param>
         /// <param name="styles">The styles.</param>
         /// <returns></returns>
-        protected override IStyle GetStyle([NotNull] TileBase tile, [NotNull] IStyle[] styles)
+        protected override IStyle GetStyle(TileBase tile, IStyle[] styles)
         {
             Debug.Assert(tile != null, "tile != null");
             Debug.Assert(styles != null, "styles != null");

@@ -1,4 +1,3 @@
-using EscherTilier.Graphics;
 using EscherTilier.Graphics.Resources;
 using JetBrains.Annotations;
 

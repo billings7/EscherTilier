@@ -80,6 +80,7 @@
     <Compile Include="Edge.cs" />
     <Compile Include="EdgePart.cs" />
     <Compile Include="EdgePartAdjacencies.cs" />
+    <Compile Include="EdgePartPosition.cs" />
     <Compile Include="EdgePartShape.cs" />
     <Compile Include="EdgePattern.cs" />
     <Compile Include="Expressions\AggregateExpression.cs" />
