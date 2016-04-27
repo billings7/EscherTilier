@@ -206,7 +206,7 @@ namespace EscherTilier
 
         private void TilingController_EditLineTool_OptionsChanged(object sender, EventArgs e)
         {
-            TilingController.EditLineTool tool = (TilingController.EditLineTool) sender;
+            TilingController.EditLineTool tool = (TilingController.EditLineTool)sender;
 
             _changeLineTypeCmb.Visible = tool.Options.Contains(tool.ChangeLineOption);
         }
@@ -279,6 +279,8 @@ namespace EscherTilier
         private void saveMenuItem_Click(object sender, EventArgs e) { }
 
         private void saveAsMenuItem_Click(object sender, EventArgs e) { }
+
+        private void _pageSetupMenuItem_Click(object sender, EventArgs e) { }
 
         private void printMenuItem_Click(object sender, EventArgs e) { }
 
@@ -519,7 +521,7 @@ namespace EscherTilier
                 return;
             }
 
-            zoom = (float) Math.Round(zoom, 2);
+            zoom = (float)Math.Round(zoom, 2);
             if (zoom < _zoomLevels[_zoomLevels.Length - 1])
                 zoom = _zoomLevels[_zoomLevels.Length - 1];
             else if (zoom > _zoomLevels[0])
@@ -577,7 +579,7 @@ namespace EscherTilier
 
         private void _changeLineTypeCmb_SelectedIndexChanged(object sender, EventArgs e)
         {
-            ComboBoxValue<Type> val = (ComboBoxValue<Type>) _changeLineTypeCmb.SelectedItem;
+            ComboBoxValue<Type> val = (ComboBoxValue<Type>)_changeLineTypeCmb.SelectedItem;
             if (_controller != null) _controller.EditLine.ChangeLineOption.Value = val.Value;
         }
 
@@ -591,10 +593,10 @@ namespace EscherTilier
             if (_controller == null) return;
 
             Debug.Assert(sender is ToolStripButton);
-            ToolStripButton btn = (ToolStripButton) sender;
+            ToolStripButton btn = (ToolStripButton)sender;
 
             Debug.Assert(btn.Tag is Tool);
-            Tool tool = (Tool) btn.Tag;
+            Tool tool = (Tool)btn.Tag;
 
             if (_controller.CurrentTool != null)
             {
@@ -640,7 +642,7 @@ namespace EscherTilier
                 if (!_toolBtns.TryGetValue(tool, out btn))
                 {
                     string toolName = Resources.ResourceManager.GetString(tool.Name + ":Name");
-                    Image toolImage = (Image) Resources.ResourceManager.GetObject(tool.Name + ":Icon");
+                    Image toolImage = (Image)Resources.ResourceManager.GetObject(tool.Name + ":Icon");
 
                     btn = new ToolStripButton(toolName, toolImage, toolBtn_Click, tool.Name)
                     {

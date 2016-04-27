@@ -118,6 +118,9 @@
     <Compile Include="Graphics\GDI\GDIExtensions.cs" />
     <Compile Include="Graphics\GDI\GDIGraphics.cs" />
     <Compile Include="Graphics\GDI\GDIResourceManager.cs" />
+    <Compile Include="Graphics\GDI\TilerPrintDocument.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
     </Compile>
