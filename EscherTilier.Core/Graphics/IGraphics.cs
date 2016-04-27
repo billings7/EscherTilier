@@ -42,7 +42,7 @@ namespace EscherTilier.Graphics
         ///     Draws a set of lines joining the array of points given.
         /// </summary>
         /// <param name="points">The points to draw lines between.</param>
-        void DrawLines([NotNull] Vector2[] points);
+        void DrawLines([NotNull] params Vector2[] points);
 
         /// <summary>
         ///     Draws an arc of an elipse.

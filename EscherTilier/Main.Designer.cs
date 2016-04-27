@@ -1,4 +1,7 @@
-﻿namespace EscherTilier
+﻿using System.Windows.Forms;
+using JetBrains.Annotations;
+
+namespace EscherTilier
 {
     partial class Main
     {
@@ -64,6 +67,7 @@
             this._statusInfoLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this._contextToolStrip = new System.Windows.Forms.ToolStrip();
             this._zoomText = new System.Windows.Forms.ToolStripTextBox();
+            this._changeLineTypeCmb = new System.Windows.Forms.ToolStripComboBox();
             this._renderControl = new EscherTilier.RenderControl();
             sep1 = new System.Windows.Forms.ToolStripSeparator();
             sep2 = new System.Windows.Forms.ToolStripSeparator();
@@ -81,17 +85,17 @@
             // sep1
             // 
             sep1.Name = "sep1";
-            sep1.Size = new System.Drawing.Size(149, 6);
+            sep1.Size = new System.Drawing.Size(143, 6);
             // 
             // sep2
             // 
             sep2.Name = "sep2";
-            sep2.Size = new System.Drawing.Size(149, 6);
+            sep2.Size = new System.Drawing.Size(143, 6);
             // 
             // sep3
             // 
             sep3.Name = "sep3";
-            sep3.Size = new System.Drawing.Size(149, 6);
+            sep3.Size = new System.Drawing.Size(143, 6);
             // 
             // editMenuItem
             // 
@@ -165,7 +169,7 @@
             this._newMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._newMenuItem.Name = "_newMenuItem";
             this._newMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
-            this._newMenuItem.Size = new System.Drawing.Size(152, 22);
+            this._newMenuItem.Size = new System.Drawing.Size(146, 22);
             this._newMenuItem.Text = "&New";
             this._newMenuItem.Click += new System.EventHandler(this.newMenuItem_Click);
             // 
@@ -175,7 +179,7 @@
             this._openMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._openMenuItem.Name = "_openMenuItem";
             this._openMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-            this._openMenuItem.Size = new System.Drawing.Size(152, 22);
+            this._openMenuItem.Size = new System.Drawing.Size(146, 22);
             this._openMenuItem.Text = "&Open";
             this._openMenuItem.Click += new System.EventHandler(this.openMenuItem_Click);
             // 
@@ -185,14 +189,14 @@
             this._saveMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._saveMenuItem.Name = "_saveMenuItem";
             this._saveMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this._saveMenuItem.Size = new System.Drawing.Size(152, 22);
+            this._saveMenuItem.Size = new System.Drawing.Size(146, 22);
             this._saveMenuItem.Text = "&Save";
             this._saveMenuItem.Click += new System.EventHandler(this.saveMenuItem_Click);
             // 
             // _saveAsMenuItem
             // 
             this._saveAsMenuItem.Name = "_saveAsMenuItem";
-            this._saveAsMenuItem.Size = new System.Drawing.Size(152, 22);
+            this._saveAsMenuItem.Size = new System.Drawing.Size(146, 22);
             this._saveAsMenuItem.Text = "Save &As";
             this._saveAsMenuItem.Click += new System.EventHandler(this.saveAsMenuItem_Click);
             // 
@@ -202,7 +206,7 @@
             this._printMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._printMenuItem.Name = "_printMenuItem";
             this._printMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.P)));
-            this._printMenuItem.Size = new System.Drawing.Size(152, 22);
+            this._printMenuItem.Size = new System.Drawing.Size(146, 22);
             this._printMenuItem.Text = "&Print";
             this._printMenuItem.Click += new System.EventHandler(this.printMenuItem_Click);
             // 
@@ -211,14 +215,14 @@
             this._printPreviewMenuItem.Image = global::EscherTilier.Properties.Resources.PrintPreviewIcon;
             this._printPreviewMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._printPreviewMenuItem.Name = "_printPreviewMenuItem";
-            this._printPreviewMenuItem.Size = new System.Drawing.Size(152, 22);
+            this._printPreviewMenuItem.Size = new System.Drawing.Size(146, 22);
             this._printPreviewMenuItem.Text = "Print Pre&view";
             this._printPreviewMenuItem.Click += new System.EventHandler(this.printPreviewMenuItem_Click);
             // 
             // _exitMenuItem
             // 
             this._exitMenuItem.Name = "_exitMenuItem";
-            this._exitMenuItem.Size = new System.Drawing.Size(152, 22);
+            this._exitMenuItem.Size = new System.Drawing.Size(146, 22);
             this._exitMenuItem.Text = "E&xit";
             this._exitMenuItem.Click += new System.EventHandler(this.exitMenuItem_Click);
             // 
@@ -391,7 +395,8 @@
             this._contextToolStrip.Dock = System.Windows.Forms.DockStyle.Bottom;
             this._contextToolStrip.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this._contextToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this._zoomText});
+            this._zoomText,
+            this._changeLineTypeCmb});
             this._contextToolStrip.Location = new System.Drawing.Point(41, 514);
             this._contextToolStrip.Name = "_contextToolStrip";
             this._contextToolStrip.Size = new System.Drawing.Size(743, 25);
@@ -409,6 +414,13 @@
             this._zoomText.TextBoxTextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this._zoomText.WordWrap = false;
             this._zoomText.Leave += new System.EventHandler(this.zoomText_Leave);
+            // 
+            // _changeLineTypeCmb
+            // 
+            this._changeLineTypeCmb.Name = "_changeLineTypeCmb";
+            this._changeLineTypeCmb.Size = new System.Drawing.Size(121, 25);
+            this._changeLineTypeCmb.Visible = false;
+            this._changeLineTypeCmb.SelectedIndexChanged += new System.EventHandler(this._changeLineTypeCmb_SelectedIndexChanged);
             // 
             // _renderControl
             // 
@@ -457,7 +469,103 @@
 
         }
 
+        [NotNull]
+        private MenuStrip _menuStrip;
+
+        [NotNull]
+        private ToolStripMenuItem _fileMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _newMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _openMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _saveMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _saveAsMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _printMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _printPreviewMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _exitMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _undoMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _redoMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _toolsMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _customizeMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _optionsMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _helpMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _indexMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _searchMenuItem;
+
+        [NotNull]
+        private ToolStripMenuItem _aboutMenuItem;
+
+        [NotNull]
+        private ToolStripButton _newButton;
+
+        [NotNull]
+        private ToolStripButton _openButton;
+
+        [NotNull]
+        private ToolStripButton _saveButton;
+
+        [NotNull]
+        private ToolStripButton _printButton;
+
+        [NotNull]
+        private ToolStripButton _helpButton;
+
+        [NotNull]
+        private ToolStrip _toolStrip;
+
+        [NotNull]
+        private ToolStrip _operationToolStrip;
+
+        [NotNull]
+        private ToolStripButton _panToolBtn;
+
+        [NotNull]
+        private StatusStrip _statusStrip;
+
+        [NotNull]
+        private ToolStripStatusLabel _statusInfoLabel;
+
+        [NotNull]
+        private ToolStrip _contextToolStrip;
+
+        [NotNull]
+        private RenderControl _renderControl;
+
+        [NotNull]
+        private ToolStripTextBox _zoomText;
+
+        [NotNull]
+        private ToolStripComboBox _changeLineTypeCmb;
         #endregion
+
     }
 }
 

@@ -58,7 +58,7 @@ namespace EscherTilier
             Interlocked.Exchange(ref _controller, null)?.Dispose();
         }
 
-        partial void renderControl_Render([NotNull] RenderTarget renderTarget, [NotNull] SwapChain swapChain)
+        private void renderControl_Render([NotNull] RenderTarget renderTarget, [NotNull] SwapChain swapChain)
         {
             IGraphics graphics = _directXGraphics;
             Controller controller = _controller;
@@ -129,7 +129,8 @@ namespace EscherTilier
             }
             //*/
 
-            controller.Draw(graphics);
+            lock (_drawLock)
+                controller.Draw(graphics);
 
             renderTarget.EndDraw();
             swapChain.Present(0, PresentFlags.None);

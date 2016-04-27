@@ -58,6 +58,7 @@ namespace EscherTilier
         /// <value>
         ///     The first control point.
         /// </value>
+        [NotNull]
         public LineVector ControlPointA { get; }
 
         /// <summary>
@@ -66,6 +67,7 @@ namespace EscherTilier
         /// <value>
         ///     The second control point.
         /// </value>
+        [NotNull]
         public LineVector ControlPointB { get; }
 
         /// <summary>

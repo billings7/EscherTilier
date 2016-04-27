@@ -68,7 +68,7 @@ namespace EscherTilier
         private Numerics.Rectangle _bounds;
 
         [CanBeNull]
-        private Controller _controller;
+        private TilingController _controller;
 
         [NotNull]
         private PanTool _panTool;
@@ -76,108 +76,19 @@ namespace EscherTilier
         [NotNull]
         private readonly Dictionary<Tool, ToolStripButton> _toolBtns = new Dictionary<Tool, ToolStripButton>();
 
-        #region Controls
-
         [NotNull]
-        private MenuStrip _menuStrip;
-
-        [NotNull]
-        private ToolStripMenuItem _fileMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _newMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _openMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _saveMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _saveAsMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _printMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _printPreviewMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _exitMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _undoMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _redoMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _toolsMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _customizeMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _optionsMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _helpMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _indexMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _searchMenuItem;
-
-        [NotNull]
-        private ToolStripMenuItem _aboutMenuItem;
-
-        [NotNull]
-        private ToolStripButton _newButton;
-
-        [NotNull]
-        private ToolStripButton _openButton;
-
-        [NotNull]
-        private ToolStripButton _saveButton;
-
-        [NotNull]
-        private ToolStripButton _printButton;
-
-        [NotNull]
-        private ToolStripButton _helpButton;
-
-        [NotNull]
-        private ToolStrip _toolStrip;
-
-        [NotNull]
-        private ToolStrip _operationToolStrip;
-
-        [NotNull]
-        private ToolStripButton _panToolBtn;
-
-        [NotNull]
-        private StatusStrip _statusStrip;
-
-        [NotNull]
-        private ToolStripStatusLabel _statusInfoLabel;
-
-        [NotNull]
-        private ToolStrip _contextToolStrip;
-
-        [NotNull]
-        private RenderControl _renderControl;
-
-        [NotNull]
-        private ToolStripTextBox _zoomText;
-
-        #endregion
+        private readonly object _drawLock = new object();
 
         // ReSharper disable once NotNullMemberIsNotInitialized - they are
         public Main()
         {
             InitializeComponent();
             InitializeGraphics();
+
+            _changeLineTypeCmb.Name = TilingController.EditLineTool.ChangeLineTypeName;
+            _changeLineTypeCmb.Items.Add(new ComboBoxValue<Type>("Line", typeof(Line)));
+            _changeLineTypeCmb.Items.Add(new ComboBoxValue<Type>("Quadratic Curve", typeof(QuadraticBezierCurve)));
+            _changeLineTypeCmb.Items.Add(new ComboBoxValue<Type>("Cubic Curve", typeof(CubicBezierCurve)));
 
             _centerTranslate = Matrix3x2.CreateTranslation(_renderControl.Width / 2f, _renderControl.Height / 2f);
             _invCenterTranslate = Matrix3x2.CreateTranslation(-_renderControl.Width / 2f, -_renderControl.Height / 2f);
@@ -186,11 +97,6 @@ namespace EscherTilier
             _statusInfoLabel.Text = string.Empty;
 
             _renderControl.MouseWheel += renderControl_MouseWheel;
-
-            //using (Factory factory = new Factory())
-            //{
-            //    _textFormat = new TextFormat(factory, "Calibri", 24.0f);
-            //}
         }
 
         /// <summary>
@@ -278,18 +184,31 @@ namespace EscherTilier
                 }
             };
 
-            _controller = new TilingController(
+            TilingController tc = new TilingController(
                 template.CreateTiling(template.Tilings[0], sc.Shapes, randomStyleManager),
                 randomStyleManager,
                 this);
+
+            tc.EditLine.OptionsChanged += TilingController_EditLineTool_OptionsChanged;
+            tc.EditLine.ChangeLineOption.ValueChanged += v => _changeLineTypeCmb.SelectedItem = v;
+            _changeLineTypeCmb.SelectedItem = tc.EditLine.ChangeLineOption.Value;
+
+            _controller = tc;
             _controller.CurrentToolChanged += _controller_CurrentToolChanged;
             _panTool = new PanTool(_controller, this);
 
             _toolBtns.Add(_panTool, _panToolBtn);
 
             UpdateTools();
-            
+
             _renderControl.Start();
+        }
+
+        private void TilingController_EditLineTool_OptionsChanged(object sender, EventArgs e)
+        {
+            TilingController.EditLineTool tool = (TilingController.EditLineTool) sender;
+
+            _changeLineTypeCmb.Visible = tool.Options.Contains(tool.ChangeLineOption);
         }
 
         /// <summary>
@@ -476,8 +395,6 @@ namespace EscherTilier
             UpdateScale();
         }
 
-        partial void renderControl_Render(SharpDX.Direct2D1.RenderTarget renderTarget, SharpDX.DXGI.SwapChain swapChain);
-
         /// <summary>
         ///     Handles the Layout event of the renderControl control.
         /// </summary>
@@ -543,8 +460,11 @@ namespace EscherTilier
 
             Vector2 loc = new Vector2(e.X, e.Y);
 
-            Action action = _controller.CurrentTool?.StartAction(loc);
-            _dragAction = action as DragAction;
+            lock (_drawLock)
+            {
+                Action action = _controller.CurrentTool?.StartAction(loc);
+                _dragAction = action as DragAction;
+            }
         }
 
         /// <summary>
@@ -554,17 +474,23 @@ namespace EscherTilier
         /// <param name="e">The <see cref="MouseEventArgs" /> instance containing the event data.</param>
         private void renderControl_MouseMove(object sender, [NotNull] MouseEventArgs e)
         {
-            _controller.CurrentTool?.UpdateLocation(new Vector2(e.X, e.Y));
-            _dragAction?.Update(new Vector2(e.X, e.Y));
+            lock (_drawLock)
+            {
+                _controller?.CurrentTool?.UpdateLocation(new Vector2(e.X, e.Y));
+                _dragAction?.Update(new Vector2(e.X, e.Y));
+            }
         }
-        
+
         /// <summary>
         ///     Handles the MouseUp event of the renderControl control.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs" /> instance containing the event data.</param>
         private void renderControl_MouseUp(object sender, MouseEventArgs e)
-            => Interlocked.Exchange(ref _dragAction, null)?.Apply();
+        {
+            lock (_drawLock)
+                Interlocked.Exchange(ref _dragAction, null)?.Apply();
+        }
 
         /// <summary>
         ///     Handles the MouseLeave event of the renderControl control.
@@ -572,7 +498,10 @@ namespace EscherTilier
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void renderControl_MouseLeave(object sender, EventArgs e)
-            => Interlocked.Exchange(ref _dragAction, null)?.Apply();
+        {
+            lock (_drawLock)
+                Interlocked.Exchange(ref _dragAction, null)?.Apply();
+        }
 
         /// <summary>
         ///     Updates the zoom level.
@@ -622,7 +551,7 @@ namespace EscherTilier
                 container = control as IContainerControl;
             }
         }
-        
+
         private void _controller_CurrentToolChanged(object sender, CurrentToolChangedEventArgs e)
         {
             if (e.OldTool != null)
@@ -644,6 +573,12 @@ namespace EscherTilier
                     newBtn.Checked = true;
                 }
             }
+        }
+
+        private void _changeLineTypeCmb_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ComboBoxValue<Type> val = (ComboBoxValue<Type>) _changeLineTypeCmb.SelectedItem;
+            if (_controller != null) _controller.EditLine.ChangeLineOption.Value = val.Value;
         }
 
         /// <summary>
@@ -671,7 +606,8 @@ namespace EscherTilier
                 }
             }
 
-            _controller.CurrentTool = tool;
+            lock (_drawLock)
+                _controller.CurrentTool = tool;
             btn.Checked = true;
         }
 
@@ -723,120 +659,65 @@ namespace EscherTilier
             _panToolBtn.PerformClick();
         }
 
-        /// <summary>
-        ///     Tool used to pan around the tiling.
-        /// </summary>
-        /// <seealso cref="EscherTilier.Controllers.Tool" />
-        private class PanTool : Tool
+        private class ComboBoxValue<T>
         {
+            /// <summary>
+            /// The display string.
+            /// </summary>
             [NotNull]
-            private readonly Main _form;
-
-            private Cursor _lastCursor;
+            public readonly string DisplayString;
 
             /// <summary>
-            ///     Initializes a new instance of the <see cref="PanTool" /> class.
+            /// The value.
             /// </summary>
-            /// <param name="controller">The controller.</param>
-            /// <param name="form">The form.</param>
-            public PanTool([NotNull] Controller controller, [NotNull] Main form)
-                : base(controller)
+            [NotNull]
+            public readonly T Value;
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="ComboBoxValue{T}"/> class.
+            /// </summary>
+            /// <param name="displayString">The display string.</param>
+            /// <param name="value">The value.</param>
+            /// <exception cref="System.ArgumentNullException">
+            /// </exception>
+            public ComboBoxValue([NotNull] string displayString, [NotNull] T value)
             {
-                _form = form;
+                if (displayString == null) throw new ArgumentNullException(nameof(displayString));
+                if (value == null) throw new ArgumentNullException(nameof(value));
+
+                DisplayString = displayString;
+                Value = value;
             }
 
             /// <summary>
-            ///     Called when this tool is selected as the current tool.
+            /// Returns a string that represents the current object.
             /// </summary>
-            public override void Selected()
-            {
-                base.Selected();
-                _lastCursor = _form._renderControl.Cursor;
-                _form._renderControl.Cursor = Cursors.SizeAll;
-            }
-
-            /// <summary>
-            ///     Called when this tool is deselected as the current tool.
-            /// </summary>
-            public override void Deselected()
-            {
-                base.Deselected();
-                _form._renderControl.Cursor = _lastCursor;
-            }
-
-            /// <summary>
-            ///     Starts the action associated with this tool at the location given.
-            /// </summary>
-            /// <param name="rawLocation">
-            ///     The raw location to start the action.
-            ///     Should be transformed by the <see cref="IView.InverseViewMatrix" /> for the
-            ///     <see cref="Controller">Controllers</see> <see cref="EscherTilier.Controllers.Controller.View" /> to get the
-            ///     location in the tiling itself.
-            /// </param>
             /// <returns>
-            ///     The action that was performed, or null if no action was performed.
+            /// A string that represents the current object.
             /// </returns>
-            public override Action StartAction(Vector2 rawLocation)
+            public override string ToString() => DisplayString;
+
+            /// <summary>
+            /// Determines whether the specified object is equal to the current object.
+            /// </summary>
+            /// <returns>
+            /// true if the specified object  is equal to the current object; otherwise, false.
+            /// </returns>
+            /// <param name="obj">The object to compare with the current object. </param>
+            public override bool Equals(object obj)
             {
-                return new PanAction(rawLocation, _form);
+                ComboBoxValue<T> val = obj as ComboBoxValue<T>;
+                if (val != null) return Equals(Value, val.Value);
+                return Equals(Value, obj);
             }
 
             /// <summary>
-            ///     Action used for panning.
+            /// Serves as the default hash function.
             /// </summary>
-            private class PanAction : DragAction
-            {
-                private Vector2 _last;
-
-                [NotNull]
-                private readonly Main _form;
-
-                private readonly Matrix3x2 _translate;
-                private readonly Matrix3x2 _invTranslate;
-
-                /// <summary>
-                ///     Initializes a new instance of the <see cref="PanAction" /> class.
-                /// </summary>
-                /// <param name="start">The start point of the action.</param>
-                /// <param name="form">The form.</param>
-                public PanAction(Vector2 start, [NotNull] Main form)
-                {
-                    _last = start;
-                    _form = form;
-
-                    _translate = form._translate;
-                    _invTranslate = form._invTranslate;
-                }
-
-                /// <summary>
-                ///     Updates the location of the action.
-                /// </summary>
-                /// <param name="rawLocation">
-                ///     The raw location that the action has been dragged to.
-                ///     Should be transformed by the <see cref="P:EscherTilier.IView.InverseViewMatrix" /> for the
-                ///     <see cref="P:EscherTilier.Controllers.Controller.View" /> to get the location in 1the tiling itself.
-                /// </param>
-                public override void Update(Vector2 rawLocation)
-                {
-                    _form.UpdateTranslation(rawLocation - _last);
-                    _last = rawLocation;
-                }
-
-                /// <summary>
-                ///     Cancels this action.
-                /// </summary>
-                public override void Cancel()
-                {
-                    _form._translate = _translate;
-                    _form._invTranslate = _invTranslate;
-                    _form.UpdateViewBounds();
-                }
-
-                /// <summary>
-                ///     Applies this action.
-                /// </summary>
-                public override void Apply() { }
-            }
+            /// <returns>
+            /// A hash code for the current object.
+            /// </returns>
+            public override int GetHashCode() => Value.GetHashCode();
         }
     }
 }

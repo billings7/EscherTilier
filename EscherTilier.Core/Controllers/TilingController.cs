@@ -21,6 +21,10 @@ namespace EscherTilier.Controllers
         private static readonly float _tolerance = 10;
 
         [NotNull]
+        private static readonly SolidColourStyle _transparentBlue =
+            new SolidColourStyle(Colour.CornflowerBlue, 0.5f);
+
+        [NotNull]
         private readonly Tiling _tiling;
 
         [NotNull]
@@ -58,6 +62,7 @@ namespace EscherTilier.Controllers
             resourceManager.Add(SolidColourStyle.Black);
             resourceManager.Add(SolidColourStyle.Gray);
             resourceManager.Add(SolidColourStyle.CornflowerBlue);
+            resourceManager.Add(_transparentBlue);
 
             _tiles = _tiling.GetTiles(view.ViewBounds, Enumerable.Empty<TileBase>());
 
@@ -319,6 +324,11 @@ namespace EscherTilier.Controllers
             /// </summary>
             public const string ToolName = "EditLineTool";
 
+            /// <summary>
+            ///     The change line type option name.
+            /// </summary>
+            public const string ChangeLineTypeName = "ChangeLineType";
+
             [CanBeNull]
             private SelectedLine _selectedLine;
 
@@ -329,6 +339,9 @@ namespace EscherTilier.Controllers
 
             [CanBeNull]
             private SelectedLine _hoverLine;
+
+            [NotNull]
+            public readonly Option ChangeLineOption;
 
             /// <summary>
             ///     Gets or sets the tolerance for how close the point has to be to the line to select it.
@@ -357,6 +370,8 @@ namespace EscherTilier.Controllers
             {
                 if (tolerance <= 0) throw new ArgumentOutOfRangeException(nameof(tolerance));
                 _tolerance = tolerance;
+                ChangeLineOption = new Option(ChangeLineTypeName, typeof(Line));
+                ChangeLineOption.ValueChanged += ChangeLineType;
             }
 
             /// <summary>
@@ -366,7 +381,7 @@ namespace EscherTilier.Controllers
             ///     The controller.
             /// </value>
             [NotNull]
-            public new TilingController Controller => (TilingController)base.Controller;
+            public new TilingController Controller => (TilingController) base.Controller;
 
             /// <summary>
             ///     Called when this tool is selected as the current tool.
@@ -396,6 +411,87 @@ namespace EscherTilier.Controllers
                 base.UpdateLocation(rawLocation);
 
                 _hoverLine = Controller.GetSelected(rawLocation, _tolerance);
+            }
+
+            /// <summary>
+            ///     Changes the type of the selected line.
+            /// </summary>
+            /// <param name="value">The value.</param>
+            private void ChangeLineType(object value)
+            {
+                Type type = value as Type;
+                if (type == null) throw new ArgumentException();
+
+                SelectedLine selectedLine = _selectedLine;
+                if (selectedLine == null) return;
+
+                ILine currLine = selectedLine.Line;
+                Type currLineType = currLine.GetType();
+                if (type == currLineType) return;
+
+                ILine newLine;
+
+                if (type == typeof(Line))
+                    newLine = new Line(currLine.Start, currLine.End);
+                else if (type == typeof(QuadraticBezierCurve))
+                {
+                    if (currLineType == typeof(Line))
+                    {
+                        newLine = new QuadraticBezierCurve(
+                            currLine.Start,
+                            new LineVector((currLine.Start.Vector + currLine.End.Vector) / 2),
+                            currLine.End);
+                    }
+                    else if (currLineType == typeof(CubicBezierCurve))
+                    {
+                        CubicBezierCurve cubic = (CubicBezierCurve) currLine;
+
+                        Vector2 vec = currLine.Start.Vector + (currLine.End.Vector - currLine.Start.Vector) / 2;
+                        newLine = new QuadraticBezierCurve(
+                            cubic.Start,
+                            new LineVector(vec),
+                            cubic.End);
+                    }
+                    else
+                        throw new NotImplementedException();
+                }
+                else if (type == typeof(CubicBezierCurve))
+                {
+                    if (currLineType == typeof(Line))
+                    {
+                        Vector2 vec = (currLine.End.Vector - currLine.Start.Vector) / 3;
+                        newLine = new CubicBezierCurve(
+                            currLine.Start,
+                            new LineVector(currLine.Start.Vector + vec),
+                            new LineVector(currLine.Start.Vector + vec + vec),
+                            currLine.End);
+                    }
+                    else if (currLineType == typeof(QuadraticBezierCurve))
+                    {
+                        QuadraticBezierCurve quad = (QuadraticBezierCurve) currLine;
+
+                        newLine = new CubicBezierCurve(
+                            quad.Start,
+                            new LineVector(
+                                quad.Start.Vector + (2f / 3f * (quad.ControlPoint.Vector - quad.Start.Vector))),
+                            new LineVector(quad.End.Vector + (2f / 3f * (quad.ControlPoint.Vector - quad.End.Vector))),
+                            quad.End);
+                    }
+                    else
+                        throw new NotImplementedException();
+                }
+                else
+                    throw new NotImplementedException();
+
+                Debug.Assert(newLine.GetType() == type, "newLine.GetType() == type");
+
+                selectedLine.EdgePart.Lines.Replace(currLine, newLine);
+
+                _selectedLine = new SelectedLine(
+                    selectedLine.Tile,
+                    selectedLine.EdgePart,
+                    newLine,
+                    selectedLine.LineTransform);
             }
 
             /// <summary>
@@ -437,7 +533,7 @@ namespace EscherTilier.Controllers
 
                     // Gets the closest point to the location
                     Tuple<LineVector, float> closest =
-                        _selectedLine.Line.Points
+                        _selectedLine.EdgePart.Lines.SelectMany(l => l.Points)
                             .Where(p => !p.IsFixed)
                             .Select(p => GetDist(p, transform, rawLocation))
                             .OrderBy(t => t.Item2)
@@ -465,7 +561,15 @@ namespace EscherTilier.Controllers
                 _selectedVector = null;
 
                 _selectedLine = Controller.GetSelected(rawLocation, _tolerance);
-                return _selectedLine == null ? null : InstantAction.Instance;
+                if (_selectedLine == null)
+                {
+                    RemoveOption(ChangeLineOption);
+                    return null;
+                }
+
+                ChangeLineOption.Value = _selectedLine.Line.GetType();
+                AddOption(ChangeLineOption);
+                return InstantAction.Instance;
             }
 
             /// <summary>
@@ -478,6 +582,7 @@ namespace EscherTilier.Controllers
 
                 graphics.LineWidth = Controller._styleManager.LineStyle.Width;
 
+                SelectedLine selectedLine = _selectedLine;
                 SelectedLine hoverLine = _hoverLine;
                 if (hoverLine != null)
                 {
@@ -487,24 +592,50 @@ namespace EscherTilier.Controllers
                         hoverLine.EdgePart.GetLineTransform() * hoverLine.Tile.Transform);
                 }
 
-                SelectedLine selectedLine = _selectedLine;
-                if (selectedLine == null) return;
-
-                float radius = Controller._styleManager.LineStyle.Width * 2;
-
-                Matrix3x2 transform =
-                    selectedLine.EdgePart.GetLineTransform()
-                    * selectedLine.Tile.Transform;
-
-                graphics.LineStyle = SolidColourStyle.Black;
-
-                foreach (LineVector point in selectedLine.Line.Points)
+                if (selectedLine != null)
                 {
-                    if (point.IsFixed) graphics.FillStyle = SolidColourStyle.Gray;
-                    else if (point == _selectedVector) graphics.FillStyle = SolidColourStyle.CornflowerBlue;
-                    else graphics.FillStyle = SolidColourStyle.White;
+                    float radius = Controller._styleManager.LineStyle.Width * 2;
 
-                    DrawControl(graphics, Vector2.Transform(point, transform), radius);
+                    Matrix3x2 transform = selectedLine.EdgePart.GetLineTransform() * selectedLine.Tile.Transform;
+
+                    graphics.LineStyle = SolidColourStyle.CornflowerBlue;
+                    selectedLine.Line.Draw(graphics, transform);
+
+                    graphics.LineStyle = SolidColourStyle.Black;
+
+                    foreach (ILine line in selectedLine.EdgePart.Lines)
+                    {
+                        QuadraticBezierCurve quadCurve;
+                        CubicBezierCurve cubicCurve;
+                        if ((quadCurve = line as QuadraticBezierCurve) != null)
+                        {
+                            graphics.LineStyle = _transparentBlue;
+                            graphics.DrawLines(
+                                Vector2.Transform(quadCurve.Start, transform),
+                                Vector2.Transform(quadCurve.ControlPoint, transform),
+                                Vector2.Transform(quadCurve.End, transform));
+                            graphics.LineStyle = SolidColourStyle.Black;
+                        }
+                        else if ((cubicCurve = line as CubicBezierCurve) != null)
+                        {
+                            graphics.LineStyle = _transparentBlue;
+                            graphics.DrawLines(
+                                Vector2.Transform(cubicCurve.Start, transform),
+                                Vector2.Transform(cubicCurve.ControlPointA, transform),
+                                Vector2.Transform(cubicCurve.ControlPointB, transform),
+                                Vector2.Transform(cubicCurve.End, transform));
+                            graphics.LineStyle = SolidColourStyle.Black;
+                        }
+
+                        foreach (LineVector point in line.Points)
+                        {
+                            if (point.IsFixed) graphics.FillStyle = SolidColourStyle.Gray;
+                            else if (point == _selectedVector) graphics.FillStyle = SolidColourStyle.CornflowerBlue;
+                            else graphics.FillStyle = SolidColourStyle.White;
+
+                            DrawControl(graphics, Vector2.Transform(point, transform), radius);
+                        }
+                    }
                 }
             }
 
@@ -597,7 +728,7 @@ namespace EscherTilier.Controllers
             public const string ToolName = "SplitLineTool";
 
             [CanBeNull]
-            private SelectedLine _selectedLine;
+            private SelectedLine _selectedLine, _hoverLine;
 
             private float _tolerance;
 
@@ -639,7 +770,7 @@ namespace EscherTilier.Controllers
             ///     The controller.
             /// </value>
             [NotNull]
-            public new TilingController Controller => (TilingController)base.Controller;
+            public new TilingController Controller => (TilingController) base.Controller;
 
             /// <summary>
             ///     Called when the highlighted location (ie the cursor location) changes.
@@ -658,14 +789,14 @@ namespace EscherTilier.Controllers
                     return;
 
                 LinePoint loc;
-                SelectedLine selected = Controller.GetSelected(rawLocation, _tolerance, out loc);
-                if (selected == null)
+                _hoverLine = Controller.GetSelected(rawLocation, _tolerance, out loc);
+                if (_hoverLine == null)
                 {
                     _drawSplit = false;
                     return;
                 }
 
-                SetSplitLineLoc(selected, loc);
+                SetSplitLineLoc(_hoverLine, loc);
             }
 
             /// <summary>
@@ -698,10 +829,27 @@ namespace EscherTilier.Controllers
             {
                 base.Draw(graphics);
 
-                if (_drawSplit)
+                float lineWidth = Controller._styleManager.LineStyle.Width;
+                graphics.LineStyle = SolidColourStyle.Black;
+                graphics.LineWidth = lineWidth;
+
+                SelectedLine currLine = _selectedLine ?? _hoverLine;
+                if (currLine != null)
                 {
-                    graphics.LineStyle = SolidColourStyle.Black;
-                    graphics.LineWidth = Controller._styleManager.LineStyle.Width;
+                    Matrix3x2 transform = currLine.EdgePart.GetLineTransform() * currLine.Tile.Transform;
+
+                    bool first = true;
+                    foreach (ILine line in currLine.EdgePart.Lines)
+                    {
+                        if (first)
+                        {
+                            first = false;
+                            graphics.DrawCircle(Vector2.Transform(line.Start, transform), lineWidth);
+                        }
+
+                        graphics.DrawCircle(Vector2.Transform(line.End, transform), lineWidth);
+                    }
+
                     graphics.DrawLine(_splitLineStart, _splitLineEnd);
                 }
             }

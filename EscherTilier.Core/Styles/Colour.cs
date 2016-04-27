@@ -12,6 +12,18 @@ namespace EscherTilier.Styles
     public partial struct Colour : IEquatable<Colour>
     {
         /// <summary>
+        ///     Initializes a new instance of the <see cref="Colour" /> struct from an existing colour, changing the alpha
+        ///     component.
+        /// </summary>
+        /// <param name="colour">The colour.</param>
+        /// <param name="alpha">The alpha.</param>
+        public Colour(Colour colour, float alpha)
+        {
+            this = colour;
+            A = alpha;
+        }
+
+        /// <summary>
         ///     Initializes a new instance of the <see cref="Colour" /> struct.
         /// </summary>
         /// <param name="red">The red component.</param>

@@ -19,6 +19,16 @@ namespace EscherTilier.Styles
         /// <summary>
         ///     Initializes a new instance of the <see cref="SolidColourStyle" /> class.
         /// </summary>
+        /// <param name="colour">The colour.</param>
+        /// <param name="alpha">The alpha.</param>
+        public SolidColourStyle(Colour colour, float alpha)
+        {
+            Colour = new Colour(colour, alpha);
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="SolidColourStyle" /> class.
+        /// </summary>
         /// <param name="red">The red component.</param>
         /// <param name="green">The green component.</param>
         /// <param name="blue">The blue component.</param>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using EscherTilier.Graphics;
@@ -13,7 +14,7 @@ namespace EscherTilier.Controllers
     public abstract class Tool : IDrawable
     {
         [NotNull]
-        private IEnumerable<Option> _options;
+        private readonly Dictionary<string, Option> _options = new Dictionary<string, Option>();
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Tool" /> class.
@@ -60,7 +61,13 @@ namespace EscherTilier.Controllers
                 name = GetType().FullName;
             Controller = controller;
             Name = name;
-            _options = options ?? Enumerable.Empty<Option>();
+
+            if (options != null)
+                foreach (Option option in options)
+                {
+                    Debug.Assert(option != null, "option != null");
+                    _options.Add(option.Name, option);
+                }
         }
 
         /// <summary>
@@ -94,15 +101,34 @@ namespace EscherTilier.Controllers
         /// </value>
         [NotNull]
         [ItemNotNull]
-        public IEnumerable<Option> Options
+        public IReadOnlyCollection<Option> Options => _options.Values;
+
+        /// <summary>
+        ///     Adds an option.
+        /// </summary>
+        /// <param name="option">The option.</param>
+        /// <exception cref="System.ArgumentNullException"></exception>
+        protected void AddOption([NotNull] Option option)
         {
-            get { return _options; }
-            protected set
+            if (option == null) throw new ArgumentNullException(nameof(option));
+            if (!_options.ContainsKey(option.Name))
             {
-                if (ReferenceEquals(_options, value)) return;
-                _options = value;
+                _options.Add(option.Name, option);
                 OnOptionsChanged(EventArgs.Empty);
             }
+        }
+
+        /// <summary>
+        ///     Removes an option.
+        /// </summary>
+        /// <param name="option">The option.</param>
+        protected bool RemoveOption([NotNull] Option option)
+        {
+            if (option == null) throw new ArgumentNullException(nameof(option));
+            bool removed = _options.Remove(option.Name);
+            if (removed)
+                OnOptionsChanged(EventArgs.Empty);
+            return removed;
         }
 
         /// <summary>
@@ -208,14 +234,54 @@ namespace EscherTilier.Controllers
         public abstract void Apply();
     }
 
+    /// <summary>
+    ///     Defines an option for a tool.
+    /// </summary>
     public class Option
     {
+        private object _value;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Option"/> class.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <param name="initialValue">The initial value.</param>
+        public Option([NotNull] string name, [CanBeNull] object initialValue = null)
+        {
+            if (name == null) throw new ArgumentNullException(nameof(name));
+            Name = name;
+            Value = initialValue;
+        }
+
+        /// <summary>
+        ///     Gets the name of the option.
+        /// </summary>
+        /// <value>
+        ///     The name.
+        /// </value>
+        [NotNull]
         public string Name { get; }
 
-        public IOptionType Type { get; }
+        /// <summary>
+        ///     Gets the value.
+        /// </summary>
+        /// <value>
+        ///     The value.
+        /// </value>
+        public object Value
+        {
+            get { return _value; }
+            set
+            {
+                if (Equals(value, _value)) return;
+                _value = value;
+                ValueChanged?.Invoke(value);
+            }
+        }
 
-        public object Value { get; }
+        /// <summary>
+        /// Occurs when the value of the <see cref="Value"/> property changes.
+        /// </summary>
+        public event Action<object> ValueChanged;
     }
-
-    public interface IOptionType { }
 }
