@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Threading;
+using EscherTiler.Graphics;
 using EscherTiler.Numerics;
 using EscherTiler.Styles;
 using EscherTiler.Utilities;
@@ -141,11 +143,24 @@ namespace EscherTiler
 
             if (tiles.Count < 1)
             {
+                TileBase tile = Tiles[0];
+                Debug.Assert(tile != null, "tile != null");
+
+                Rectangle approximateBounds = tile.GetApproximateBounds();
+                if (!bounds.IntersectsWith(approximateBounds))
+                {
+                    tile = new TileInstance(
+                        (Tile) tile,
+                        tile.Label,
+                        tile.Transform * Matrix3x2.CreateTranslation(bounds.Center - approximateBounds.Center));
+                    tile.Style = StyleManager.GetStyle(tile);
+                }
+
                 // add initial tile to tiles
-                tiles.Add(Tiles[0]);
+                tiles.Add(tile);
 
                 // add initial tile to end of openTiles
-                openTiles.Enqueue(Tiles[0]);
+                openTiles.Enqueue(tile);
             }
 
             // while there are tiles with no neighbour
@@ -204,6 +219,93 @@ namespace EscherTiler
             newTile.Style = StyleManager.GetStyle(newTile);
 
             return newTile;
+        }
+
+        /// <summary>
+        ///     Draws a tiling.
+        /// </summary>
+        /// <param name="tiles">The tiles to draw.</param>
+        /// <param name="graphics">The graphics to draw to.</param>
+        /// <param name="lineStyle">The line style.</param>
+        /// <param name="fillStyle">If not null, overwrites the <see cref="TileBase.Style" /> of the tiles.</param>
+        /// <exception cref="ArgumentNullException">
+        /// </exception>
+        public static void DrawTiling(
+            [NotNull] IEnumerable<TileBase> tiles,
+            [NotNull] IGraphics graphics,
+            [NotNull] LineStyle lineStyle,
+            [CanBeNull] IStyle fillStyle = null)
+        {
+            if (tiles == null) throw new ArgumentNullException(nameof(tiles));
+            if (graphics == null) throw new ArgumentNullException(nameof(graphics));
+            if (lineStyle == null) throw new ArgumentNullException(nameof(lineStyle));
+
+            Matrix3x2 initialTransform = graphics.Transform;
+
+            graphics.SetLineStyle(lineStyle);
+            if (fillStyle != null)
+                graphics.FillStyle = fillStyle;
+
+            Dictionary<Tile, IGraphicsPath> tilePaths = new Dictionary<Tile, IGraphicsPath>();
+            try
+            {
+                foreach (TileBase tile in tiles)
+                {
+                    if (tile == null) throw new ArgumentNullException();
+
+                    if (fillStyle == null)
+                        graphics.FillStyle = tile.Style ?? SolidColourStyle.White;
+
+                    IGraphicsPath path;
+                    bool disposePath = false;
+
+                    TileInstance tileInstance;
+                    Tile rawTile = tile as Tile;
+                    if (rawTile != null)
+                    {
+                        path = graphics.CreatePath();
+                        rawTile.PopulateGraphicsPath(path);
+                        tilePaths.Add(rawTile, path);
+
+                        graphics.Transform = initialTransform;
+                    }
+                    else if ((tileInstance = tile as TileInstance) != null)
+                    {
+                        if (!tilePaths.TryGetValue(tileInstance.Tile, out path))
+                        {
+                            path = graphics.CreatePath();
+                            tileInstance.Tile.PopulateGraphicsPath(path);
+                            tilePaths.Add(tileInstance.Tile, path);
+                        }
+                        Debug.Assert(path != null, "path != null");
+
+                        graphics.Transform = tile.Transform * initialTransform;
+                    }
+                    else
+                    {
+                        disposePath = true;
+                        path = graphics.CreatePath();
+                        tile.PopulateGraphicsPath(path);
+
+                        graphics.Transform = initialTransform;
+                    }
+
+                    using (disposePath ? path : null)
+                    {
+                        graphics.FillPath(path);
+                        graphics.DrawPath(path);
+                    }
+                }
+            }
+            finally
+            {
+                graphics.Transform = initialTransform;
+                foreach (IGraphicsPath path in tilePaths.Values)
+                {
+                    Debug.Assert(path != null, "path != null");
+                    path.Dispose();
+                }
+            }
         }
     }
 }

@@ -683,6 +683,18 @@ namespace EscherTiler.Graphics.DirectX
             }
 
             /// <summary>
+            ///     Determines whether the path contains the specified point.
+            /// </summary>
+            /// <param name="point">The point.</param>
+            /// <param name="transform"></param>
+            /// <returns><see langword="true" /> if the point is within this path; otherwise <see langword="false" />.</returns>
+            public bool ContainsPoint(Vector2 point, Matrix3x2 transform)
+                => PathGeometry.FillContainsPoint(
+                    point.ToRawVector2(),
+                    transform.ToRawMatrix3x2(),
+                    PathGeometry.FlatteningTolerance);
+
+            /// <summary>
             ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
             /// </summary>
             public void Dispose()

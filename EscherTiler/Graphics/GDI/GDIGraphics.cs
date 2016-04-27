@@ -49,7 +49,7 @@ namespace EscherTiler.Graphics.GDI
         /// </exception>
         public GDIGraphics(
             [NotNull] System.Drawing.Graphics graphics,
-            [NotNull] IResourceManager resourceManager,
+            [NotNull] GDIResourceManager resourceManager,
             [NotNull] IStyle fillStyle,
             [NotNull] LineStyle lineStyle)
         {
@@ -248,7 +248,7 @@ namespace EscherTiler.Graphics.GDI
         /// <param name="rect">The rectangle to draw.</param>
         public void DrawRectangle(Rectangle rect)
         {
-            _graphics.DrawRectangle(LinePen, rect.ToGDIRectangle());
+            _graphics.DrawRectangle(LinePen, rect.X, rect.Y, rect.Width, rect.Height);
         }
 
         /// <summary>
@@ -257,7 +257,7 @@ namespace EscherTiler.Graphics.GDI
         /// <param name="rect">The rectangle to fill.</param>
         public void FillRectangle(Rectangle rect)
         {
-            _graphics.FillRectangle(FillBrush, rect.ToGDIRectangle());
+            _graphics.FillRectangle(FillBrush, rect.X, rect.Y, rect.Width, rect.Height);
         }
 
         /// <summary>
@@ -424,7 +424,7 @@ namespace EscherTiler.Graphics.GDI
             if (lineStyle == null) throw new ArgumentNullException(nameof(lineStyle));
 
             // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (lineStyle.Style == LineStyle && lineStyle.Width == LineWidth) return;
+            if (_lineStyle != null && lineStyle.Style == LineStyle && lineStyle.Width == LineWidth) return;
             if (_resourceManager == null)
                 throw new InvalidOperationException("The ResourceManager must be set before setting the style.");
             if (_lineStyle != null)
@@ -504,7 +504,7 @@ namespace EscherTiler.Graphics.GDI
         /// <summary>
         ///     The <see cref="IGraphicsPath" /> implementation for DirectX.
         /// </summary>
-        private class GraphicsPath : IGraphicsPath
+        public class GraphicsPath : IGraphicsPath
         {
             private GDIGraphicsPath _pathGeometry;
 
@@ -658,6 +658,15 @@ namespace EscherTiler.Graphics.GDI
 
                 return this;
             }
+
+            /// <summary>
+            ///     Determines whether the path contains the specified point.
+            /// </summary>
+            /// <param name="point">The point.</param>
+            /// <param name="transform">The transform to apply to the point.</param>
+            /// <returns><see langword="true" /> if the point is within this path; otherwise <see langword="false" />.</returns>
+            public bool ContainsPoint(Vector2 point, Matrix3x2 transform)
+                => PathGeometry.IsVisible(Vector2.Transform(point, transform).ToPointF());
 
             /// <summary>
             ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.

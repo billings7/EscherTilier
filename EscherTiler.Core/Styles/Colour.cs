@@ -145,7 +145,7 @@ namespace EscherTiler.Styles
             return ((byte) (A * 255) << 24) |
                    ((byte) (R * 255) << 16) |
                    ((byte) (G * 255) << 8) |
-                   ((byte) (A * 255) << 0);
+                   ((byte) (B * 255) << 0);
         }
 
         /// <summary>

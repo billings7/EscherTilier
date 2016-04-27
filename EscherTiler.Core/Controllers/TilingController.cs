@@ -21,7 +21,7 @@ namespace EscherTiler.Controllers
         private static readonly float _tolerance = 10;
 
         [NotNull]
-        private static readonly SolidColourStyle _transparentBlue =
+        public static readonly SolidColourStyle TransparentBlue =
             new SolidColourStyle(Colour.CornflowerBlue, 0.5f);
 
         [NotNull]
@@ -62,7 +62,7 @@ namespace EscherTiler.Controllers
             resourceManager.Add(SolidColourStyle.Black);
             resourceManager.Add(SolidColourStyle.Gray);
             resourceManager.Add(SolidColourStyle.CornflowerBlue);
-            resourceManager.Add(_transparentBlue);
+            resourceManager.Add(TransparentBlue);
 
             _tiles = _tiling.GetTiles(view.ViewBounds, Enumerable.Empty<TileBase>());
 
@@ -104,6 +104,15 @@ namespace EscherTiler.Controllers
         public IEnumerable<TileBase> Tiles => _tiles;
 
         /// <summary>
+        ///     Gets the tiling.
+        /// </summary>
+        /// <value>
+        ///     The tiling.
+        /// </value>
+        [NotNull]
+        public Tiling Tiling => _tiling;
+
+        /// <summary>
         ///     Raises the <see cref="E:ScreenBoundsChanged" /> event.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
@@ -123,71 +132,7 @@ namespace EscherTiler.Controllers
 
             graphics.ResourceManager = _resourceManager;
 
-            Matrix3x2 initialTransform = graphics.Transform;
-
-            graphics.SetLineStyle(_styleManager.LineStyle);
-
-            // First draw the tiles
-            Dictionary<Tile, IGraphicsPath> tilePaths = new Dictionary<Tile, IGraphicsPath>();
-            try
-            {
-                IEnumerable<TileBase> tiles = _tiles;
-                foreach (TileBase tile in tiles)
-                {
-                    Debug.Assert(tile != null, "tile != null");
-
-                    graphics.FillStyle = tile.Style ?? SolidColourStyle.White;
-
-                    IGraphicsPath path;
-                    bool disposePath = false;
-
-                    TileInstance tileInstance;
-                    Tile rawTile = tile as Tile;
-                    if (rawTile != null)
-                    {
-                        path = graphics.CreatePath();
-                        rawTile.PopulateGraphicsPath(path);
-                        tilePaths.Add(rawTile, path);
-
-                        graphics.Transform = initialTransform;
-                    }
-                    else if ((tileInstance = tile as TileInstance) != null)
-                    {
-                        if (!tilePaths.TryGetValue(tileInstance.Tile, out path))
-                        {
-                            path = graphics.CreatePath();
-                            tileInstance.Tile.PopulateGraphicsPath(path);
-                            tilePaths.Add(tileInstance.Tile, path);
-                        }
-                        Debug.Assert(path != null, "path != null");
-
-                        graphics.Transform = tile.Transform * initialTransform;
-                    }
-                    else
-                    {
-                        disposePath = true;
-                        path = graphics.CreatePath();
-                        tile.PopulateGraphicsPath(path);
-
-                        graphics.Transform = initialTransform;
-                    }
-
-                    using (disposePath ? path : null)
-                    {
-                        graphics.FillPath(path);
-                        graphics.DrawPath(path);
-                    }
-                }
-            }
-            finally
-            {
-                graphics.Transform = initialTransform;
-                foreach (IGraphicsPath path in tilePaths.Values)
-                {
-                    Debug.Assert(path != null, "path != null");
-                    path.Dispose();
-                }
-            }
+            Tiling.DrawTiling(_tiles, graphics, _styleManager.LineStyle);
 
             CurrentTool?.Draw(graphics);
         }
@@ -612,7 +557,7 @@ namespace EscherTiler.Controllers
                         CubicBezierCurve cubicCurve;
                         if ((quadCurve = line as QuadraticBezierCurve) != null)
                         {
-                            graphics.LineStyle = _transparentBlue;
+                            graphics.LineStyle = TransparentBlue;
                             graphics.DrawLines(
                                 Vector2.Transform(quadCurve.Start, transform),
                                 Vector2.Transform(quadCurve.ControlPoint, transform),
@@ -621,7 +566,7 @@ namespace EscherTiler.Controllers
                         }
                         else if ((cubicCurve = line as CubicBezierCurve) != null)
                         {
-                            graphics.LineStyle = _transparentBlue;
+                            graphics.LineStyle = TransparentBlue;
                             graphics.DrawLines(
                                 Vector2.Transform(cubicCurve.Start, transform),
                                 Vector2.Transform(cubicCurve.ControlPointA, transform),

@@ -8,9 +8,11 @@ using System.Linq;
 using System.Media;
 using System.Numerics;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using EscherTiler.Controllers;
 using EscherTiler.Expressions;
+using EscherTiler.Graphics.GDI;
 using EscherTiler.Properties;
 using EscherTiler.Styles;
 using EscherTiler.Utilities;
@@ -24,8 +26,8 @@ namespace EscherTiler
     {
         private float _zoom = 100f;
         private Matrix3x2 _scale = Matrix3x2.Identity, _invScale = Matrix3x2.Identity;
-        private Matrix3x2 _centerTranslate = Matrix3x2.Identity, _invCenterTranslate = Matrix3x2.Identity;
         private Matrix3x2 _translate = Matrix3x2.Identity, _invTranslate = Matrix3x2.Identity;
+        private Matrix3x2 _centerTranslate, _invCenterTranslate;
 
         [NotNull]
         private readonly float[] _zoomLevels =
@@ -67,6 +69,10 @@ namespace EscherTiler
 
         private Numerics.Rectangle _bounds;
 
+        private Size _lastNormalSize = Size.Empty;
+
+        private Point _lastNormalLocation = new Point(0, 0);
+
         [CanBeNull]
         private TilingController _controller;
 
@@ -74,7 +80,16 @@ namespace EscherTiler
         private PanTool _panTool;
 
         [NotNull]
+        private SelectTileTool _selectTileTool;
+
+        [CanBeNull]
+        private DragAction _dragAction;
+
+        [NotNull]
         private readonly Dictionary<Tool, ToolStripButton> _toolBtns = new Dictionary<Tool, ToolStripButton>();
+
+        [NotNull]
+        private readonly TilingPrintSettingsDialog _tilingPrintSettingsDialog;
 
         [NotNull]
         private readonly object _drawLock = new object();
@@ -97,6 +112,13 @@ namespace EscherTiler
             _statusInfoLabel.Text = string.Empty;
 
             _renderControl.MouseWheel += renderControl_MouseWheel;
+
+            _printDocument.GetTranform = GetPrintTransform;
+
+            _printPreviewDialog.StartPosition = FormStartPosition.CenterParent;
+            _printPreviewDialog.Size = new Size(1000, 800);
+
+            _tilingPrintSettingsDialog = new TilingPrintSettingsDialog(_printDocument, SelectTileAsync);
         }
 
         /// <summary>
@@ -155,9 +177,9 @@ namespace EscherTiler
                     new[]
                     {
                         new EdgePattern("a", new[] { pa = new EdgePart(1, 1, true) }),
-                        new EdgePattern("b", new[] { pb = new EdgePart(1, 1, true) }),
+                        new EdgePattern("b", new[] { pb = new EdgePart(2, 1, true) }),
                         new EdgePattern("c", new[] { pc = new EdgePart(1, 1, false) }),
-                        new EdgePattern("d", new[] { pd = new EdgePart(1, 1, false) })
+                        new EdgePattern("d", new[] { pd = new EdgePart(2, 1, false) })
                     },
                     new EdgePartAdjacencies
                     {
@@ -194,8 +216,9 @@ namespace EscherTiler
             _changeLineTypeCmb.SelectedItem = tc.EditLine.ChangeLineOption.Value;
 
             _controller = tc;
-            _controller.CurrentToolChanged += _controller_CurrentToolChanged;
+            _controller.CurrentToolChanged += controller_CurrentToolChanged;
             _panTool = new PanTool(_controller, this);
+            _selectTileTool = new SelectTileTool(_controller);
 
             _toolBtns.Add(_panTool, _panToolBtn);
 
@@ -204,9 +227,14 @@ namespace EscherTiler
             _renderControl.Start();
         }
 
+        /// <summary>
+        ///     Handles the OptionsChanged event of the TilingControllers EditLineTool.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void TilingController_EditLineTool_OptionsChanged(object sender, EventArgs e)
         {
-            TilingController.EditLineTool tool = (TilingController.EditLineTool)sender;
+            TilingController.EditLineTool tool = (TilingController.EditLineTool) sender;
 
             _changeLineTypeCmb.Visible = tool.Options.Contains(tool.ChangeLineOption);
         }
@@ -240,9 +268,6 @@ namespace EscherTiler
 
             UnloadGraphics();
         }
-
-        private Size _lastNormalSize = Size.Empty;
-        private Point _lastNormalLocation = new Point(0, 0);
 
         /// <summary>
         ///     Raises the <see cref="E:System.Windows.Forms.Control.Layout" /> event.
@@ -280,11 +305,46 @@ namespace EscherTiler
 
         private void saveAsMenuItem_Click(object sender, EventArgs e) { }
 
-        private void _pageSetupMenuItem_Click(object sender, EventArgs e) { }
+        /// <summary>
+        ///     Handles the Click event of the _pageSetupMenuItem control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        private void _pageSetupMenuItem_Click(object sender, EventArgs e)
+        {
+            _pageSetupDialog.ShowDialog(this);
+        }
 
-        private void printMenuItem_Click(object sender, EventArgs e) { }
+        /// <summary>
+        ///     Handles the Click event of the printMenuItem control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        private void printMenuItem_Click(object sender, EventArgs e)
+        {
+            _printDocument.Tiling = _controller?.Tiling;
+            if (_tilingPrintSettingsDialog.ShowDialog(this) != DialogResult.OK)
+                return;
 
-        private void printPreviewMenuItem_Click(object sender, EventArgs e) { }
+            if (_printDialog.ShowDialog(this) == DialogResult.OK)
+                _printDocument.Print();
+        }
+
+        /// <summary>
+        ///     Handles the Click event of the printPreviewMenuItem control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        private void printPreviewMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_printDocument.Tile == null && _printDocument.Tiling == null)
+                _printDocument.Tiling = _controller?.Tiling;
+
+            if (_tilingPrintSettingsDialog.ShowDialog(this) != DialogResult.OK)
+                return;
+
+            _printPreviewDialog.ShowDialog(this);
+        }
 
         private void exitMenuItem_Click(object sender, EventArgs e)
         {
@@ -321,7 +381,23 @@ namespace EscherTiler
 
         private void saveButton_Click(object sender, EventArgs e) { }
 
-        private void printButton_Click(object sender, EventArgs e) { }
+        /// <summary>
+        ///     Handles the Click event of the printButton control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        private void printButton_Click(object sender, EventArgs e)
+        {
+            if (_printDocument.Tile == null && _printDocument.Tiling == null)
+            {
+                _printDocument.Tiling = _controller?.Tiling;
+
+                if (_tilingPrintSettingsDialog.ShowDialog(this) != DialogResult.OK)
+                    return;
+            }
+
+            _printDocument.Print();
+        }
 
         private void helpButton_Click(object sender, EventArgs e) { }
 
@@ -449,8 +525,6 @@ namespace EscherTiler
             return false;
         }
 
-        private DragAction _dragAction;
-
         /// <summary>
         ///     Handles the MouseDown event of the renderControl control.
         /// </summary>
@@ -521,7 +595,7 @@ namespace EscherTiler
                 return;
             }
 
-            zoom = (float)Math.Round(zoom, 2);
+            zoom = (float) Math.Round(zoom, 2);
             if (zoom < _zoomLevels[_zoomLevels.Length - 1])
                 zoom = _zoomLevels[_zoomLevels.Length - 1];
             else if (zoom > _zoomLevels[0])
@@ -554,7 +628,12 @@ namespace EscherTiler
             }
         }
 
-        private void _controller_CurrentToolChanged(object sender, CurrentToolChangedEventArgs e)
+        /// <summary>
+        ///     Handles the CurrentToolChanged event of the _controller object.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="CurrentToolChangedEventArgs" /> instance containing the event data.</param>
+        private void controller_CurrentToolChanged(object sender, CurrentToolChangedEventArgs e)
         {
             if (e.OldTool != null)
             {
@@ -577,9 +656,14 @@ namespace EscherTiler
             }
         }
 
-        private void _changeLineTypeCmb_SelectedIndexChanged(object sender, EventArgs e)
+        /// <summary>
+        ///     Handles the SelectedIndexChanged event of the _changeLineTypeCmb control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        private void changeLineTypeCmb_SelectedIndexChanged(object sender, EventArgs e)
         {
-            ComboBoxValue<Type> val = (ComboBoxValue<Type>)_changeLineTypeCmb.SelectedItem;
+            ComboBoxValue<Type> val = (ComboBoxValue<Type>) _changeLineTypeCmb.SelectedItem;
             if (_controller != null) _controller.EditLine.ChangeLineOption.Value = val.Value;
         }
 
@@ -593,10 +677,10 @@ namespace EscherTiler
             if (_controller == null) return;
 
             Debug.Assert(sender is ToolStripButton);
-            ToolStripButton btn = (ToolStripButton)sender;
+            ToolStripButton btn = (ToolStripButton) sender;
 
             Debug.Assert(btn.Tag is Tool);
-            Tool tool = (Tool)btn.Tag;
+            Tool tool = (Tool) btn.Tag;
 
             if (_controller.CurrentTool != null)
             {
@@ -642,7 +726,7 @@ namespace EscherTiler
                 if (!_toolBtns.TryGetValue(tool, out btn))
                 {
                     string toolName = Resources.ResourceManager.GetString(tool.Name + ":Name");
-                    Image toolImage = (Image)Resources.ResourceManager.GetObject(tool.Name + ":Icon");
+                    Image toolImage = (Image) Resources.ResourceManager.GetObject(tool.Name + ":Icon");
 
                     btn = new ToolStripButton(toolName, toolImage, toolBtn_Click, tool.Name)
                     {
@@ -661,22 +745,90 @@ namespace EscherTiler
             _panToolBtn.PerformClick();
         }
 
+        /// <summary>
+        ///     Selects a tile from the tiling.
+        /// </summary>
+        /// <param name="initialTile">The initial tile.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ObjectDisposedException"></exception>
+        private Task<TileBase> SelectTileAsync(TileBase initialTile)
+        {
+            if (_controller == null) throw new ObjectDisposedException(nameof(Main));
+            _selectTileTool.LastTool = _controller.CurrentTool;
+            _selectTileTool.TileSelectedTcs = new TaskCompletionSource<TileBase>();
+            _controller.CurrentTool = _selectTileTool;
+            return _selectTileTool.TileSelectedTcs.Task;
+        }
+
+        /// <summary>
+        ///     Gets the transform matricies used for printing.
+        /// </summary>
+        /// <param name="bounds">The bounds.</param>
+        /// <param name="transform">The transform.</param>
+        /// <param name="inverseTransform">The inverse transform.</param>
+        /// <exception cref="System.ArgumentOutOfRangeException"></exception>
+        private void GetPrintTransform(
+            Numerics.Rectangle bounds,
+            out Matrix3x2 transform,
+            out Matrix3x2 inverseTransform)
+        {
+            float minDim = Math.Min(bounds.Width, bounds.Height);
+
+            Vector2 center = bounds.Center;
+
+            Matrix3x2 scale = Matrix3x2.CreateScale((minDim * _zoom) / 10000f, center);
+            Matrix3x2 invScale = Matrix3x2.CreateScale(10000f / (minDim * _zoom), center);
+
+            Matrix3x2 centerTranslate = Matrix3x2.CreateTranslation(center);
+            Matrix3x2 invCenterTranslate = Matrix3x2.CreateTranslation(-center);
+
+            Matrix3x2 translate, invTranslate;
+
+            switch (_printDocument.PrintMode)
+            {
+                case TilingPrintMode.TilingFull:
+                case TilingPrintMode.TilingLines:
+                    translate = Matrix3x2.CreateTranslation(_bounds.Center);
+                    invTranslate = Matrix3x2.CreateTranslation(-_bounds.Center);
+                    break;
+
+                case TilingPrintMode.SingleTileFull:
+                case TilingPrintMode.SingleTileLines:
+                    Debug.Assert(_printDocument.Tile != null, "_printDocument.Tile != null");
+
+                    Vector2 centroid = _printDocument.Tile.Centroid;
+
+                    translate = Matrix3x2.CreateTranslation(centroid);
+                    invTranslate = Matrix3x2.CreateTranslation(-centroid);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            transform = centerTranslate * translate * scale;
+            inverseTransform = invScale * invTranslate * invCenterTranslate;
+        }
+
+        /// <summary>
+        ///     Stores a value for a combo box with the display string that should be shown in the box.
+        /// </summary>
+        /// <typeparam name="T">The type of the value.</typeparam>
         private class ComboBoxValue<T>
         {
             /// <summary>
-            /// The display string.
+            ///     The display string.
             /// </summary>
             [NotNull]
             public readonly string DisplayString;
 
             /// <summary>
-            /// The value.
+            ///     The value.
             /// </summary>
             [NotNull]
             public readonly T Value;
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="ComboBoxValue{T}"/> class.
+            ///     Initializes a new instance of the <see cref="ComboBoxValue{T}" /> class.
             /// </summary>
             /// <param name="displayString">The display string.</param>
             /// <param name="value">The value.</param>
@@ -692,18 +844,18 @@ namespace EscherTiler
             }
 
             /// <summary>
-            /// Returns a string that represents the current object.
+            ///     Returns a string that represents the current object.
             /// </summary>
             /// <returns>
-            /// A string that represents the current object.
+            ///     A string that represents the current object.
             /// </returns>
             public override string ToString() => DisplayString;
 
             /// <summary>
-            /// Determines whether the specified object is equal to the current object.
+            ///     Determines whether the specified object is equal to the current object.
             /// </summary>
             /// <returns>
-            /// true if the specified object  is equal to the current object; otherwise, false.
+            ///     true if the specified object  is equal to the current object; otherwise, false.
             /// </returns>
             /// <param name="obj">The object to compare with the current object. </param>
             public override bool Equals(object obj)
@@ -714,10 +866,10 @@ namespace EscherTiler
             }
 
             /// <summary>
-            /// Serves as the default hash function.
+            ///     Serves as the default hash function.
             /// </summary>
             /// <returns>
-            /// A hash code for the current object.
+            ///     A hash code for the current object.
             /// </returns>
             public override int GetHashCode() => Value.GetHashCode();
         }

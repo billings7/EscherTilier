@@ -43,7 +43,7 @@ namespace EscherTiler.Graphics.GDI
         /// </summary>
         /// <param name="styleManager">The style manager to initialise the resources with.</param>
         /// <exception cref="System.ArgumentNullException"></exception>
-        public GDIResourceManager([CanBeNull] StyleManager styleManager)
+        public GDIResourceManager([CanBeNull] StyleManager styleManager = null)
         {
             if (styleManager != null)
                 AddFromStyleManager(styleManager);
@@ -559,6 +559,18 @@ namespace EscherTiler.Graphics.GDI
                 if (brushes != null)
                 {
                     foreach (KeyValuePair<IStyle, Resource<Brush>> kvp in brushes)
+                    {
+                        Debug.Assert(kvp.Value != null, "kvp.Value != null");
+                        Debug.Assert(kvp.Key != null, "kvp.Key != null");
+
+                        kvp.Value.Dispose();
+                    }
+                }
+
+                ResourceDictionary<LineStyle, Resource<Pen>> pens = Interlocked.Exchange(ref _pens, null);
+                if (pens != null)
+                {
+                    foreach (KeyValuePair<LineStyle, Resource<Pen>> kvp in pens)
                     {
                         Debug.Assert(kvp.Value != null, "kvp.Value != null");
                         Debug.Assert(kvp.Key != null, "kvp.Key != null");

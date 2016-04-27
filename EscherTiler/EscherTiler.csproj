@@ -101,6 +101,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Numerics.Vectors, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Numerics.Vectors.4.1.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
@@ -121,6 +122,7 @@
     <Compile Include="Graphics\GDI\TilerPrintDocument.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Graphics\GDI\TilingPrintMode.cs" />
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -131,7 +133,7 @@
       <SubType>Form</SubType>
       <DependentUpon>Main.cs</DependentUpon>
     </Compile>
-    <Compile Include="MainPanTool.cs">
+    <Compile Include="MainTools.cs">
       <SubType>Form</SubType>
       <DependentUpon>Main.cs</DependentUpon>
     </Compile>
@@ -142,6 +144,12 @@
     </Compile>
     <Compile Include="RenderDelegate.cs" />
     <Compile Include="RenderTargetContainer.cs" />
+    <Compile Include="TilingPrintSettingsDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="TilingPrintSettingsDialog.Designer.cs">
+      <DependentUpon>TilingPrintSettingsDialog.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
     </EmbeddedResource>
@@ -155,6 +163,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="TilingPrintSettingsDialog.resx">
+      <DependentUpon>TilingPrintSettingsDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

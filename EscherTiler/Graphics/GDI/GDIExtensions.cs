@@ -29,11 +29,25 @@ namespace EscherTiler.Graphics.GDI
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Rectangle ToGDIRectangle(this Numerics.Rectangle rectangle)
+        public static RectangleF ToGDIRectangleF(this Numerics.Rectangle rectangle)
         {
             Union u = _union;
             u.Rectangle = rectangle;
-            return u.GdiRectangle;
+            return u.GdiRectangleF;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Numerics.Rectangle ToRectangle(this Rectangle rectangle)
+        {
+            return new Numerics.Rectangle(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Numerics.Rectangle ToRectangle(this RectangleF rectangle)
+        {
+            Union u = _union;
+            u.GdiRectangleF = rectangle;
+            return u.Rectangle;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -81,7 +95,7 @@ namespace EscherTiler.Graphics.GDI
             public SizeF SizeF;
 
             [FieldOffset(0)]
-            public Rectangle GdiRectangle;
+            public RectangleF GdiRectangleF;
 
             [FieldOffset(0)]
             public Numerics.Rectangle Rectangle;

@@ -81,5 +81,13 @@ namespace EscherTiler.Graphics
         /// <returns>This <see cref="IGraphicsPath" />.</returns>
         [NotNull]
         IGraphicsPath AddCubicBezier(Vector2 controlA, Vector2 controlB, Vector2 to);
+
+        /// <summary>
+        ///     Determines whether the path contains the specified point.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <param name="transform">The transform to apply to the point.</param>
+        /// <returns><see langword="true" /> if the point is within this path; otherwise <see langword="false" />.</returns>
+        bool ContainsPoint(Vector2 point, Matrix3x2 transform);
     }
 }
