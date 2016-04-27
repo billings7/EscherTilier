@@ -115,6 +115,9 @@
     <Compile Include="Graphics\DirectX\DirectXGraphics.cs" />
     <Compile Include="Graphics\DirectX\DirectXExtensions.cs" />
     <Compile Include="Graphics\DirectX\DirectXResourceManager.cs" />
+    <Compile Include="Graphics\GDI\GDIExtensions.cs" />
+    <Compile Include="Graphics\GDI\GDIGraphics.cs" />
+    <Compile Include="Graphics\GDI\GDIResourceManager.cs" />
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
     </Compile>

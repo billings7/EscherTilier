@@ -289,7 +289,7 @@ namespace EscherTilier.Utilities
         public static IDisposable TempState(
             [NotNull] this IGraphics graphics,
             [CanBeNull] IStyle fillStyle = null,
-            [CanBeNull] IStyle lineStyle = null,
+            [CanBeNull] SolidColourStyle lineStyle = null,
             [CanBeNull] float? lineWidth = null,
             [CanBeNull] Matrix3x2? transform = null,
             [CanBeNull] IResourceManager resourceManager = null,

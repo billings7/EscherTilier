@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using EscherTilier.Styles;
 using SharpDX;
@@ -36,6 +36,7 @@ namespace EscherTilier.Graphics.DirectX
         ///     Converts a <see cref="System.Numerics.Vector2" /> to a DirectX <see cref="RawVector2" />.
         /// </summary>
         /// <param name="vector">The vector.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RawVector2 ToRawVector2(this Vector2 vector)
         {
             Union u = _union;
@@ -47,6 +48,7 @@ namespace EscherTilier.Graphics.DirectX
         ///     Converts a <see cref="Vector2" /> to a DirectX <see cref="Size2" />.
         /// </summary>
         /// <param name="vector">The vector.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Size2F ToSize2F(this Vector2 vector)
         {
             Union u = _union;
@@ -58,6 +60,7 @@ namespace EscherTilier.Graphics.DirectX
         ///     Converts a <see cref="Colour" /> to a DirectX <see cref="RawColor4" />.
         /// </summary>
         /// <param name="colour">The colour.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RawColor4 ToRawColor4(this Colour colour)
         {
             Union u = _union;
@@ -69,6 +72,7 @@ namespace EscherTilier.Graphics.DirectX
         ///     Converts a <see cref="System.Numerics.Matrix3x2" /> to a DirectX <see cref="RawMatrix3x2" />.
         /// </summary>
         /// <param name="matrix">The matrix.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RawMatrix3x2 ToRawMatrix3x2(this System.Numerics.Matrix3x2 matrix)
         {
             Union u = _union;
@@ -80,6 +84,7 @@ namespace EscherTilier.Graphics.DirectX
         ///     Converts a DirectX <see cref="RawMatrix3x2" /> to a <see cref="System.Numerics.Matrix3x2" />.
         /// </summary>
         /// <param name="matrix">The matrix.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static System.Numerics.Matrix3x2 ToMatrix3x2(this RawMatrix3x2 matrix)
         {
             Union u = _union;
@@ -92,6 +97,7 @@ namespace EscherTilier.Graphics.DirectX
         /// </summary>
         /// <param name="rect">The rectangle.</param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RawRectangleF ToRawRectangleF(this Numerics.Rectangle rect)
         {
             return new RawRectangleF(rect.Left, rect.Top, rect.Right, rect.Bottom);
@@ -102,6 +108,7 @@ namespace EscherTilier.Graphics.DirectX
         /// </summary>
         /// <param name="gradientStop">The gradient stop.</param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static SharpDX.Direct2D1.GradientStop ToGradientStop(this GradientStop gradientStop)
         {
             return new SharpDX.Direct2D1.GradientStop

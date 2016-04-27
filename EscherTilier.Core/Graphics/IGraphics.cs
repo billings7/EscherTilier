@@ -147,7 +147,7 @@ namespace EscherTilier.Graphics
         ///     The line style.
         /// </value>
         [NotNull]
-        IStyle LineStyle { get; set; }
+        SolidColourStyle LineStyle { get; set; }
 
         /// <summary>
         ///     Gets or sets the width of the drawn line.

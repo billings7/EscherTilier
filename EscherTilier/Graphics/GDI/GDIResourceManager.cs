@@ -1,155 +1,56 @@
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using EscherTilier.Graphics.Resources;
 using EscherTilier.Styles;
 using JetBrains.Annotations;
-using SharpDX.Direct2D1;
-using SharpDX.WIC;
-using Bitmap = SharpDX.Direct2D1.Bitmap;
-using BitmapInterpolationMode = SharpDX.Direct2D1.BitmapInterpolationMode;
-using FactoryD2D = SharpDX.Direct2D1.Factory;
-using FactoryWrite = SharpDX.DirectWrite.Factory;
 
-namespace EscherTilier.Graphics.DirectX
+namespace EscherTilier.Graphics.GDI
 {
     /// <summary>
-    ///     Resource manager for DirectX related objects.
+    ///     Resource manager for GDI+ related objects.
     /// </summary>
     /// <seealso cref="ResourceManager" />
     /// <seealso cref="IResourceManager{IStyle, Brush}" />
     /// <seealso cref="IResourceManager{IImage, Bitmap}" />
-    public class DirectXResourceManager : ResourceManager,
+    public class GDIResourceManager : ResourceManager,
         IResourceManager<IStyle, Brush>,
+        IResourceManager<LineStyle, Pen>,
         IResourceManager<IImage, Bitmap>
     {
-        /// <summary>
-        ///     The <see cref="FactoryD2D" /> instance.
-        /// </summary>
-        [NotNull]
-        public static readonly FactoryD2D FactoryD2D = new FactoryD2D(FactoryType.MultiThreaded);
-
-        [NotNull]
-        private static readonly FactoryWrite _factoryWrite = new FactoryWrite(SharpDX.DirectWrite.FactoryType.Shared);
-
-        [NotNull]
-        private static readonly ImagingFactory _imagingFactory = new ImagingFactory();
-
-        /// <summary>
-        ///     Creates an empty <see cref="PathGeometry" />.
-        /// </summary>
-        [NotNull]
-        public static PathGeometry CreatePathGeometry() => new PathGeometry(FactoryD2D);
-
-        /// <summary>
-        ///     Creates a stroke style.
-        /// </summary>
-        /// <param name="properties">The properties.</param>
-        /// <returns></returns>
-        [NotNull]
-        public static StrokeStyle CreateStrokeStyle(StrokeStyleProperties properties)
-            => new StrokeStyle(FactoryD2D, properties);
-
         [NotNull]
         private readonly object _lock = new object();
-
-        [NotNull]
-        private RenderTarget _renderTarget;
 
         [CanBeNull]
         private ResourceDictionary<IStyle, Resource<Brush>> _brushes =
             new ResourceDictionary<IStyle, Resource<Brush>>();
 
         [CanBeNull]
+        private ResourceDictionary<LineStyle, Resource<Pen>> _pens =
+            new ResourceDictionary<LineStyle, Resource<Pen>>();
+
+        [CanBeNull]
         private ResourceDictionary<IImage, Bitmap> _bitmaps =
             new ResourceDictionary<IImage, Bitmap>();
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="DirectXResourceManager" /> class.
+        ///     Initializes a new instance of the <see cref="GDIResourceManager" /> class.
         /// </summary>
-        /// <param name="renderTarget">The render target.</param>
-        public DirectXResourceManager([NotNull] RenderTarget renderTarget)
-        {
-            if (renderTarget == null) throw new ArgumentNullException(nameof(renderTarget));
-            _renderTarget = renderTarget;
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="DirectXResourceManager" /> class.
-        /// </summary>
-        /// <param name="renderTarget">The render target.</param>
         /// <param name="styleManager">The style manager to initialise the resources with.</param>
-        /// <exception cref="System.ArgumentNullException">
-        /// </exception>
-        public DirectXResourceManager([NotNull] RenderTarget renderTarget, [CanBeNull] StyleManager styleManager)
+        /// <exception cref="System.ArgumentNullException"></exception>
+        public GDIResourceManager([CanBeNull] StyleManager styleManager)
         {
-            if (renderTarget == null) throw new ArgumentNullException(nameof(renderTarget));
-            _renderTarget = renderTarget;
             if (styleManager != null)
                 AddFromStyleManager(styleManager);
         }
 
         /// <summary>
-        ///     Gets or sets the render target.
-        /// </summary>
-        /// <value>
-        ///     The render target.
-        /// </value>
-        public RenderTarget RenderTarget
-        {
-            get { return _renderTarget; }
-            set
-            {
-                if (value == null) throw new ArgumentNullException(nameof(value));
-                if (_renderTarget == value) return;
-
-                if (_bitmaps == null)
-                    throw new ObjectDisposedException(nameof(DirectXResourceManager));
-
-                lock (_lock)
-                {
-                    if (_bitmaps == null)
-                        throw new ObjectDisposedException(nameof(DirectXResourceManager));
-                    if (_renderTarget == value) return;
-
-                    _renderTarget = value;
-
-                    ResourceDictionary<IImage, Bitmap> oldBitmaps = _bitmaps;
-                    _bitmaps = new ResourceDictionary<IImage, Bitmap>();
-
-                    foreach (KeyValuePair<IImage, Bitmap> kvp in oldBitmaps)
-                    {
-                        Debug.Assert(kvp.Value != null, "kvp.Value != null");
-                        Debug.Assert(kvp.Key != null, "kvp.Key != null");
-
-                        _bitmaps.Add(kvp.Key, CreateBitmap(kvp.Key), false);
-
-                        kvp.Value.Dispose();
-                    }
-
-                    Debug.Assert(_brushes != null);
-                    ResourceDictionary<IStyle, Resource<Brush>> oldBrushes = _brushes;
-                    _brushes = new ResourceDictionary<IStyle, Resource<Brush>>();
-
-                    foreach (KeyValuePair<IStyle, Resource<Brush>> kvp in oldBrushes)
-                    {
-                        Debug.Assert(kvp.Value != null, "kvp.Value != null");
-                        Debug.Assert(kvp.Key != null, "kvp.Key != null");
-
-                        _brushes.Add(kvp.Key, CreateBrush(kvp.Key, false), false);
-
-                        kvp.Value.Dispose();
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        ///     Creates a <see cref="Brush" /> from an <see cref="IStyle" /> using the current render target.
+        ///     Creates a <see cref="Brush" /> from an <see cref="IStyle" />.
         /// </summary>
         /// <param name="style">The style.</param>
         /// <param name="temp">if set to <see langword="true" /> the brush is temporary.</param>
@@ -162,77 +63,76 @@ namespace EscherTilier.Graphics.DirectX
             {
                 SolidColourStyle solidColour = style as SolidColourStyle;
                 if (solidColour != null)
-                    return new SolidColorBrush(_renderTarget, solidColour.Colour.ToRawColor4());
+                    return new SolidBrush(solidColour.Colour.ToColor());
 
                 RandomColourStyle randomColour = style as RandomColourStyle;
                 if (randomColour != null)
-                    return new SolidColorBrush(_renderTarget, randomColour.PositionColour.ToRawColor4());
+                    return new SolidBrush(randomColour.PositionColour.ToColor());
 
                 LinearGradientStyle linearGradient = style as LinearGradientStyle;
                 if (linearGradient != null)
                 {
-                    GradientStopCollection gradientStops = new GradientStopCollection(
-                        _renderTarget,
-                        linearGradient.GradientStops.Select(DirectXExtensions.ToGradientStop).ToArray(),
-                        Gamma.Linear);
+                    ColorBlend blend = new ColorBlend(linearGradient.GradientStops.Count);
 
-                    return new Resource<Brush>(
-                        new LinearGradientBrush(
-                            _renderTarget,
-                            new LinearGradientBrushProperties
-                            {
-                                StartPoint = linearGradient.Start.ToRawVector2(),
-                                EndPoint = linearGradient.End.ToRawVector2()
-                            },
-                            gradientStops),
-                        gradientStops);
+                    Debug.Assert(blend.Colors != null, "blend.Colors != null");
+                    Debug.Assert(blend.Positions != null, "blend.Positions != null");
+
+                    for (int i = 0; i < linearGradient.GradientStops.Count; i++)
+                    {
+                        GradientStop stop = linearGradient.GradientStops[i];
+
+                        blend.Colors[i] = stop.Colour.ToColor();
+                        blend.Positions[i] = stop.Position;
+                    }
+
+                    return new LinearGradientBrush(
+                        linearGradient.Start.ToPointF(),
+                        linearGradient.End.ToPointF(),
+                        Color.Black,
+                        Color.White)
+                    {
+                        InterpolationColors = blend,
+                        WrapMode = WrapMode.Clamp
+                    };
                 }
 
                 RadialGradientStyle radialGradient = style as RadialGradientStyle;
                 if (radialGradient != null)
                 {
-                    GradientStopCollection gradientStops = new GradientStopCollection(
-                        _renderTarget,
-                        radialGradient.GradientStops.Select(DirectXExtensions.ToGradientStop).ToArray(),
-                        Gamma.Linear);
+                    ColorBlend blend = new ColorBlend(radialGradient.GradientStops.Count);
 
+                    Debug.Assert(blend.Colors != null, "blend.Colors != null");
+                    Debug.Assert(blend.Positions != null, "blend.Positions != null");
+
+                    for (int i = 0; i < radialGradient.GradientStops.Count; i++)
+                    {
+                        GradientStop stop = radialGradient.GradientStops[i];
+
+                        blend.Colors[i] = stop.Colour.ToColor();
+                        blend.Positions[i] = stop.Position;
+                    }
+
+                    GraphicsPath path = new GraphicsPath();
+                    path.AddEllipse(-1, -1, 1, 1);
                     return new Resource<Brush>(
-                        new RadialGradientBrush(
-                            _renderTarget,
-                            new RadialGradientBrushProperties
-                            {
-                                GradientOriginOffset = radialGradient.UnitOriginOffset.ToRawVector2(),
-                                RadiusX = 1,
-                                RadiusY = 1
-                            },
-                            new BrushProperties
-                            {
-                                Opacity = 1,
-                                Transform = radialGradient.GradientTransform.ToRawMatrix3x2()
-                            },
-                            gradientStops),
-                        gradientStops);
+                        new PathGradientBrush(path)
+                        {
+                            WrapMode = WrapMode.Clamp,
+                            Transform = radialGradient.GradientTransform.ToMatrix(),
+                            InterpolationColors = blend,
+                            CenterPoint = radialGradient.UnitOriginOffset.ToPointF()
+                        },
+                        path);
                 }
 
                 ImageStyle image = style as ImageStyle;
                 if (image != null)
                 {
                     Bitmap bitmap = temp ? Get(image.Image) : Add(image.Image);
-                    return new BitmapBrush(
-                        _renderTarget,
-                        bitmap,
-                        new BitmapBrushProperties
-                        {
-                            // TODO set from style
-                            ExtendModeX = ExtendMode.Clamp,
-                            ExtendModeY = ExtendMode.Clamp,
-                            InterpolationMode = BitmapInterpolationMode.Linear
-                        },
-                        new BrushProperties
-                        {
-                            Transform = image.ImageTransform.ToRawMatrix3x2(),
-                            Opacity = 1
-                        });
+                    return new TextureBrush(bitmap, WrapMode.Clamp)
+                    {
+                        Transform = image.ImageTransform.ToMatrix()
+                    };
                 }
 
                 throw new NotSupportedException();
@@ -240,7 +140,29 @@ namespace EscherTilier.Graphics.DirectX
         }
 
         /// <summary>
-        ///     Creates a <see cref="Bitmap" /> from an <see cref="IImage" /> using the current render target.
+        ///     Creates a <see cref="Pen" /> from a <see cref="LineStyle" />.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        /// <param name="temp">if set to <see langword="true" /> the brush is temporary.</param>
+        /// <returns></returns>
+        /// <exception cref="System.NotImplementedException"></exception>
+        [NotNull]
+        private Resource<Pen> CreatePen([NotNull] LineStyle style, bool temp)
+        {
+            lock (_lock)
+            {
+                Brush brush = temp ? Get(style.Style) : Add(style.Style);
+                return new Pen(brush, style.Width)
+                {
+                    LineJoin = LineJoin.Round,
+                    StartCap = LineCap.Round,
+                    EndCap = LineCap.Round
+                };
+            }
+        }
+
+        /// <summary>
+        ///     Creates a <see cref="Bitmap" /> from an <see cref="IImage" />.
         /// </summary>
         /// <param name="image">The image.</param>
         /// <returns></returns>
@@ -248,20 +170,7 @@ namespace EscherTilier.Graphics.DirectX
         private Bitmap CreateBitmap([NotNull] IImage image)
         {
             using (Stream stream = image.GetStream())
-            using (BitmapDecoder decoder = new BitmapDecoder(
-                _imagingFactory,
-                stream,
-                DecodeOptions.CacheOnDemand))
-            using (BitmapFrameDecode source = decoder.GetFrame(0))
-            using (FormatConverter converter = new FormatConverter(_imagingFactory))
-            {
-                converter.Initialize(source, SharpDX.WIC.PixelFormat.Format32bppPRGBA);
-
-                Bitmap bitmap = Bitmap.FromWicBitmap(_renderTarget, converter);
-
-                Debug.Assert(bitmap != null, "bitmap != null");
-                return bitmap;
-            }
+                return (Bitmap) Image.FromStream(stream);
         }
 
         /// <summary>
@@ -284,6 +193,8 @@ namespace EscherTilier.Graphics.DirectX
             }
         }
 
+        #region Brushes
+
         /// <summary>
         ///     Gets the brush for the specified style.
         /// </summary>
@@ -299,7 +210,7 @@ namespace EscherTilier.Graphics.DirectX
 
             lock (_lock)
             {
-                if (_brushes == null) throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                if (_brushes == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
                 Resource<Brush> brush;
                 if (_brushes.TryGetResource(style, out brush))
                 {
@@ -318,13 +229,14 @@ namespace EscherTilier.Graphics.DirectX
         /// </summary>
         /// <param name="style">The style.</param>
         /// <returns>The created brush.</returns>
+        [NotNull]
         public Brush Add(IStyle style)
         {
             if (style == null) throw new ArgumentNullException(nameof(style));
 
             lock (_lock)
             {
-                if (_brushes == null) throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                if (_brushes == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
                 return _brushes.GetOrAdd(style, k => CreateBrush(k, false), false).Value;
             }
         }
@@ -343,7 +255,7 @@ namespace EscherTilier.Graphics.DirectX
 
             lock (_lock)
             {
-                if (_brushes == null) throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                if (_brushes == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
                 _brushes.Add(style, brush, false);
             }
         }
@@ -370,11 +282,11 @@ namespace EscherTilier.Graphics.DirectX
             if (style == null) throw new ArgumentNullException(nameof(style));
 
             if (_brushes == null)
-                throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                throw new ObjectDisposedException(nameof(GDIResourceManager));
             lock (_lock)
             {
                 if (_brushes == null)
-                    throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                    throw new ObjectDisposedException(nameof(GDIResourceManager));
 
                 ImageStyle imageStyle = style as ImageStyle;
                 if (imageStyle != null)
@@ -398,6 +310,127 @@ namespace EscherTilier.Graphics.DirectX
             }
         }
 
+        #endregion
+
+        #region Pens
+
+        /// <summary>
+        ///     Gets the pen for the specified style.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        /// <returns>The pen.</returns>
+        /// <exception cref="System.Collections.Generic.KeyNotFoundException">
+        ///     The manager did not contain a resource with the given
+        ///     key.
+        /// </exception>
+        public Pen Get(LineStyle style)
+        {
+            if (style == null) throw new ArgumentNullException(nameof(style));
+
+            lock (_lock)
+            {
+                if (_pens == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
+                Resource<Pen> pen;
+                if (_pens.TryGetResource(style, out pen))
+                {
+                    Debug.Assert(pen != null, "pen != null");
+                    return pen.Value;
+                }
+
+                pen = CreatePen(style, true);
+                _pens.Add(style, pen, true);
+                return pen.Value;
+            }
+        }
+
+        /// <summary>
+        ///     Adds the specified <see cref="LineStyle" /> to the manager, creating the pen for it.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        /// <returns>The created pen.</returns>
+        [NotNull]
+        public Pen Add(LineStyle style)
+        {
+            if (style == null) throw new ArgumentNullException(nameof(style));
+
+            lock (_lock)
+            {
+                if (_pens == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
+                return _pens.GetOrAdd(style, k => CreatePen(k, false), false).Value;
+            }
+        }
+
+        void IResourceManager<LineStyle>.Add(LineStyle style) => Add(style);
+
+        /// <summary>
+        ///     Adds the specified <see cref="LineStyle" /> to <see cref="Pen" /> resource mapping to the manager.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        /// <param name="pen">The pen.</param>
+        public void Add(LineStyle style, Pen pen)
+        {
+            if (style == null) throw new ArgumentNullException(nameof(style));
+            if (pen == null) throw new ArgumentNullException(nameof(pen));
+
+            lock (_lock)
+            {
+                if (_pens == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
+                _pens.Add(style, pen, false);
+            }
+        }
+
+        /// <summary>
+        ///     Releases the specified <see cref="LineStyle" />.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        public void Release(LineStyle style) => ReleaseRemove(style, true);
+
+        /// <summary>
+        ///     Removes the resource specified by the given key.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        public void Remove(LineStyle style) => ReleaseRemove(style, false);
+
+        /// <summary>
+        ///     Releases or completely removes a resource.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        /// <param name="release">if set to <see langword="true" /> the resource will be released instead of completely removed.</param>
+        private bool ReleaseRemove(LineStyle style, bool release)
+        {
+            if (style == null) throw new ArgumentNullException(nameof(style));
+
+            if (_pens == null)
+                throw new ObjectDisposedException(nameof(GDIResourceManager));
+            lock (_lock)
+            {
+                if (_pens == null)
+                    throw new ObjectDisposedException(nameof(GDIResourceManager));
+
+                Release(style.Style);
+
+                Resource<Pen> pen;
+                switch (_pens.Remove(style, out pen, release ? true : (bool?) null))
+                {
+                    case Removed.NotFound:
+                        return false;
+                    case Removed.Removed:
+                        return true;
+                    case Removed.RemovedLast:
+                        Debug.Assert(pen != null, "pen != null");
+                        pen.Dispose();
+                        return true;
+                    default:
+                        Debug.Fail("Unexpected value");
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
+
+        #endregion
+
+        #region Images
+
         /// <summary>
         ///     Gets the bitmap for the specified image.
         /// </summary>
@@ -411,7 +444,7 @@ namespace EscherTilier.Graphics.DirectX
 
             lock (_lock)
             {
-                if (_bitmaps == null) throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                if (_bitmaps == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
                 Bitmap bitmap;
                 if (_bitmaps.TryGetResource(image, out bitmap))
                 {
@@ -437,7 +470,7 @@ namespace EscherTilier.Graphics.DirectX
 
             lock (_lock)
             {
-                if (_bitmaps == null) throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                if (_bitmaps == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
                 return _bitmaps.GetOrAdd(image, CreateBitmap, false);
             }
         }
@@ -456,7 +489,7 @@ namespace EscherTilier.Graphics.DirectX
 
             lock (_lock)
             {
-                if (_bitmaps == null) throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                if (_bitmaps == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
                 _bitmaps.Add(image, bitmap, false);
             }
         }
@@ -483,11 +516,11 @@ namespace EscherTilier.Graphics.DirectX
             if (image == null) throw new ArgumentNullException(nameof(image));
 
             if (_bitmaps == null)
-                throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                throw new ObjectDisposedException(nameof(GDIResourceManager));
             lock (_lock)
             {
                 if (_bitmaps == null)
-                    throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                    throw new ObjectDisposedException(nameof(GDIResourceManager));
 
                 Bitmap bitmap;
                 switch (_bitmaps.Remove(image, out bitmap, release ? true : (bool?) null))
@@ -506,6 +539,8 @@ namespace EscherTilier.Graphics.DirectX
                 }
             }
         }
+
+        #endregion
 
         /// <summary>
         ///     Releases unmanaged and - optionally - managed resources.

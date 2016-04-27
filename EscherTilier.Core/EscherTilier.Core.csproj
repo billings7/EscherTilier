@@ -102,6 +102,9 @@
     <Compile Include="Graphics\MemoryImage.cs" />
     <Compile Include="Graphics\Resources\IResourceReleaser.cs" />
     <Compile Include="Graphics\Resources\IResourceRemover.cs" />
+    <Compile Include="Graphics\Resources\Removed.cs" />
+    <Compile Include="Graphics\Resources\Resource.cs" />
+    <Compile Include="Graphics\Resources\ResourceDictionary.cs" />
     <Compile Include="Graphics\Resources\ResourceManager.cs" />
     <Compile Include="IView.cs" />
     <Compile Include="LinePoint.cs" />

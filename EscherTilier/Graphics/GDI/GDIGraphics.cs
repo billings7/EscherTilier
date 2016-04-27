@@ -2,105 +2,81 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Numerics;
 using System.Threading;
 using EscherTilier.Graphics.Resources;
-using EscherTilier.Numerics;
 using EscherTilier.Styles;
 using JetBrains.Annotations;
-using SharpDX.Direct2D1;
-using SharpDX.Mathematics.Interop;
+using GDIGraphicsPath = System.Drawing.Drawing2D.GraphicsPath;
+using Rectangle = EscherTilier.Numerics.Rectangle;
 
-namespace EscherTilier.Graphics.DirectX
+namespace EscherTilier.Graphics.GDI
 {
-    /// <summary>
-    ///     DirectX graphics renderer.
-    /// </summary>
-    public class DirectXGraphics : IGraphics
+    public class GDIGraphics : IGraphics
     {
-        private static readonly StrokeStyle _strokeStyle = DirectXResourceManager.CreateStrokeStyle(
-            new StrokeStyleProperties
-            {
-                LineJoin = LineJoin.Round,
-                StartCap = CapStyle.Round,
-                EndCap = CapStyle.Round
-            });
-
         [NotNull]
-        private RenderTarget _renderTarget;
+        private System.Drawing.Graphics _graphics;
 
         [CanBeNull]
         private Brush _fillBrush;
 
         [CanBeNull]
-        private Brush _lineBrush;
+        private Pen _linePen;
 
         [CanBeNull]
         private IStyle _fillStyle;
 
         [CanBeNull]
-        private SolidColourStyle _lineStyle;
-
-        private float _lineWidth;
+        private LineStyle _lineStyle;
 
         [NotNull]
-        private DirectXResourceManager _resourceManager;
+        private GDIResourceManager _resourceManager;
 
         [NotNull]
         private readonly Stack<State> _stateStack = new Stack<State>();
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="DirectXGraphics" /> class.
+        ///     Initializes a new instance of the <see cref="GDIGraphics" /> class.
         /// </summary>
-        /// <param name="renderTarget">The render target.</param>
+        /// <param name="graphics">The graphics.</param>
         /// <param name="resourceManager">The initial resource manager.</param>
         /// <param name="fillStyle">The initial fill style.</param>
         /// <param name="lineStyle">The initial line style.</param>
-        /// <param name="lineWidth">Width of the line.</param>
         /// <exception cref="System.ArgumentNullException">
         /// </exception>
-        public DirectXGraphics(
-            [NotNull] RenderTarget renderTarget,
+        public GDIGraphics(
+            [NotNull] System.Drawing.Graphics graphics,
             [NotNull] IResourceManager resourceManager,
             [NotNull] IStyle fillStyle,
-            [NotNull] SolidColourStyle lineStyle,
-            float lineWidth)
+            [NotNull] LineStyle lineStyle)
         {
-            if (renderTarget == null) throw new ArgumentNullException(nameof(renderTarget));
+            if (graphics == null) throw new ArgumentNullException(nameof(graphics));
             if (resourceManager == null) throw new ArgumentNullException(nameof(resourceManager));
             if (fillStyle == null) throw new ArgumentNullException(nameof(fillStyle));
             if (lineStyle == null) throw new ArgumentNullException(nameof(lineStyle));
-            _renderTarget = renderTarget;
+            _graphics = graphics;
             ResourceManager = resourceManager;
             FillStyle = fillStyle;
-            LineStyle = lineStyle;
-            LineWidth = lineWidth;
+            SetLineStyle(lineStyle);
         }
 
         /// <summary>
-        /// Gets or sets the render target.
+        ///     Gets or sets the render target.
         /// </summary>
         /// <value>
-        /// The render target.
+        ///     The render target.
         /// </value>
         [NotNull]
-        public RenderTarget RenderTarget
+        public System.Drawing.Graphics Graphics
         {
-            get { return _renderTarget; }
+            get { return _graphics; }
             set
             {
                 if (value == null) throw new ArgumentNullException(nameof(value));
-                if (_renderTarget == value) return;
-
-                if (_fillStyle != null)
-                    _resourceManager.Release(_fillStyle);
-                if (_lineStyle != null)
-                    _resourceManager.Release(_lineStyle);
-                _lineBrush = null;
-                _fillBrush = null;
-
-                _resourceManager.RenderTarget = value;
-                _renderTarget = value;
+                _graphics = value;
             }
         }
 
@@ -108,7 +84,7 @@ namespace EscherTilier.Graphics.DirectX
         ///     Creates an <see cref="IGraphicsPath" /> that can be used to draw a path with this graphics object.
         /// </summary>
         /// <returns></returns>
-        public IGraphicsPath CreatePath() => new GraphicsPath(DirectXResourceManager.CreatePathGeometry());
+        public IGraphicsPath CreatePath() => new GraphicsPath();
 
         /// <summary>
         ///     Draws a path.
@@ -121,7 +97,7 @@ namespace EscherTilier.Graphics.DirectX
             if (gp == null)
                 throw new ArgumentException("The path must be a path returned by CreatePath", nameof(path));
 
-            _renderTarget.DrawGeometry(gp.PathGeometry, LineBrush, _lineWidth, _strokeStyle);
+            _graphics.DrawPath(LinePen, gp.PathGeometry);
         }
 
         /// <summary>
@@ -135,7 +111,7 @@ namespace EscherTilier.Graphics.DirectX
             if (gp == null)
                 throw new ArgumentException("The path must be a path returned by CreatePath", nameof(path));
 
-            _renderTarget.FillGeometry(gp.PathGeometry, FillBrush);
+            _graphics.FillPath(FillBrush, gp.PathGeometry);
         }
 
         /// <summary>
@@ -145,7 +121,7 @@ namespace EscherTilier.Graphics.DirectX
         /// <param name="to">The point to draw the line to.</param>
         public void DrawLine(Vector2 @from, Vector2 to)
         {
-            _renderTarget.DrawLine(@from.ToRawVector2(), to.ToRawVector2(), LineBrush, _lineWidth, _strokeStyle);
+            _graphics.DrawLine(LinePen, @from.ToPointF(), to.ToPointF());
         }
 
         /// <summary>
@@ -154,18 +130,11 @@ namespace EscherTilier.Graphics.DirectX
         /// <param name="points">The points to draw lines between.</param>
         public void DrawLines(Vector2[] points)
         {
-            using (GraphicsPath path = new GraphicsPath(DirectXResourceManager.CreatePathGeometry()))
-            {
-                path.Start(points[0])
-                    .AddLines(new ArraySegment<Vector2>(points, 1, points.Length - 1))
-                    .End(false);
-
-                _renderTarget.DrawGeometry(path.PathGeometry, LineBrush, _lineWidth, _strokeStyle);
-            }
+            _graphics.DrawLines(LinePen, points.Select(GDIExtensions.ToPointF).ToArray());
         }
 
         /// <summary>
-        /// Draws an arc of an elipse.
+        ///     Draws an arc of an elipse.
         /// </summary>
         /// <param name="from">The start point of the arc.</param>
         /// <param name="to">The end point of the arc.</param>
@@ -175,14 +144,7 @@ namespace EscherTilier.Graphics.DirectX
         /// <param name="isLarge">Specifies whether the given arc is larger than 180 degrees</param>
         public void DrawArc(Vector2 @from, Vector2 to, Vector2 radius, float angle, bool clockwise, bool isLarge)
         {
-            using (GraphicsPath path = new GraphicsPath(DirectXResourceManager.CreatePathGeometry()))
-            {
-                path.Start(from)
-                    .AddArc(to, radius, angle, clockwise, isLarge)
-                    .End(false);
-
-                _renderTarget.DrawGeometry(path.PathGeometry, LineBrush, _lineWidth, _strokeStyle);
-            }
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -194,14 +156,12 @@ namespace EscherTilier.Graphics.DirectX
         /// <returns>This <see cref="IGraphicsPath" />.</returns>
         public void DrawQuadraticBezier(Vector2 @from, Vector2 control, Vector2 to)
         {
-            using (GraphicsPath path = new GraphicsPath(DirectXResourceManager.CreatePathGeometry()))
-            {
-                path.Start(from)
-                    .AddQuadraticBezier(control, to)
-                    .End(false);
-
-                _renderTarget.DrawGeometry(path.PathGeometry, LineBrush, _lineWidth, _strokeStyle);
-            }
+            _graphics.DrawBezier(
+                LinePen,
+                @from.ToPointF(),
+                (@from + (2f / 3f * (control - @from))).ToPointF(),
+                (to + (2f / 3f * (control - to))).ToPointF(),
+                to.ToPointF());
         }
 
         /// <summary>
@@ -214,14 +174,12 @@ namespace EscherTilier.Graphics.DirectX
         /// <returns>This <see cref="IGraphicsPath" />.</returns>
         public void DrawCubicBezier(Vector2 @from, Vector2 controlA, Vector2 controlB, Vector2 to)
         {
-            using (GraphicsPath path = new GraphicsPath(DirectXResourceManager.CreatePathGeometry()))
-            {
-                path.Start(from)
-                    .AddCubicBezier(controlA, controlB, to)
-                    .End(false);
-
-                _renderTarget.DrawGeometry(path.PathGeometry, LineBrush, _lineWidth, _strokeStyle);
-            }
+            _graphics.DrawBezier(
+                LinePen,
+                @from.ToPointF(),
+                controlA.ToPointF(),
+                controlB.ToPointF(),
+                to.ToPointF());
         }
 
         /// <summary>
@@ -231,16 +189,12 @@ namespace EscherTilier.Graphics.DirectX
         /// <param name="radius">The radius of the circle.</param>
         public void DrawCircle(Vector2 point, float radius)
         {
-            _renderTarget.DrawEllipse(
-                new Ellipse
-                {
-                    Point = point.ToRawVector2(),
-                    RadiusX = radius,
-                    RadiusY = radius
-                },
-                LineBrush,
-                _lineWidth,
-                _strokeStyle);
+            _graphics.DrawEllipse(
+                LinePen,
+                point.X - radius,
+                point.Y - radius,
+                radius * 2,
+                radius * 2);
         }
 
         /// <summary>
@@ -250,14 +204,12 @@ namespace EscherTilier.Graphics.DirectX
         /// <param name="radius">The radius of the circle.</param>
         public void FillCircle(Vector2 point, float radius)
         {
-            _renderTarget.FillEllipse(
-                new Ellipse
-                {
-                    Point = point.ToRawVector2(),
-                    RadiusX = radius,
-                    RadiusY = radius
-                },
-                FillBrush);
+            _graphics.FillEllipse(
+                FillBrush,
+                point.X - radius,
+                point.Y - radius,
+                radius * 2,
+                radius * 2);
         }
 
         /// <summary>
@@ -267,16 +219,12 @@ namespace EscherTilier.Graphics.DirectX
         /// <param name="radius">The radius of the elipse in each axis.</param>
         public void DrawEllipse(Vector2 point, Vector2 radius)
         {
-            _renderTarget.DrawEllipse(
-                new Ellipse
-                {
-                    Point = point.ToRawVector2(),
-                    RadiusX = radius.X,
-                    RadiusY = radius.Y
-                },
-                LineBrush,
-                _lineWidth,
-                _strokeStyle);
+            _graphics.DrawEllipse(
+                LinePen,
+                point.X - radius.X,
+                point.Y - radius.Y,
+                radius.X * 2,
+                radius.Y * 2);
         }
 
         /// <summary>
@@ -286,14 +234,12 @@ namespace EscherTilier.Graphics.DirectX
         /// <param name="radius">The radius of the elipse in each axis.</param>
         public void FillEllipse(Vector2 point, Vector2 radius)
         {
-            _renderTarget.FillEllipse(
-                new Ellipse
-                {
-                    Point = point.ToRawVector2(),
-                    RadiusX = radius.X,
-                    RadiusY = radius.Y
-                },
-                FillBrush);
+            _graphics.FillEllipse(
+                FillBrush,
+                point.X - radius.X,
+                point.Y - radius.Y,
+                radius.X * 2,
+                radius.Y * 2);
         }
 
         /// <summary>
@@ -302,7 +248,7 @@ namespace EscherTilier.Graphics.DirectX
         /// <param name="rect">The rectangle to draw.</param>
         public void DrawRectangle(Rectangle rect)
         {
-            _renderTarget.DrawRectangle(rect.ToRawRectangleF(), LineBrush, _lineWidth, _strokeStyle);
+            _graphics.DrawRectangle(LinePen, rect.ToGDIRectangle());
         }
 
         /// <summary>
@@ -311,7 +257,7 @@ namespace EscherTilier.Graphics.DirectX
         /// <param name="rect">The rectangle to fill.</param>
         public void FillRectangle(Rectangle rect)
         {
-            _renderTarget.FillRectangle(rect.ToRawRectangleF(), FillBrush);
+            _graphics.FillRectangle(FillBrush, rect.ToGDIRectangle());
         }
 
         /// <summary>
@@ -322,8 +268,12 @@ namespace EscherTilier.Graphics.DirectX
         /// </value>
         public Matrix3x2 Transform
         {
-            get { return _renderTarget.Transform.ToMatrix3x2(); }
-            set { _renderTarget.Transform = value.ToRawMatrix3x2(); }
+            get
+            {
+                using (Matrix transform = _graphics.Transform)
+                    return transform.ToMatrix3x2();
+            }
+            set { _graphics.Transform = value.ToMatrix(); }
         }
 
         /// <summary>
@@ -344,13 +294,13 @@ namespace EscherTilier.Graphics.DirectX
                 if (value == null) throw new ArgumentNullException(nameof(value));
                 if (value == _resourceManager) return;
 
-                DirectXResourceManager manager = value as DirectXResourceManager;
+                GDIResourceManager manager = value as GDIResourceManager;
                 if (manager == null)
-                    throw new ArgumentException("Expected resource manager of type DirectXResourceManager.");
+                    throw new ArgumentException("Expected resource manager of type GDIResourceManager.");
 
                 if (_fillStyle != null) _resourceManager.Release(_fillStyle);
                 if (_lineStyle != null) _resourceManager.Release(_lineStyle);
-                _lineBrush = null;
+                _linePen = null;
                 _fillBrush = null;
                 _resourceManager = manager;
             }
@@ -406,31 +356,33 @@ namespace EscherTilier.Graphics.DirectX
             get
             {
                 Debug.Assert(_lineStyle != null, "_style != null");
-                return _lineStyle;
+                return _lineStyle.Style;
             }
             set
             {
                 if (value == null) throw new ArgumentNullException(nameof(value));
-                if (value == _lineStyle) return;
+                if (value == _lineStyle?.Style) return;
                 if (_resourceManager == null)
                     throw new InvalidOperationException("The ResourceManager must be set before setting the style.");
                 if (_lineStyle != null)
                     _resourceManager.Release(_lineStyle);
-                _lineBrush = _resourceManager.Get<IStyle, Brush>(value);
-                _lineStyle = value;
+
+                LineStyle newStyle = new LineStyle(_lineStyle?.Width ?? 0, value);
+                _linePen = _resourceManager.Get<LineStyle, Pen>(newStyle);
+                _lineStyle = newStyle;
             }
         }
 
         [NotNull]
-        private Brush LineBrush
+        private Pen LinePen
         {
             get
             {
-                if (_lineBrush != null) return _lineBrush;
+                if (_linePen != null) return _linePen;
                 Debug.Assert(_lineStyle != null, "_lineStyle != null");
-                _lineBrush = _resourceManager.Get<IStyle, Brush>(_lineStyle);
-                Debug.Assert(_lineBrush != null, "_lineBrush != null");
-                return _lineBrush;
+                _linePen = _resourceManager.Get<LineStyle, Pen>(_lineStyle);
+                Debug.Assert(_linePen != null, "_linePen != null");
+                return _linePen;
             }
         }
 
@@ -442,11 +394,24 @@ namespace EscherTilier.Graphics.DirectX
         /// </value>
         public float LineWidth
         {
-            get { return _lineWidth; }
+            get { return _lineStyle?.Width ?? 0; }
             set
             {
                 if (value <= 0) throw new ArgumentOutOfRangeException(nameof(value));
-                _lineWidth = value;
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (value == (_lineStyle?.Width ?? 0)) return;
+                if (_resourceManager == null)
+                {
+                    throw new InvalidOperationException(
+                        "The ResourceManager must be set before setting the line width.");
+                }
+                if (_lineStyle == null)
+                    throw new InvalidOperationException("The LineStyle must be set before setting the line width.");
+                _resourceManager.Release(_lineStyle);
+
+                LineStyle newStyle = new LineStyle(value, _lineStyle.Style);
+                _linePen = _resourceManager.Get<LineStyle, Pen>(newStyle);
+                _lineStyle = newStyle;
             }
         }
 
@@ -457,8 +422,16 @@ namespace EscherTilier.Graphics.DirectX
         public void SetLineStyle(LineStyle lineStyle)
         {
             if (lineStyle == null) throw new ArgumentNullException(nameof(lineStyle));
-            LineStyle = lineStyle.Style;
-            LineWidth = lineStyle.Width;
+
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            if (lineStyle.Style == LineStyle && lineStyle.Width == LineWidth) return;
+            if (_resourceManager == null)
+                throw new InvalidOperationException("The ResourceManager must be set before setting the style.");
+            if (_lineStyle != null)
+                _resourceManager.Release(_lineStyle);
+
+            _linePen = _resourceManager.Get<LineStyle, Pen>(lineStyle);
+            _lineStyle = lineStyle;
         }
 
         /// <summary>
@@ -487,7 +460,7 @@ namespace EscherTilier.Graphics.DirectX
             if (_lineStyle != null)
             {
                 _resourceManager.Release(_lineStyle);
-                _lineBrush = null;
+                _linePen = null;
             }
         }
 
@@ -501,32 +474,29 @@ namespace EscherTilier.Graphics.DirectX
             private readonly IStyle FillStyle;
 
             [NotNull]
-            private readonly SolidColourStyle LineStyle;
-
-            private readonly float LineWidth;
+            private readonly LineStyle LineStyle;
 
             private readonly Matrix3x2 Transform;
 
             [NotNull]
-            private readonly DirectXResourceManager ResourceManager;
+            private readonly GDIResourceManager ResourceManager;
 
-            public State([NotNull] DirectXGraphics graphics)
+            public State([NotNull] GDIGraphics graphics)
             {
                 Debug.Assert(graphics != null, "graphics != null");
+                Debug.Assert(graphics._lineStyle != null, "_style != null");
                 FillStyle = graphics.FillStyle;
-                LineStyle = graphics.LineStyle;
-                LineWidth = graphics._lineWidth;
+                LineStyle = graphics._lineStyle;
                 ResourceManager = graphics._resourceManager;
                 Transform = graphics.Transform;
             }
 
-            public void Restore([NotNull] DirectXGraphics graphics)
+            public void Restore([NotNull] GDIGraphics graphics)
             {
                 Debug.Assert(graphics != null, "graphics != null");
                 graphics._resourceManager = ResourceManager;
                 graphics.FillStyle = FillStyle;
-                graphics.LineStyle = LineStyle;
-                graphics._lineWidth = LineWidth;
+                graphics.SetLineStyle(LineStyle);
                 graphics.Transform = Transform;
             }
         }
@@ -536,25 +506,27 @@ namespace EscherTilier.Graphics.DirectX
         /// </summary>
         private class GraphicsPath : IGraphicsPath
         {
-            private GeometrySink _sink;
+            private GDIGraphicsPath _pathGeometry;
 
-            /// <summary>
-            ///     The path geometry.
-            /// </summary>
-            [NotNull]
-            public readonly PathGeometry PathGeometry;
+            private PointF _lastPoint;
 
             /// <summary>
             ///     Initializes a new instance of the <see cref="GraphicsPath" /> class.
             /// </summary>
-            /// <param name="pathGeometry">The path geometry.</param>
-            public GraphicsPath([NotNull] PathGeometry pathGeometry)
+            public GraphicsPath()
             {
-                Debug.Assert(pathGeometry != null, "pathGeometry != null");
-                PathGeometry = pathGeometry;
-                // ReSharper disable once AssignNullToNotNullAttribute
-                _sink = pathGeometry.Open();
-                Debug.Assert(_sink != null);
+                _pathGeometry = new GDIGraphicsPath();
+            }
+
+            [NotNull]
+            public GDIGraphicsPath PathGeometry
+            {
+                get
+                {
+                    if (_pathGeometry == null)
+                        throw new ObjectDisposedException(nameof(GraphicsPath));
+                    return _pathGeometry;
+                }
             }
 
             /// <summary>
@@ -564,7 +536,7 @@ namespace EscherTilier.Graphics.DirectX
             /// <returns>This <see cref="IGraphicsPath" />.</returns>
             public IGraphicsPath Start(Vector2 point)
             {
-                _sink?.BeginFigure(point.ToRawVector2(), FigureBegin.Filled);
+                _lastPoint = point.ToPointF();
                 return this;
             }
 
@@ -575,8 +547,7 @@ namespace EscherTilier.Graphics.DirectX
             /// <returns>This <see cref="IGraphicsPath" />.</returns>
             public IGraphicsPath End(bool close = true)
             {
-                _sink?.EndFigure(close ? FigureEnd.Closed : FigureEnd.Open);
-                _sink?.Close();
+                _pathGeometry?.CloseFigure();
                 return this;
             }
 
@@ -587,7 +558,9 @@ namespace EscherTilier.Graphics.DirectX
             /// <returns>This <see cref="IGraphicsPath" />.</returns>
             public IGraphicsPath AddLine(Vector2 to)
             {
-                _sink?.AddLine(to.ToRawVector2());
+                PointF end = to.ToPointF();
+                _pathGeometry?.AddLine(_lastPoint, end);
+                _lastPoint = end;
                 return this;
             }
 
@@ -599,10 +572,13 @@ namespace EscherTilier.Graphics.DirectX
             public IGraphicsPath AddLines([NotNull] params Vector2[] points)
             {
                 if (points == null) throw new ArgumentNullException(nameof(points));
-                RawVector2[] rawVecs = new RawVector2[points.Length];
-                for (int i = 0; i < points.Length; i++)
-                    rawVecs[i] = points[i].ToRawVector2();
-                _sink?.AddLines(rawVecs);
+                PointF[] pointFs = new PointF[points.Length + 1];
+                pointFs[0] = _lastPoint;
+
+                for (int i = 1; i <= points.Length; i++)
+                    pointFs[i] = _lastPoint = points[i].ToPointF();
+
+                _pathGeometry?.AddLines(pointFs);
                 return this;
             }
 
@@ -614,15 +590,19 @@ namespace EscherTilier.Graphics.DirectX
             public IGraphicsPath AddLines(ArraySegment<Vector2> points)
             {
                 if (points.Array == null) throw new ArgumentNullException(nameof(points));
-                RawVector2[] rawVecs = new RawVector2[points.Count];
-                for (int i = 0, j = points.Offset; i < points.Count; i++, j++)
-                    rawVecs[i] = points.Array[j].ToRawVector2();
-                _sink?.AddLines(rawVecs);
+
+                PointF[] pointFs = new PointF[points.Count + 1];
+                pointFs[0] = _lastPoint;
+
+                for (int i = 1, j = points.Offset; i <= points.Count; i++, j++)
+                    pointFs[i] = _lastPoint = points.Array[j].ToPointF();
+
+                _pathGeometry?.AddLines(pointFs);
                 return this;
             }
 
             /// <summary>
-            /// Adds an arc of an elipse to the end of the path.
+            ///     Adds an arc of an elipse to the end of the path.
             /// </summary>
             /// <param name="to">The end point of the arc.</param>
             /// <param name="radius">The radius of the arc.</param>
@@ -630,20 +610,11 @@ namespace EscherTilier.Graphics.DirectX
             /// <param name="clockwise">If set to <see langword="true" /> the arc will be drawn clockwise.</param>
             /// <param name="isLarge">Specifies whether the given arc is larger than 180 degrees</param>
             /// <returns>
-            /// This <see cref="IGraphicsPath" />.
+            ///     This <see cref="IGraphicsPath" />.
             /// </returns>
             public IGraphicsPath AddArc(Vector2 to, Vector2 radius, float angle, bool clockwise, bool isLarge)
             {
-                _sink?.AddArc(
-                    new ArcSegment
-                    {
-                        Point = to.ToRawVector2(),
-                        RotationAngle = (float) (angle * 180 / Math.PI),
-                        Size = radius.ToSize2F(),
-                        SweepDirection = clockwise ? SweepDirection.Clockwise : SweepDirection.CounterClockwise,
-                        ArcSize = isLarge ? ArcSize.Large : ArcSize.Small
-                    });
-                return this;
+                throw new NotImplementedException();
             }
 
             /// <summary>
@@ -654,12 +625,16 @@ namespace EscherTilier.Graphics.DirectX
             /// <returns>This <see cref="IGraphicsPath" />.</returns>
             public IGraphicsPath AddQuadraticBezier(Vector2 control, Vector2 to)
             {
-                _sink?.AddQuadraticBezier(
-                    new QuadraticBezierSegment
-                    {
-                        Point1 = control.ToRawVector2(),
-                        Point2 = to.ToRawVector2()
-                    });
+                Vector2 @from = _lastPoint.ToVector2();
+                PointF end = to.ToPointF();
+
+                _pathGeometry?.AddBezier(
+                    _lastPoint,
+                    (@from + (2f / 3f * (control - @from))).ToPointF(),
+                    (to + (2f / 3f * (control - to))).ToPointF(),
+                    end);
+                _lastPoint = end;
+
                 return this;
             }
 
@@ -672,28 +647,22 @@ namespace EscherTilier.Graphics.DirectX
             /// <returns>This <see cref="IGraphicsPath" />.</returns>
             public IGraphicsPath AddCubicBezier(Vector2 controlA, Vector2 controlB, Vector2 to)
             {
-                _sink?.AddBezier(
-                    new BezierSegment
-                    {
-                        Point1 = controlA.ToRawVector2(),
-                        Point2 = controlB.ToRawVector2(),
-                        Point3 = to.ToRawVector2()
-                    });
+                PointF end = to.ToPointF();
+
+                PathGeometry?.AddBezier(
+                    _lastPoint,
+                    controlA.ToPointF(),
+                    controlB.ToPointF(),
+                    end);
+                _lastPoint = end;
+
                 return this;
             }
 
             /// <summary>
             ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
             /// </summary>
-            public void Dispose()
-            {
-                GeometrySink sink = Interlocked.Exchange(ref _sink, null);
-                if (sink != null)
-                {
-                    sink.Dispose();
-                    PathGeometry.Dispose();
-                }
-            }
+            public void Dispose() => Interlocked.Exchange(ref _pathGeometry, null)?.Dispose();
         }
     }
 }

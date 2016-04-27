@@ -470,11 +470,14 @@ namespace EscherTilier.Controllers
                     {
                         QuadraticBezierCurve quad = (QuadraticBezierCurve) currLine;
 
+                        Vector2 start = quad.Start.Vector;
+                        Vector2 end = quad.End.Vector;
+                        Vector2 control = quad.ControlPoint.Vector;
+
                         newLine = new CubicBezierCurve(
                             quad.Start,
-                            new LineVector(
-                                quad.Start.Vector + (2f / 3f * (quad.ControlPoint.Vector - quad.Start.Vector))),
-                            new LineVector(quad.End.Vector + (2f / 3f * (quad.ControlPoint.Vector - quad.End.Vector))),
+                            new LineVector(start + (2f / 3f * (control - start))),
+                            new LineVector(end + (2f / 3f * (control - end))),
                             quad.End);
                     }
                     else
