@@ -24,9 +24,25 @@ namespace EscherTiler
         /// </summary>
         /// <param name="template">The template to create the shape from.</param>
         /// <exception cref="System.ArgumentNullException"><paramref name="template" /> was <see langword="null" /></exception>
-        public Shape([NotNull] ShapeTemplate template)
+        public Shape([NotNull] ShapeTemplate template) : this(template, template.InitialVertices)
+        {
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Shape" /> class.
+        /// </summary>
+        /// <param name="template">The template to create the shape from.</param>
+        /// <param name="vertexPositions">The positions of each vertex.</param>
+        /// <exception cref="System.ArgumentNullException">
+        ///     <paramref name="template" /> or <paramref name="vertexPositions" /> was <see langword="null" />
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">Wrong number of vertex positions given.</exception>
+        public Shape([NotNull] ShapeTemplate template, [NotNull] IReadOnlyList<Vector2> vertexPositions)
         {
             if (template == null) throw new ArgumentNullException(nameof(template));
+            if (vertexPositions == null) throw new ArgumentNullException(nameof(vertexPositions));
+            if (vertexPositions.Count != template.VertexNames.Count)
+                throw new ArgumentOutOfRangeException(nameof(vertexPositions), "Wrong number of vertex positions given.");
 
             Template = template;
 
@@ -43,7 +59,7 @@ namespace EscherTiler
             {
                 string edgeName = template.EdgeNames[i];
                 string vertName = template.VertexNames[i];
-                Vector2 vertLoc = template.InitialVertices[i];
+                Vector2 vertLoc = vertexPositions[i];
 
                 Debug.Assert(edgeName != null, "edgeName != null");
                 Debug.Assert(vertName != null, "vertName != null");

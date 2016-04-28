@@ -36,12 +36,16 @@ namespace EscherTiler.Storage
         private static readonly CultureInfo _culture = CultureInfo.InvariantCulture;
 
         [NotNull]
-        private static readonly ThreadLocal<Dictionary<IImage, string>> _imageFileNames =
+        private static readonly ThreadLocal<Dictionary<IImage, string>> _fileNameByImage =
             new ThreadLocal<Dictionary<IImage, string>>(() => new Dictionary<IImage, string>());
 
         [NotNull]
-        private static readonly ThreadLocal<Dictionary<string, IImage>> _fileNameImages =
+        private static readonly ThreadLocal<Dictionary<string, IImage>> _imageByFileName =
             new ThreadLocal<Dictionary<string, IImage>>(() => new Dictionary<string, IImage>());
+
+        [NotNull]
+        private static readonly ThreadLocal<Dictionary<string, Shape>> _shapeByName =
+            new ThreadLocal<Dictionary<string, Shape>>(() => new Dictionary<string, Shape>());
 
         /// <summary>
         ///     Saves the given <see cref="Template" /> to a file.
@@ -259,10 +263,10 @@ namespace EscherTiler.Storage
                         );
                 }
 
-                Dictionary<IImage, string> imageFileNames = _imageFileNames.Value;
-                Debug.Assert(imageFileNames != null, "imageFileNames != null");
+                Dictionary<IImage, string> fileNameByImage = _fileNameByImage.Value;
+                Debug.Assert(fileNameByImage != null, "fileNameByImage != null");
 
-                imageFileNames.Clear();
+                fileNameByImage.Clear();
 
                 int imgId = 0;
                 foreach (ImageStyle imageStyle in tiling.StyleManager.Styles.Select(s => s.Style).OfType<ImageStyle>())
@@ -272,7 +276,7 @@ namespace EscherTiler.Storage
                     string extension = imageStyle.Image.Format.GetFormatExtension();
                     string name = $"Image{imgId++}.{extension}";
 
-                    imageFileNames.Add(imageStyle.Image, name);
+                    fileNameByImage.Add(imageStyle.Image, name);
 
                     ZipArchiveEntry imgEntry = zip.CreateEntry(name, CompressionLevel.Optimal);
 
@@ -402,11 +406,11 @@ namespace EscherTiler.Storage
 
                 Template template = DeserializeTemplate(doc.Root);
 
-                Dictionary<string, IImage> fileNameImages = _fileNameImages.Value;
-                Debug.Assert(fileNameImages != null, "imageFileNames != null");
+                Dictionary<string, IImage> imageByFileName = _imageByFileName.Value;
+                Debug.Assert(imageByFileName != null, "imageByFileName != null");
 
                 // Load images
-                fileNameImages.Clear();
+                imageByFileName.Clear();
 
                 foreach (ZipArchiveEntry imgEntry in zip.Entries.Where(e => e.Name.StartsWith("Image")))
                 {
@@ -421,7 +425,7 @@ namespace EscherTiler.Storage
                         image = new MemoryImage(data);
                     }
 
-                    fileNameImages.Add(imgEntry.Name, image);
+                    imageByFileName.Add(imgEntry.Name, image);
                 }
 
                 // Load the tiling
@@ -561,6 +565,20 @@ namespace EscherTiler.Storage
             TilingDefinition definition;
             if (!template.Tilings.TryGetValue(definitionId, out definition))
                 throw new InvalidDataException("Tiling definition ID does not exist.");
+            
+            XElement tilesElm = element.Element("Tiles");
+
+            if (tilesElm == null || tilesElm.IsEmpty)
+                throw new InvalidDataException("Tiles missing");
+
+            Tile[] tiles = tilesElm
+                .Elements("Tile")
+                .Select(DeserializeTile)
+                .ToArray();
+
+            _shapeByName.Value.Clear();
+            foreach (Tile tile in tiles)
+                _shapeByName.Value.Add(tile.Shape.Template.Name, tile.Shape);
 
             XElement styleManagerElm = element.Element("StyleManager");
 
@@ -568,6 +586,8 @@ namespace EscherTiler.Storage
                 throw new InvalidDataException("Style manager missing");
 
             StyleManager styleManager = DeserializeStyleManager(styleManagerElm);
+
+            return new Tiling(template, definition, tiles, styleManager);
         }
 
         /// <summary>
@@ -872,7 +892,7 @@ namespace EscherTiler.Storage
         {
             XElement element = new XElement(
                 "StyleManager",
-                new XAttribute("type", styleManager.GetType().FullName),
+                new XAttribute("type", styleManager.GetType().Name),
                 new XElement(
                     "LineStyle",
                     new XAttribute("width", styleManager.LineStyle.Width),
@@ -885,6 +905,7 @@ namespace EscherTiler.Storage
             GreedyStyleManager greedyManager;
 
             if ((randomManager = styleManager as RandomStyleManager) != null)
+                // NOTE: this also includes RandomGreedyStyleManager
                 element.Add(new XElement("Seed", randomManager.Seed.ToString(_culture)));
             else if ((greedyManager = styleManager as GreedyStyleManager) != null)
             {
@@ -894,6 +915,51 @@ namespace EscherTiler.Storage
             }
 
             return element;
+        }
+
+        /// <summary>
+        ///     Deserializes a style manager from an XML element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns></returns>
+        [NotNull]
+        private static StyleManager DeserializeStyleManager([NotNull] XElement element)
+        {
+            string typeName = element.Attribute("type")?.Value;
+            if (string.IsNullOrEmpty(typeName))
+                throw new InvalidDataException("Style manager type missing.");
+
+            LineStyle lineStyle = null;
+            TileStyle[] styles = null;
+
+            int seed;
+
+            switch (typeName)
+            {
+                case nameof(RandomStyleManager):
+                    if (!int.TryParse(element.Element("Seed")?.Value, out seed))
+                        throw new InvalidDataException("Random seed is invalid or missings.");
+
+                    return new RandomStyleManager(seed, lineStyle, styles);
+                case nameof(RandomGreedyStyleManager):
+                    if (!int.TryParse(element.Element("Seed")?.Value, out seed))
+                        throw new InvalidDataException("Random seed is invalid or missings.");
+
+                    return new RandomGreedyStyleManager(seed, lineStyle, styles);
+                case nameof(GreedyStyleManager):
+                    int pa, pb, pc;
+
+                    if (!int.TryParse(element.Element("ParamA")?.Value, out pa))
+                        throw new InvalidDataException("Style manager parameter A is invalid or missings.");
+                    if (!int.TryParse(element.Element("ParamB")?.Value, out pb))
+                        throw new InvalidDataException("Style manager parameter B is invalid or missings.");
+                    if (!int.TryParse(element.Element("ParamC")?.Value, out pc))
+                        throw new InvalidDataException("Style manager parameter C is invalid or missings.");
+
+                    return new GreedyStyleManager(pa, pb, pc, lineStyle, styles);
+                default:
+                    throw new InvalidDataException($"Unknown style manager type {typeName}.");
+            }
         }
 
         /// <summary>
@@ -948,7 +1014,7 @@ namespace EscherTiler.Storage
                     break;
                 case StyleType.Image:
                     ImageStyle image = (ImageStyle) style;
-                    element.Add(new XAttribute("file", _imageFileNames.Value[image.Image]));
+                    element.Add(new XAttribute("file", _fileNameByImage.Value[image.Image]));
                     element.Add(Serialize(image.ImageTransform, "Transform"));
                     break;
                 default:
@@ -969,9 +1035,22 @@ namespace EscherTiler.Storage
             return new XElement(
                 "Tile",
                 new XAttribute("label", tile.Label),
-                new XAttribute("shape", tile.Shape.Template.Name),
+                Serialize(tile.Shape),
                 Serialize(tile.Transform, "Transform"),
                 new XElement("PartShapes", tile.PartShapes.Select(Serialize)));
+        }
+
+        /// <summary>
+        ///     Serializes the specified shape to an XML element.
+        /// </summary>
+        /// <param name="shape">The shape.</param>
+        /// <returns></returns>
+        private static XElement Serialize([NotNull] Shape shape)
+        {
+            return new XElement(
+                "Shape",
+                new XAttribute("name", shape.Template.Name),
+                new XElement("Vertices", shape.Vertices.Select(v => Serialize(v.Location, "Vertex"))));
         }
 
         /// <summary>

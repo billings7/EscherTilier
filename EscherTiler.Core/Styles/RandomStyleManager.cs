@@ -11,12 +11,8 @@ namespace EscherTiler.Styles
         /// <summary>
         ///     Initializes a new instance of the <see cref="RandomStyleManager" /> class.
         /// </summary>
-        /// <param name="resourceManager">The resource manager.</param>
         /// <param name="seed">The seed.</param>
-        public RandomStyleManager(
-            [CanBeNull] IResourceManager resourceManager,
-            int seed)
-            : base(resourceManager)
+        public RandomStyleManager(int seed)
         {
             Seed = seed;
         }

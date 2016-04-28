@@ -5,6 +5,16 @@ namespace EscherTiler.Styles
 {
     public class GreedyStyleManager : StyleManager
     {
+        public GreedyStyleManager(
+            int paramA,
+            int paramB,
+            int paramC)
+        {
+            ParamA = paramA;
+            ParamB = paramB;
+            ParamC = paramC;
+        }
+
         public int ParamA { get; }
 
         public int ParamB { get; }
@@ -14,18 +24,6 @@ namespace EscherTiler.Styles
         protected override IStyle GetStyle(TileBase tile, IStyle[] styles)
         {
             throw new System.NotImplementedException();
-        }
-
-        public GreedyStyleManager(
-            [CanBeNull] IResourceManager resourceManager,
-            int paramA,
-            int paramB,
-            int paramC)
-            : base(resourceManager)
-        {
-            ParamA = paramA;
-            ParamB = paramB;
-            ParamC = paramC;
         }
     }
 }

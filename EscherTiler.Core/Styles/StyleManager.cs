@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -7,39 +8,33 @@ using JetBrains.Annotations;
 
 namespace EscherTiler.Styles
 {
-    public abstract class StyleManager : IDisposable
+    public abstract class StyleManager : IEnumerable<TileStyle>
     {
-        // TODO Use DI instead?
-        public static StyleManager CreateManager()
-        {
-            throw new NotImplementedException();
-        }
-
         [NotNull]
         [ItemNotNull]
         public IList<TileStyle> Styles => _styles;
 
         [NotNull]
         public LineStyle LineStyle { get; set; }
-
-        [CanBeNull]
-        private IResourceManager _resourceManager;
-
+        
         [NotNull]
         private readonly List<TileStyle> _styles = new List<TileStyle>();
 
-        protected StyleManager([CanBeNull] IResourceManager resourceManager)
+        public StyleManager()
         {
-            _resourceManager = resourceManager;
         }
 
-        public void Add(TileStyle style)
+        public StyleManager([CanBeNull] IEnumerable<TileStyle> styles)
         {
-            _styles.Add(style);
+            if (styles != null)
+                _styles.AddRange(styles);
         }
 
-        [CanBeNull]
-        public IResourceManager ResourceManager => _resourceManager;
+        public void Add(TileStyle style) => _styles.Add(style);
+
+        public void Add(params TileStyle[] styles) => _styles.AddRange(styles);
+
+        public void Add(IEnumerable<TileStyle> styles) => _styles.AddRange(styles);
 
         /// <summary>
         ///     Gets the style for the given tile.
@@ -67,34 +62,8 @@ namespace EscherTiler.Styles
         [NotNull]
         protected abstract IStyle GetStyle([NotNull] TileBase tile, [NotNull] IStyle[] styles);
 
-        /// <summary>
-        ///     Finalizes an instance of the <see cref="StyleManager" /> class.
-        /// </summary>
-        ~StyleManager()
-        {
-            Dispose(false);
-        }
+        public IEnumerator<TileStyle> GetEnumerator() => _styles.GetEnumerator();
 
-        /// <summary>
-        ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        ///     Releases unmanaged and - optionally - managed resources.
-        /// </summary>
-        /// <param name="disposing">
-        ///     <see langword="true" /> to release both managed and unmanaged resources; <see langword="false" /> to release only
-        ///     unmanaged resources.
-        /// </param>
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-                Interlocked.Exchange(ref _resourceManager, null)?.Dispose();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
