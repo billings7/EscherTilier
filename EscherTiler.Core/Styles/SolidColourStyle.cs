@@ -51,6 +51,14 @@ namespace EscherTiler.Styles
         }
 
         /// <summary>
+        ///     Gets the type of the style.
+        /// </summary>
+        /// <value>
+        ///     The type.
+        /// </value>
+        public StyleType Type => StyleType.SolidColour;
+
+        /// <summary>
         ///     Gets the colour.
         /// </summary>
         /// <value>

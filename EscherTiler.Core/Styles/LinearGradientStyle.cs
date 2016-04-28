@@ -23,6 +23,14 @@ namespace EscherTiler.Styles
         }
 
         /// <summary>
+        ///     Gets the type of the style.
+        /// </summary>
+        /// <value>
+        ///     The type.
+        /// </value>
+        public override StyleType Type => StyleType.LinearGradient;
+
+        /// <summary>
         ///     Gets the start point of the gradient (position 0).
         /// </summary>
         /// <value>

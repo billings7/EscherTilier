@@ -59,7 +59,7 @@ namespace EscherTiler
                 throw new ArgumentException(Strings.Template_Template_UnknownEdges, nameof(tilings));
 
             ShapeTemplates = shapeTemplates;
-            Tilings = tilings;
+            Tilings = tilings.ToDictionary(t => t.ID);
 
             ShapeSet shapes = CreateShapes();
             foreach (IExpression<bool> constaint in shapeConstraints)
@@ -124,7 +124,7 @@ namespace EscherTiler
         /// </value>
         [NotNull]
         [ItemNotNull]
-        public IReadOnlyList<TilingDefinition> Tilings { get; }
+        public IReadOnlyDictionary<int, TilingDefinition> Tilings { get; }
 
         /// <summary>
         ///     Creates shapes from the <see cref="ShapeTemplates" />.
@@ -149,7 +149,7 @@ namespace EscherTiler
             if (tilingDefinition == null) throw new ArgumentNullException(nameof(tilingDefinition));
             if (shapes == null) throw new ArgumentNullException(nameof(shapes));
             if (styleManager == null) throw new ArgumentNullException(nameof(styleManager));
-            if (!Tilings.Contains(tilingDefinition))
+            if (!Tilings.Values.Contains(tilingDefinition))
             {
                 throw new ArgumentException(
                     Strings.Template_CreateTiling_UnknownTilingDefinition,

@@ -97,6 +97,8 @@
     <Compile Include="Graphics\IDrawable.cs" />
     <Compile Include="Graphics\IGraphics.cs" />
     <Compile Include="Graphics\IImage.cs" />
+    <Compile Include="Graphics\ImageExtensions.cs" />
+    <Compile Include="Graphics\ImageFormat.cs" />
     <Compile Include="Graphics\Resources\IReadonlyResourceManager.cs" />
     <Compile Include="Graphics\Resources\IResourceManager.cs" />
     <Compile Include="Graphics\MemoryImage.cs" />
@@ -108,6 +110,7 @@
     <Compile Include="Graphics\Resources\ResourceManager.cs" />
     <Compile Include="IView.cs" />
     <Compile Include="LinePoint.cs" />
+    <Compile Include="LineType.cs" />
     <Compile Include="LineVector.cs" />
     <Compile Include="Numerics\Matrix.cs" />
     <Compile Include="Controllers\ShapeController.cs" />
@@ -123,6 +126,7 @@
       <DependentUpon>Colours.tt</DependentUpon>
     </Compile>
     <Compile Include="Styles\SimpleStyleManager.cs" />
+    <Compile Include="Styles\StyleType.cs" />
     <Compile Include="TileBase.cs" />
     <Compile Include="Controllers\TilingController.cs" />
     <Compile Include="TileSet.cs" />

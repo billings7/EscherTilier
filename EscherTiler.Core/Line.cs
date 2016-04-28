@@ -27,6 +27,14 @@ namespace EscherTiler
         }
 
         /// <summary>
+        ///     Gets the type of the line.
+        /// </summary>
+        /// <value>
+        ///     The type.
+        /// </value>
+        public LineType Type => LineType.Line;
+
+        /// <summary>
         ///     Gets the start point of the line.
         /// </summary>
         /// <value>

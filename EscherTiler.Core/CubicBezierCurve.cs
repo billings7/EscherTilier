@@ -37,6 +37,14 @@ namespace EscherTiler
         }
 
         /// <summary>
+        ///     Gets the type of the line.
+        /// </summary>
+        /// <value>
+        ///     The type.
+        /// </value>
+        public LineType Type => LineType.CubicBezierCurve;
+
+        /// <summary>
         ///     Gets the start point of the line.
         /// </summary>
         /// <value>

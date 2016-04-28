@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using JetBrains.Annotations;
 
 namespace EscherTiler.Graphics
 {
@@ -14,10 +15,20 @@ namespace EscherTiler.Graphics
         ///     Initializes a new instance of the <see cref="MemoryImage" /> class.
         /// </summary>
         /// <param name="data">The data.</param>
-        public MemoryImage(byte[] data)
+        public MemoryImage([NotNull] byte[] data)
         {
+            if (data == null) throw new ArgumentNullException(nameof(data));
             _data = data;
+            Format = data.GetImageFormat();
         }
+
+        /// <summary>
+        ///     Gets the format of the image.
+        /// </summary>
+        /// <value>
+        ///     The format.
+        /// </value>
+        public ImageFormat Format { get; }
 
         /// <summary>
         ///     Gets a stream for reading the image data.

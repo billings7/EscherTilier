@@ -48,6 +48,14 @@ namespace EscherTiler.Styles
         }
 
         /// <summary>
+        ///     Gets the type of the style.
+        /// </summary>
+        /// <value>
+        ///     The type.
+        /// </value>
+        public override StyleType Type => StyleType.RadialGradient;
+
+        /// <summary>
         ///     Gets the origin offset vector.
         /// </summary>
         /// <value>

@@ -22,6 +22,14 @@ namespace EscherTiler.Styles
         }
 
         /// <summary>
+        ///     Gets the type of the style.
+        /// </summary>
+        /// <value>
+        ///     The type.
+        /// </value>
+        public abstract StyleType Type { get; }
+
+        /// <summary>
         ///     Gets the gradient stops for this style.
         /// </summary>
         /// <value>

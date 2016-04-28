@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace EscherTiler.Styles
 {
@@ -12,8 +14,10 @@ namespace EscherTiler.Styles
         /// </summary>
         /// <param name="style">The style.</param>
         /// <param name="shapes">The shapes.</param>
-        public TileStyle(IStyle style, IReadOnlyList<Shape> shapes)
+        public TileStyle([NotNull] IStyle style, [NotNull] IReadOnlyCollection<Shape> shapes)
         {
+            if (style == null) throw new ArgumentNullException(nameof(style));
+            if (shapes == null) throw new ArgumentNullException(nameof(shapes));
             Style = style;
             Shapes = shapes;
         }
@@ -24,7 +28,8 @@ namespace EscherTiler.Styles
         /// <value>
         ///     The shapes.
         /// </value>
-        public IReadOnlyList<Shape> Shapes { get; }
+        [NotNull]
+        public IReadOnlyCollection<Shape> Shapes { get; }
 
         /// <summary>
         ///     Gets the style.
@@ -32,6 +37,7 @@ namespace EscherTiler.Styles
         /// <value>
         ///     The style.
         /// </value>
+        [NotNull]
         public IStyle Style { get; }
     }
 }

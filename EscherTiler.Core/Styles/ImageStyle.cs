@@ -53,6 +53,14 @@ namespace EscherTiler.Styles
         }
 
         /// <summary>
+        ///     Gets the type of the style.
+        /// </summary>
+        /// <value>
+        ///     The type.
+        /// </value>
+        public StyleType Type => StyleType.Image;
+
+        /// <summary>
         ///     Gets the image.
         /// </summary>
         /// <value>
@@ -69,7 +77,7 @@ namespace EscherTiler.Styles
         /// </value>
         public Matrix3x2 ImageTransform { get; }
 
-        // TODO extend mode and interpolation
+        // TODO extend mode
 
         /// <summary>
         ///     Returns a copy of this style with the given transform applied.

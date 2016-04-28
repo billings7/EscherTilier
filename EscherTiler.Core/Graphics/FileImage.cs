@@ -18,6 +18,8 @@ namespace EscherTiler.Graphics
         {
             if (filePath == null) throw new ArgumentNullException(nameof(filePath));
             FilePath = filePath;
+            using (Stream stream = GetStream())
+                Format = stream.GetImageFormat();
         }
 
         /// <summary>
@@ -28,6 +30,14 @@ namespace EscherTiler.Graphics
         /// </value>
         [NotNull]
         public string FilePath { get; }
+
+        /// <summary>
+        ///     Gets the format of the image.
+        /// </summary>
+        /// <value>
+        ///     The format.
+        /// </value>
+        public ImageFormat Format { get; }
 
         /// <summary>
         ///     Gets a stream for reading the image data.

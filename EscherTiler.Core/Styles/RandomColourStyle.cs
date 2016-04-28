@@ -30,6 +30,14 @@ namespace EscherTiler.Styles
         }
 
         /// <summary>
+        ///     Gets the type of the style.
+        /// </summary>
+        /// <value>
+        ///     The type.
+        /// </value>
+        public StyleType Type => StyleType.RandomColour;
+
+        /// <summary>
         ///     Gets the colour to interpolate from.
         /// </summary>
         /// <value>

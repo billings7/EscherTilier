@@ -12,6 +12,14 @@ namespace EscherTiler
     public interface ILine
     {
         /// <summary>
+        ///     Gets the type of the line.
+        /// </summary>
+        /// <value>
+        ///     The type.
+        /// </value>
+        LineType Type { get; }
+
+        /// <summary>
         ///     Gets the start point of the line.
         /// </summary>
         /// <value>

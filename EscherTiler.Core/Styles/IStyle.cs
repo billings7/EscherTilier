@@ -9,6 +9,14 @@ namespace EscherTiler.Styles
     public interface IStyle
     {
         /// <summary>
+        ///     Gets the type of the style.
+        /// </summary>
+        /// <value>
+        ///     The type.
+        /// </value>
+        StyleType Type { get; }
+
+        /// <summary>
         ///     Returns a copy of this style with the given transform applied.
         /// </summary>
         /// <param name="matrix">The transform matrix.</param>
