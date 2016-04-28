@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing.Printing;
-using System.Linq;
 using System.Numerics;
 using System.Threading;
 using EscherTiler.Numerics;
@@ -19,7 +18,7 @@ namespace EscherTiler.Graphics.GDI
     public class TilerPrintDocument : PrintDocument
     {
         /// <summary>
-        /// Delegate for getting the transform matricies for a page with the given bounds.
+        ///     Delegate for getting the transform matricies for a page with the given bounds.
         /// </summary>
         /// <param name="bounds">The bounds.</param>
         /// <param name="transform">The transform.</param>
@@ -39,7 +38,7 @@ namespace EscherTiler.Graphics.GDI
         private GetTranformDelegate _getTranform = DefaultGetTranform;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TilerPrintDocument"/> class.
+        ///     Initializes a new instance of the <see cref="TilerPrintDocument" /> class.
         /// </summary>
         public TilerPrintDocument()
         {
@@ -79,11 +78,12 @@ namespace EscherTiler.Graphics.GDI
         public TileBase Tile { get; set; }
 
         /// <summary>
-        /// Gets or sets the get tranform fucntion.
+        ///     Gets or sets the get tranform fucntion.
         /// </summary>
         /// <value>
-        /// The get tranform function.
+        ///     The get tranform function.
         /// </value>
+        [Browsable(false)]
         [NotNull]
         public GetTranformDelegate GetTranform
         {
@@ -96,7 +96,7 @@ namespace EscherTiler.Graphics.GDI
         }
 
         /// <summary>
-        ///     The default function for the <see cref="GetTranform"/> property.
+        ///     The default function for the <see cref="GetTranform" /> property.
         /// </summary>
         /// <param name="bounds">The bounds.</param>
         /// <param name="transform">The transform.</param>
@@ -174,7 +174,7 @@ namespace EscherTiler.Graphics.GDI
         }
 
         /// <summary>
-        /// Gets the tiles from the <see cref="Tiling"/>.
+        ///     Gets the tiles from the <see cref="Tiling" />.
         /// </summary>
         /// <returns></returns>
         [NotNull]

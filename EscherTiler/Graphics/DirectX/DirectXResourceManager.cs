@@ -369,12 +369,13 @@ namespace EscherTiler.Graphics.DirectX
         {
             if (style == null) throw new ArgumentNullException(nameof(style));
 
+            // If we are disposed, then technically we have already released the style
             if (_brushes == null)
-                throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                return true;
             lock (_lock)
             {
                 if (_brushes == null)
-                    throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                    return true;
 
                 ImageStyle imageStyle = style as ImageStyle;
                 if (imageStyle != null)
@@ -482,12 +483,13 @@ namespace EscherTiler.Graphics.DirectX
         {
             if (image == null) throw new ArgumentNullException(nameof(image));
 
-            if (_bitmaps == null)
-                throw new ObjectDisposedException(nameof(DirectXResourceManager));
+            // If we are disposed, then technically we have already released the style
+            if (_brushes == null)
+                return true;
             lock (_lock)
             {
-                if (_bitmaps == null)
-                    throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                if (_brushes == null)
+                    return true;
 
                 Bitmap bitmap;
                 switch (_bitmaps.Remove(image, out bitmap, release ? true : (bool?) null))

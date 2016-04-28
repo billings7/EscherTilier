@@ -48,6 +48,10 @@ namespace EscherTiler.Storage
             new ThreadLocal<Dictionary<string, Shape>>(() => new Dictionary<string, Shape>());
 
         [NotNull]
+        private static readonly ThreadLocal<Dictionary<int, ShapeLines>> _linesByPartShapeId =
+            new ThreadLocal<Dictionary<int, ShapeLines>>(() => new Dictionary<int, ShapeLines>());
+
+        [NotNull]
         private static readonly ThreadLocal<Template> _template = new ThreadLocal<Template>();
 
         /// <summary>
@@ -459,6 +463,8 @@ namespace EscherTiler.Storage
                 imageByFileName.Clear();
                 Debug.Assert(_shapeByName.Value != null, "_shapeByName.Value != null");
                 _shapeByName.Value.Clear();
+                Debug.Assert(_linesByPartShapeId.Value != null, "_linesByPartShapeId.Value != null");
+                _linesByPartShapeId.Value.Clear();
                 _template.Value = null;
 
                 return tiling;
@@ -553,14 +559,26 @@ namespace EscherTiler.Storage
         /// <param name="element">The element.</param>
         private static void Serialize([NotNull] Tiling tiling, [NotNull] XElement element)
         {
+            KeyValuePair<int, ShapeLines>[] partShapes = tiling.Tiles
+                .SelectMany(t => t.PartShapes)
+                .GroupBy(ps => ps.Part.PartShapeID, ps => ps.Lines)
+                .Select(
+                    g =>
+                    {
+                        Debug.Assert(g.Distinct().Count() == 1);
+                        return new KeyValuePair<int, ShapeLines>(g.Key, g.First());
+                    })
+                    .ToArray();
+
             element.Add(
                 new XAttribute("definitionId", tiling.Definition.ID.ToString(_culture)),
-                new XElement(
-                    "StyleManager",
-                    Serialize(tiling.StyleManager)),
-                new XElement(
-                    "Tiles",
-                    tiling.Tiles.Select(Serialize)));
+                Serialize(tiling.StyleManager),
+                new XElement("PartShapeLines", partShapes.Select(
+                    kvp => new XElement(
+                        "ShapeLines",
+                        new XAttribute("partShapeId", kvp.Key.ToString(_culture)),
+                        kvp.Value.Select((l, i) => Serialize(l, i == 0))))),
+                new XElement("Tiles", tiling.Tiles.Select(Serialize)));
         }
 
         /// <summary>
@@ -582,8 +600,38 @@ namespace EscherTiler.Storage
                 throw new InvalidDataException("Tiling definition ID does not exist.");
             Debug.Assert(definition != null, "definition != null");
 
-            XElement tilesElm = element.Element("Tiles");
+            XElement partShapeLinesElm = element.Element("PartShapeLines");
+            if (partShapeLinesElm == null || partShapeLinesElm.IsEmpty)
+                throw new InvalidDataException("Edge part shape lines missing");
 
+            Dictionary<int, ShapeLines> linesByPartShapeId = _linesByPartShapeId.Value;
+            Debug.Assert(linesByPartShapeId != null, "linesByPartShapeId != null");
+
+            linesByPartShapeId.Clear();
+
+            foreach (XElement shapeLinesElm in partShapeLinesElm.Elements("ShapeLines"))
+            {
+                Debug.Assert(shapeLinesElm != null, "shapeLinesElm != null");
+
+                int partShapeId;
+                if (!int.TryParse(shapeLinesElm.Attribute("partShapeId")?.Value, out partShapeId))
+                    throw new InvalidDataException("Edge part shape ID missing or invalid.");
+
+                ShapeLines lines = new ShapeLines();
+                ILine lastLine = null;
+                foreach (XElement lineElm in shapeLinesElm.Elements())
+                {
+                    Debug.Assert(lineElm != null, "lineElm != null");
+
+                    ILine line = DeserializeLine(lineElm, lastLine);
+                    lines.Add(line);
+                    lastLine = line;
+                }
+
+                linesByPartShapeId.Add(partShapeId, lines);
+            }
+
+            XElement tilesElm = element.Element("Tiles");
             if (tilesElm == null || tilesElm.IsEmpty)
                 throw new InvalidDataException("Tiles missing");
 
@@ -1034,7 +1082,7 @@ namespace EscherTiler.Storage
             if (styleElm == null || styleElm.IsEmpty)
                 throw new InvalidDataException("Tile style missing");
 
-            IStyle style = DeserializeStyle(styleElm);
+            IStyle style = DeserializeStyle(styleElm.Elements().Single());
 
             XElement shapesElm = element.Element("Shapes");
             if (shapesElm == null || shapesElm.IsEmpty)
@@ -1276,14 +1324,14 @@ namespace EscherTiler.Storage
             return new XElement(
                 "EdgePartShape",
                 new XAttribute("part", edgePartShape.Part.ID.ToString(_culture)),
-                new XAttribute("edge", edgePartShape.Edge.Name),
-                edgePartShape.Lines.Select((l, i) => Serialize(l, i == 0)));
+                new XAttribute("edge", edgePartShape.Edge.Name));
         }
 
         /// <summary>
         ///     Deserializes an edge part shape from an XML element.
         /// </summary>
         /// <param name="element">The element.</param>
+        /// <param name="shape">The shape the part is on.</param>
         /// <returns></returns>
         [NotNull]
         private static EdgePartShape DeserializeEdgePartShape([NotNull] XElement element, [NotNull] Shape shape)
@@ -1304,16 +1352,13 @@ namespace EscherTiler.Storage
 
             Edge edge = shape.GetEdge(edgeName);
 
-            ShapeLines lines = new ShapeLines();
-            ILine lastLine = null;
-            foreach (XElement lineElm in element.Elements())
-            {
-                Debug.Assert(lineElm != null, "lineElm != null");
+            Dictionary<int, ShapeLines> linesByPartShapeId = _linesByPartShapeId.Value;
+            Debug.Assert(linesByPartShapeId != null, "linesByPartShapeId != null");
 
-                ILine line = DeserializeLine(lineElm, lastLine);
-                lines.Add(line);
-                lastLine = line;
-            }
+            ShapeLines lines;
+            if (!linesByPartShapeId.TryGetValue(part.PartShapeID, out lines))
+                throw new InvalidDataException("Edge part shape ID missing or invalid.");
+            Debug.Assert(lines != null, "lines != null");
 
             return new EdgePartShape(part, edge, lines);
         }

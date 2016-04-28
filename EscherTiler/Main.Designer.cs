@@ -72,9 +72,11 @@ namespace EscherTiler
             this._changeLineTypeCmb = new System.Windows.Forms.ToolStripComboBox();
             this._renderControl = new EscherTiler.RenderControl();
             this._pageSetupDialog = new System.Windows.Forms.PageSetupDialog();
+            this._printDocument = new EscherTiler.Graphics.GDI.TilerPrintDocument();
             this._printDialog = new System.Windows.Forms.PrintDialog();
             this._printPreviewDialog = new System.Windows.Forms.PrintPreviewDialog();
-            this._printDocument = new EscherTiler.Graphics.GDI.TilerPrintDocument();
+            this._saveFileDialog = new System.Windows.Forms.SaveFileDialog();
+            this._openFileDialog = new System.Windows.Forms.OpenFileDialog();
             sep1 = new System.Windows.Forms.ToolStripSeparator();
             sep2 = new System.Windows.Forms.ToolStripSeparator();
             sep3 = new System.Windows.Forms.ToolStripSeparator();
@@ -456,6 +458,13 @@ namespace EscherTiler
             this._pageSetupDialog.Document = this._printDocument;
             this._pageSetupDialog.EnableMetric = true;
             //
+            // _printDocument
+            //
+            this._printDocument.DocumentName = "Tiling";
+            this._printDocument.PrintMode = EscherTiler.Graphics.GDI.TilingPrintMode.TilingFull;
+            this._printDocument.Tile = null;
+            this._printDocument.Tiling = null;
+            //
             // _printDialog
             //
             this._printDialog.Document = this._printDocument;
@@ -473,9 +482,15 @@ namespace EscherTiler
             this._printPreviewDialog.UseAntiAlias = true;
             this._printPreviewDialog.Visible = false;
             //
-            // _printDocument
+            // _saveFileDialog
             //
-            this._printDocument.DocumentName = "Tiling";
+            this._saveFileDialog.DefaultExt = "esch";
+            this._saveFileDialog.Filter = "Tiling|*.esch";
+            //
+            // _openFileDialog
+            //
+            this._openFileDialog.DefaultExt = "esch";
+            this._openFileDialog.Filter = "Tiling|*.esch";
             //
             // Main
             //
@@ -492,7 +507,7 @@ namespace EscherTiler
             this.MinimumSize = new System.Drawing.Size(600, 450);
             this.Name = "Main";
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
-            this.Text = "Escher Tililer";
+            this.Text = "Escher Tiler";
             this.Click += new System.EventHandler(this.toolBtn_Click);
             this._menuStrip.ResumeLayout(false);
             this._menuStrip.PerformLayout();
@@ -619,6 +634,12 @@ namespace EscherTiler
 
         [NotNull]
         private Graphics.GDI.TilerPrintDocument _printDocument;
+
+        [NotNull]
+        private SaveFileDialog _saveFileDialog;
+
+        [NotNull]
+        private OpenFileDialog _openFileDialog;
 
         #endregion
     }

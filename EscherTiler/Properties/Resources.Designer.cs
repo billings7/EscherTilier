@@ -90,6 +90,24 @@ namespace EscherTiler.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Do you want to save changes to {0}?.
+        /// </summary>
+        internal static string Main_PromptSave_Text {
+            get {
+                return ResourceManager.GetString("Main_PromptSave_Text", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Escher Tiler.
+        /// </summary>
+        internal static string Main_Title {
+            get {
+                return ResourceManager.GetString("Main_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap NewIcon {

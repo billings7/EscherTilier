@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Media;
 using System.Numerics;
@@ -12,8 +13,10 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using EscherTiler.Controllers;
 using EscherTiler.Expressions;
+using EscherTiler.Graphics;
 using EscherTiler.Graphics.GDI;
 using EscherTiler.Properties;
+using EscherTiler.Storage;
 using EscherTiler.Styles;
 using EscherTiler.Utilities;
 using JetBrains.Annotations;
@@ -92,7 +95,37 @@ namespace EscherTiler
         private readonly TilingPrintSettingsDialog _tilingPrintSettingsDialog;
 
         [NotNull]
-        private readonly object _drawLock = new object();
+        private readonly object _lock = new object();
+
+        [NotNull]
+        public string DocumentName
+        {
+            get { return _documentName; }
+        }
+
+        [CanBeNull]
+        public string DocumentPath
+        {
+            get { return _documentPath; }
+            set
+            {
+                _documentPath = value;
+                _documentName = _documentPath == null
+                    ? "Untitled"
+                    : Path.GetFileNameWithoutExtension(_documentPath);
+                Text = _documentName + @" - " + Resources.Main_Title;
+            }
+        }
+
+        [NotNull]
+        private string _documentName = "Untitled";
+
+        [CanBeNull]
+        private string _documentPath;
+
+        private bool _isDirty = false;
+
+        private bool _layoutSuspended;
 
         // ReSharper disable once NotNullMemberIsNotInitialized - they are
         public Main()
@@ -119,6 +152,8 @@ namespace EscherTiler
             _printPreviewDialog.Size = new Size(1000, 800);
 
             _tilingPrintSettingsDialog = new TilingPrintSettingsDialog(_printDocument, SelectTileAsync);
+
+            Text = _documentName + @" - " + Resources.Main_Title;
         }
 
         /// <summary>
@@ -194,17 +229,11 @@ namespace EscherTiler
 
             ShapeController sc = new ShapeController(template, this);
 
-            RandomStyleManager randomStyleManager = new RandomStyleManager(
-                0,
-                new LineStyle(1, _blackStyle),
-                new TileStyle(new SolidColourStyle(Colour.Red), sc.Shapes.ToArray()),
-                new TileStyle(new SolidColourStyle(Colour.White), sc.Shapes.ToArray()),
-                new TileStyle(new SolidColourStyle(Colour.Yellow), sc.Shapes.ToArray()),
-                new TileStyle(new SolidColourStyle(Colour.Orange), sc.Shapes.ToArray()));
+            StyleManager styleManager = CreateDefaultStyleManager(sc.Shapes.ToArray());
 
             TilingController tc = new TilingController(
-                template.CreateTiling(template.Tilings.Values.First(), sc.Shapes, randomStyleManager),
-                randomStyleManager,
+                template.CreateTiling(template.Tilings.Values.First(), sc.Shapes, styleManager),
+                styleManager,
                 this);
 
             tc.EditLine.OptionsChanged += TilingController_EditLineTool_OptionsChanged;
@@ -243,7 +272,11 @@ namespace EscherTiler
         {
             base.OnClosing(e);
 
-            // TODO prompt to save if not
+            if (!PromptSave())
+            {
+                e.Cancel = true;
+                return;
+            }
 
             Settings.Default.WindowState = WindowState;
             Settings.Default.WindowSize = _lastNormalSize;
@@ -291,15 +324,215 @@ namespace EscherTiler
                 _lastNormalLocation = Location;
         }
 
+        /// <summary>
+        ///     Checks if the tiling has changes and prompts the user if they want to save if there are.
+        /// </summary>
+        /// <returns>
+        ///     <see langword="true" /> if there arent any changes or the tiling was saved; otherwise <see langword="false" />.
+        /// </returns>
+        private bool PromptSave()
+        {
+            if (!_isDirty) return true;
+
+            lock (_lock)
+            {
+                if (!_isDirty) return true;
+
+                DialogResult dialogResult = MessageBox.Show(
+                    this,
+                    string.Format(Resources.Main_PromptSave_Text, DocumentName),
+                    Resources.Main_Title,
+                    MessageBoxButtons.YesNoCancel);
+
+                switch (dialogResult)
+                {
+                    case DialogResult.Yes:
+                        return Save();
+                    case DialogResult.No:
+                        return true;
+                    case DialogResult.Cancel:
+                        return false;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Saves the current tiling.
+        /// </summary>
+        /// <param name="askForPath">
+        ///     If set to <see langword="true" /> the user will be prompted for the location to save the tiling.
+        /// </param>
+        /// <returns><see langword="true" /> if the tiling was saved; otherwise <see langword="false" />.</returns>
+        private bool Save(bool askForPath = false)
+        {
+            if (!_isDirty) return true;
+
+            lock (_lock)
+            {
+                if (!_isDirty) return true;
+
+                TilingController controller = _controller;
+                if (controller == null) throw new ObjectDisposedException(nameof(Main));
+
+                if (DocumentPath == null || askForPath)
+                {
+                    _saveFileDialog.FileName = DocumentPath ?? DocumentName;
+                    if (_saveFileDialog.ShowDialog(this) == DialogResult.OK)
+                        DocumentPath = _saveFileDialog.FileName;
+                    else
+                        return false;
+                }
+
+                // TODO Create thumbnail
+
+                Debug.Assert(DocumentPath != null, "DocumentPath != null");
+                FileStorage.SaveTiling(controller.Tiling, DocumentPath);
+                _isDirty = false;
+                return true;
+            }
+        }
+
+        /// <summary>
+        ///     Opens the tiling given for editing.
+        /// </summary>
+        /// <param name="tiling">The tiling.</param>
+        /// <exception cref="System.ObjectDisposedException">
+        /// </exception>
+        private void OpenTiling([NotNull] Tiling tiling)
+        {
+            Debug.Assert(tiling != null, "tiling != null");
+
+            TilingController controller = _controller;
+            if (controller == null) throw new ObjectDisposedException(nameof(Main));
+
+            lock (_lock)
+            {
+                controller = _controller;
+                if (controller == null) throw new ObjectDisposedException(nameof(Main));
+
+                try
+                {
+                    // Dont call the ViewBoundsChanged event handler while changing the tiling
+                    _layoutSuspended = true;
+
+                    // Reset view
+                    _translate = _invTranslate = Matrix3x2.Identity;
+                    _zoom = 100f;
+                    UpdateScale();
+
+                    controller.SetTiling(tiling);
+                }
+                finally
+                {
+                    _layoutSuspended = false;
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Creates the default style manager.
+        /// </summary>
+        /// <param name="shapes">The shapes.</param>
+        /// <returns></returns>
+        [NotNull]
+        private StyleManager CreateDefaultStyleManager([NotNull] IReadOnlyCollection<Shape> shapes)
+        {
+            Debug.Assert(shapes != null, "shapes != null");
+
+            return new RandomStyleManager(
+                0,
+                new LineStyle(0.5f, _blackStyle),
+                new TileStyle(new SolidColourStyle(Colour.Red), shapes),
+                new TileStyle(new SolidColourStyle(Colour.White), shapes),
+                new TileStyle(new SolidColourStyle(Colour.Yellow), shapes),
+                new TileStyle(new SolidColourStyle(Colour.Orange), shapes));
+        }
+
         #region File menu
 
-        private void newMenuItem_Click(object sender, EventArgs e) { }
+        /// <summary>
+        ///     Handles the Click event of the newMenuItem control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        private void newMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!PromptSave()) return;
 
-        private void openMenuItem_Click(object sender, EventArgs e) { }
+            throw new NotImplementedException();
+            _isDirty = true;
+            DocumentPath = null;
+        }
 
-        private void saveMenuItem_Click(object sender, EventArgs e) { }
+        /// <summary>
+        ///     Handles the Click event of the openMenuItem control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        /// <exception cref="System.ObjectDisposedException"></exception>
+        private void openMenuItem_Click(object sender, EventArgs e)
+        {
+            TilingController controller = _controller;
+            if (controller == null) throw new ObjectDisposedException(nameof(Main));
 
-        private void saveAsMenuItem_Click(object sender, EventArgs e) { }
+            if (!PromptSave()) return;
+
+            if (_openFileDialog.ShowDialog(this) == DialogResult.OK)
+            {
+                string documentPath = _openFileDialog.FileName;
+                Debug.Assert(documentPath != null, "documentPath != null");
+
+                try
+                {
+                    IImage thumbnail;
+                    Tiling tiling = FileStorage.LoadTiling(documentPath, out thumbnail);
+
+                    OpenTiling(tiling);
+
+                    DocumentPath = documentPath;
+                }
+                catch (InvalidDataException ide)
+                {
+                    MessageBox.Show(
+                        this,
+                        "Error loading tiling",
+                        $"A problem was found with the file '{Path.GetFileName(documentPath)}', could not load the tiling.\r\n\r\n{ide.Message}",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        this,
+                        "Error loading tiling",
+                        $"A error occured while loading the file '{Path.GetFileName(documentPath)}'.\r\n\r\n{ex.Message}",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Handles the Click event of the saveMenuItem control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        private void saveMenuItem_Click(object sender, EventArgs e)
+        {
+            Save();
+        }
+
+        /// <summary>
+        ///     Handles the Click event of the saveAsMenuItem control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        private void saveAsMenuItem_Click(object sender, EventArgs e)
+        {
+            Save(true);
+        }
 
         /// <summary>
         ///     Handles the Click event of the _pageSetupMenuItem control.
@@ -318,7 +551,11 @@ namespace EscherTiler
         /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void printMenuItem_Click(object sender, EventArgs e)
         {
-            _printDocument.Tiling = _controller?.Tiling;
+            TilingController controller = _controller;
+            if (controller == null) throw new ObjectDisposedException(nameof(Main));
+
+            _printDocument.DocumentName = DocumentName;
+            _printDocument.Tiling = controller?.Tiling;
             if (_tilingPrintSettingsDialog.ShowDialog(this) != DialogResult.OK)
                 return;
 
@@ -333,8 +570,12 @@ namespace EscherTiler
         /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void printPreviewMenuItem_Click(object sender, EventArgs e)
         {
+            TilingController controller = _controller;
+            if (controller == null) throw new ObjectDisposedException(nameof(Main));
+
+            _printDocument.DocumentName = DocumentName;
             if (_printDocument.Tile == null && _printDocument.Tiling == null)
-                _printDocument.Tiling = _controller?.Tiling;
+                _printDocument.Tiling = controller?.Tiling;
 
             if (_tilingPrintSettingsDialog.ShowDialog(this) != DialogResult.OK)
                 return;
@@ -342,9 +583,15 @@ namespace EscherTiler
             _printPreviewDialog.ShowDialog(this);
         }
 
+        /// <summary>
+        ///     Handles the Click event of the exitMenuItem control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        /// <exception cref="System.NotImplementedException">save</exception>
         private void exitMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO Prompt for save if unsaved
+            if (!PromptSave()) return;
 
             Close();
         }
@@ -371,11 +618,26 @@ namespace EscherTiler
 
         #region Tool Strip
 
-        private void newButton_Click(object sender, EventArgs e) { }
+        /// <summary>
+        ///     Handles the Click event of the newButton control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        private void newButton_Click(object sender, EventArgs e) => newMenuItem_Click(sender, e);
 
-        private void openButton_Click(object sender, EventArgs e) { }
+        /// <summary>
+        ///     Handles the Click event of the openButton control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        private void openButton_Click(object sender, EventArgs e) => openMenuItem_Click(sender, e);
 
-        private void saveButton_Click(object sender, EventArgs e) { }
+        /// <summary>
+        ///     Handles the Click event of the saveButton control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        private void saveButton_Click(object sender, EventArgs e) => saveMenuItem_Click(sender, e);
 
         /// <summary>
         ///     Handles the Click event of the printButton control.
@@ -384,9 +646,13 @@ namespace EscherTiler
         /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void printButton_Click(object sender, EventArgs e)
         {
+            TilingController controller = _controller;
+            if (controller == null) throw new ObjectDisposedException(nameof(Main));
+
+            _printDocument.DocumentName = DocumentName;
             if (_printDocument.Tile == null && _printDocument.Tiling == null)
             {
-                _printDocument.Tiling = _controller?.Tiling;
+                _printDocument.Tiling = controller?.Tiling;
 
                 if (_tilingPrintSettingsDialog.ShowDialog(this) != DialogResult.OK)
                     return;
@@ -442,7 +708,8 @@ namespace EscherTiler
             br = Vector2.Transform(br, InverseViewMatrix);
 
             _bounds = Numerics.Rectangle.ContainingPoints(tl, br);
-            ViewBoundsChanged?.Invoke(this, EventArgs.Empty);
+            if (!_layoutSuspended)
+                ViewBoundsChanged?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
@@ -528,14 +795,19 @@ namespace EscherTiler
         /// <param name="e">The <see cref="MouseEventArgs" /> instance containing the event data.</param>
         private void renderControl_MouseDown(object sender, [NotNull] MouseEventArgs e)
         {
-            if (_controller == null) return;
+            TilingController controller = _controller;
+            if (controller == null) throw new ObjectDisposedException(nameof(Main));
 
             Vector2 loc = new Vector2(e.X, e.Y);
 
-            lock (_drawLock)
+            lock (_lock)
             {
-                Action action = _controller.CurrentTool?.StartAction(loc);
+                controller = _controller;
+                if (controller == null) throw new ObjectDisposedException(nameof(Main));
+
+                Action action = controller.CurrentTool?.StartAction(loc);
                 _dragAction = action as DragAction;
+                _isDirty = true;
             }
         }
 
@@ -546,10 +818,21 @@ namespace EscherTiler
         /// <param name="e">The <see cref="MouseEventArgs" /> instance containing the event data.</param>
         private void renderControl_MouseMove(object sender, [NotNull] MouseEventArgs e)
         {
-            lock (_drawLock)
+            TilingController controller = _controller;
+            if (controller == null) throw new ObjectDisposedException(nameof(Main));
+
+            lock (_lock)
             {
-                _controller?.CurrentTool?.UpdateLocation(new Vector2(e.X, e.Y));
-                _dragAction?.Update(new Vector2(e.X, e.Y));
+                controller = _controller;
+                if (controller == null) throw new ObjectDisposedException(nameof(Main));
+
+                controller?.CurrentTool?.UpdateLocation(new Vector2(e.X, e.Y));
+                DragAction dragAction = _dragAction;
+                if (dragAction != null)
+                {
+                    dragAction.Update(new Vector2(e.X, e.Y));
+                    _isDirty = true;
+                }
             }
         }
 
@@ -560,8 +843,15 @@ namespace EscherTiler
         /// <param name="e">The <see cref="MouseEventArgs" /> instance containing the event data.</param>
         private void renderControl_MouseUp(object sender, MouseEventArgs e)
         {
-            lock (_drawLock)
-                Interlocked.Exchange(ref _dragAction, null)?.Apply();
+            lock (_lock)
+            {
+                DragAction dragAction = Interlocked.Exchange(ref _dragAction, null);
+                if (dragAction != null)
+                {
+                    dragAction.Apply();
+                    _isDirty = true;
+                }
+            }
         }
 
         /// <summary>
@@ -571,8 +861,15 @@ namespace EscherTiler
         /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void renderControl_MouseLeave(object sender, EventArgs e)
         {
-            lock (_drawLock)
-                Interlocked.Exchange(ref _dragAction, null)?.Apply();
+            lock (_lock)
+            {
+                DragAction dragAction = Interlocked.Exchange(ref _dragAction, null);
+                if (dragAction != null)
+                {
+                    dragAction.Apply();
+                    _isDirty = true;
+                }
+            }
         }
 
         /// <summary>
@@ -660,7 +957,11 @@ namespace EscherTiler
         private void changeLineTypeCmb_SelectedIndexChanged(object sender, EventArgs e)
         {
             ComboBoxValue<Type> val = (ComboBoxValue<Type>) _changeLineTypeCmb.SelectedItem;
-            if (_controller != null) _controller.EditLine.ChangeLineOption.Value = val.Value;
+            if (_controller != null)
+            {
+                _controller.EditLine.ChangeLineOption.Value = val.Value;
+                _isDirty = true;
+            }
         }
 
         /// <summary>
@@ -670,7 +971,8 @@ namespace EscherTiler
         /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void toolBtn_Click(object sender, EventArgs e)
         {
-            if (_controller == null) return;
+            TilingController controller = _controller;
+            if (controller == null) throw new ObjectDisposedException(nameof(Main));
 
             Debug.Assert(sender is ToolStripButton);
             ToolStripButton btn = (ToolStripButton) sender;
@@ -678,18 +980,18 @@ namespace EscherTiler
             Debug.Assert(btn.Tag is Tool);
             Tool tool = (Tool) btn.Tag;
 
-            if (_controller.CurrentTool != null)
+            if (controller.CurrentTool != null)
             {
                 ToolStripButton lastBtn;
-                if (_toolBtns.TryGetValue(_controller.CurrentTool, out lastBtn))
+                if (_toolBtns.TryGetValue(controller.CurrentTool, out lastBtn))
                 {
                     Debug.Assert(lastBtn != null, "lastBtn != null");
                     lastBtn.Checked = false;
                 }
             }
 
-            lock (_drawLock)
-                _controller.CurrentTool = tool;
+            lock (_lock)
+                controller.CurrentTool = tool;
             btn.Checked = true;
         }
 
@@ -698,7 +1000,8 @@ namespace EscherTiler
         /// </summary>
         private void UpdateTools()
         {
-            if (_controller == null) return;
+            TilingController controller = _controller;
+            if (controller == null) throw new ObjectDisposedException(nameof(Main));
 
             _panToolBtn.Tag = _panTool;
 
@@ -707,14 +1010,14 @@ namespace EscherTiler
                 Debug.Assert(tool != null, "tool != null");
 
                 ToolStripButton btn = _toolBtns[tool];
-                if (!_controller.Tools.Contains(tool))
+                if (!controller.Tools.Contains(tool))
                     _toolBtns.Remove(tool);
 
                 Debug.Assert(btn != null, "btn != null");
                 _operationToolStrip.Items.Remove(btn);
             }
 
-            foreach (Tool tool in _controller.Tools.Except(_toolBtns.Keys))
+            foreach (Tool tool in controller.Tools.Except(_toolBtns.Keys))
             {
                 Debug.Assert(tool != null, "tool != null");
 
@@ -749,10 +1052,12 @@ namespace EscherTiler
         /// <exception cref="System.ObjectDisposedException"></exception>
         private Task<TileBase> SelectTileAsync(TileBase initialTile)
         {
-            if (_controller == null) throw new ObjectDisposedException(nameof(Main));
-            _selectTileTool.LastTool = _controller.CurrentTool;
+            TilingController controller = _controller;
+            if (controller == null) throw new ObjectDisposedException(nameof(Main));
+
+            _selectTileTool.LastTool = controller.CurrentTool;
             _selectTileTool.TileSelectedTcs = new TaskCompletionSource<TileBase>();
-            _controller.CurrentTool = _selectTileTool;
+            controller.CurrentTool = _selectTileTool;
             return _selectTileTool.TileSelectedTcs.Task;
         }
 

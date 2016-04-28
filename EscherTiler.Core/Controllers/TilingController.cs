@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using EscherTiler.Dependencies;
 using EscherTiler.Graphics;
 using EscherTiler.Graphics.Resources;
@@ -25,7 +26,7 @@ namespace EscherTiler.Controllers
             new SolidColourStyle(Colour.CornflowerBlue, 0.5f);
 
         [NotNull]
-        private readonly Tiling _tiling;
+        private Tiling _tiling;
 
         [NotNull]
         private IEnumerable<TileBase> _tiles;
@@ -55,9 +56,9 @@ namespace EscherTiler.Controllers
             _styleManager = styleManager;
 
             IResourceManager resourceManager = DependencyManger.GetResourceManager(_styleManager);
-            if (resourceManager == null) throw new InvalidOperationException();
             _resourceManager = resourceManager;
 
+            resourceManager.Add(SolidColourStyle.Transparent);
             resourceManager.Add(SolidColourStyle.White);
             resourceManager.Add(SolidColourStyle.Black);
             resourceManager.Add(SolidColourStyle.Gray);
@@ -111,6 +112,46 @@ namespace EscherTiler.Controllers
         /// </value>
         [NotNull]
         public Tiling Tiling => _tiling;
+
+        /// <summary>
+        ///     Gets the style manager.
+        /// </summary>
+        /// <value>
+        ///     The style manager.
+        /// </value>
+        [NotNull]
+        public StyleManager StyleManager => _styleManager;
+
+        /// <summary>
+        ///     Sets the tiling.
+        /// </summary>
+        /// <param name="tiling">The tiling.</param>
+        /// <exception cref="System.ArgumentNullException"></exception>
+        /// <exception cref="System.InvalidOperationException"></exception>
+        public void SetTiling([NotNull] Tiling tiling)
+        {
+            if (tiling == null) throw new ArgumentNullException(nameof(tiling));
+
+            if (tiling == _tiling) return;
+
+            _tiling = tiling;
+
+            StyleManager oldStyleManager = Interlocked.Exchange(ref _styleManager, tiling.StyleManager);
+
+            IResourceManager resourceManager = DependencyManger.GetResourceManager(tiling.StyleManager);
+            IResourceManager oldResourceManager = Interlocked.Exchange(ref _resourceManager, resourceManager);
+
+            DependencyManger.ReleaseResourceManager(ref oldResourceManager, oldStyleManager);
+
+            resourceManager.Add(SolidColourStyle.Transparent);
+            resourceManager.Add(SolidColourStyle.White);
+            resourceManager.Add(SolidColourStyle.Black);
+            resourceManager.Add(SolidColourStyle.Gray);
+            resourceManager.Add(SolidColourStyle.CornflowerBlue);
+            resourceManager.Add(TransparentBlue);
+
+            _tiles = _tiling.GetTiles(View.ViewBounds, Enumerable.Empty<TileBase>());
+        }
 
         /// <summary>
         ///     Raises the <see cref="E:ScreenBoundsChanged" /> event.

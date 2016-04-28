@@ -129,7 +129,7 @@ namespace EscherTiler
             }
             //*/
 
-            lock (_drawLock)
+            lock (_lock)
                 controller.Draw(graphics);
 
             renderTarget.EndDraw();
