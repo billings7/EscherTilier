@@ -102,8 +102,7 @@ namespace EscherTiler
             if (manager == null) throw new ArgumentNullException(nameof(manager));
             if (tiles == null) throw new ArgumentNullException(nameof(tiles));
 
-            // ReSharper disable once PossibleNullReferenceException - ReSharper thinks its always null...
-            Interlocked.Exchange(ref _styleManager, manager).Dispose();
+            Interlocked.Exchange(ref _styleManager, manager);
 
             foreach (TileBase tile in tiles)
                 tile.Style = manager.GetStyle(tile);
@@ -254,7 +253,7 @@ namespace EscherTiler
                     if (tile == null) throw new ArgumentNullException();
 
                     if (fillStyle == null)
-                        graphics.FillStyle = tile.Style ?? SolidColourStyle.White;
+                        graphics.FillStyle = tile.Style ?? SolidColourStyle.Transparent;
 
                     IGraphicsPath path;
                     bool disposePath = false;

@@ -176,10 +176,10 @@ namespace EscherTiler
                     null,
                     new[]
                     {
-                        new EdgePattern("a", new[] { pa = new EdgePart(1, 1, true) }),
-                        new EdgePattern("b", new[] { pb = new EdgePart(2, 1, true) }),
-                        new EdgePattern("c", new[] { pc = new EdgePart(1, 1, false) }),
-                        new EdgePattern("d", new[] { pd = new EdgePart(2, 1, false) })
+                        new EdgePattern("a", new[] { pa = new EdgePart(1, 1, 1, true) }),
+                        new EdgePattern("b", new[] { pb = new EdgePart(2, 2, 1, true) }),
+                        new EdgePattern("c", new[] { pc = new EdgePart(3, 1, 1, false) }),
+                        new EdgePattern("d", new[] { pd = new EdgePart(4, 2, 1, false) })
                     },
                     new EdgePartAdjacencies
                     {
@@ -194,20 +194,16 @@ namespace EscherTiler
 
             ShapeController sc = new ShapeController(template, this);
 
-            RandomStyleManager randomStyleManager = new RandomStyleManager(null, 0)
-            {
-                LineStyle = new LineStyle(1, _blackStyle),
-                Styles =
-                {
-                    new TileStyle(new SolidColourStyle(Colour.Red), sc.Shapes.ToArray()),
-                    new TileStyle(new SolidColourStyle(Colour.White), sc.Shapes.ToArray()),
-                    new TileStyle(new SolidColourStyle(Colour.Yellow), sc.Shapes.ToArray()),
-                    new TileStyle(new SolidColourStyle(Colour.Orange), sc.Shapes.ToArray())
-                }
-            };
+            RandomStyleManager randomStyleManager = new RandomStyleManager(
+                0,
+                new LineStyle(1, _blackStyle),
+                new TileStyle(new SolidColourStyle(Colour.Red), sc.Shapes.ToArray()),
+                new TileStyle(new SolidColourStyle(Colour.White), sc.Shapes.ToArray()),
+                new TileStyle(new SolidColourStyle(Colour.Yellow), sc.Shapes.ToArray()),
+                new TileStyle(new SolidColourStyle(Colour.Orange), sc.Shapes.ToArray()));
 
             TilingController tc = new TilingController(
-                template.CreateTiling(template.Tilings[0], sc.Shapes, randomStyleManager),
+                template.CreateTiling(template.Tilings.Values.First(), sc.Shapes, randomStyleManager),
                 randomStyleManager,
                 this);
 

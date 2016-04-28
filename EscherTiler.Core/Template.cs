@@ -18,6 +18,9 @@ namespace EscherTiler
     {
         private readonly Dictionary<string, ShapeTemplate> _shapeTemplateByEdgeName;
 
+        [NotNull]
+        internal readonly IReadOnlyDictionary<int, EdgePart> EdgeParts;
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="Template" /> class.
         /// </summary>
@@ -58,7 +61,9 @@ namespace EscherTiler
             if (tilings.Any(t => !allEdges.SetEquals(t.EdgePatterns.Select(p => p.EdgeName))))
                 throw new ArgumentException(Strings.Template_Template_UnknownEdges, nameof(tilings));
 
-            ShapeTemplates = shapeTemplates;
+            EdgeParts = tilings.SelectMany(s => s.EdgePatterns.SelectMany(p => p.Parts)).ToDictionary(p => p.ID);
+
+            ShapeTemplates = shapeTemplates.ToDictionary(st => st.Name);
             Tilings = tilings.ToDictionary(t => t.ID);
 
             ShapeSet shapes = CreateShapes();
@@ -86,6 +91,7 @@ namespace EscherTiler
                     pattern.ShapeTemplate = _shapeTemplateByEdgeName[pattern.EdgeName];
                 }
             }
+
             foreach (ShapeTemplate template in shapeTemplates)
             {
                 template.Template = this;
@@ -104,7 +110,7 @@ namespace EscherTiler
         /// </value>
         [NotNull]
         [ItemNotNull]
-        public IReadOnlyList<ShapeTemplate> ShapeTemplates { get; }
+        public IReadOnlyDictionary<string, ShapeTemplate> ShapeTemplates { get; }
 
         /// <summary>
         ///     Gets the constraints, if any, on the angles and verticies in the shapes in the template.
@@ -131,7 +137,7 @@ namespace EscherTiler
         /// </summary>
         /// <returns></returns>
         [NotNull]
-        public ShapeSet CreateShapes() => new ShapeSet(ShapeTemplates.Select(s => new Shape(s)).ToArray());
+        public ShapeSet CreateShapes() => new ShapeSet(ShapeTemplates.Values.Select(s => new Shape(s)).ToArray());
 
         /// <summary>
         ///     Creates a tiling from this template.
@@ -158,7 +164,7 @@ namespace EscherTiler
 
             HashSet<ShapeTemplate> templates = new HashSet<ShapeTemplate>(shapes.Select(s => s.Template));
 
-            if (!templates.SetEquals(ShapeTemplates))
+            if (!templates.SetEquals(ShapeTemplates.Values))
                 throw new ArgumentException(Strings.Template_CreateTiling_WrongShapes, nameof(shapes));
 
             Dictionary<int, ShapeLines> shapeLines = new Dictionary<int, ShapeLines>();
@@ -215,7 +221,7 @@ namespace EscherTiler
                         ep => new EdgePartShape(
                             ep,
                             shapes.GetEdge(ep.EdgePattern.EdgeName),
-                            shapeLines.GetOrAdd(ep.ID, _ => ShapeLines.CreateDefault())))
+                            shapeLines.GetOrAdd(ep.PartShapeID, _ => ShapeLines.CreateDefault())))
                     .ToArray();
 
                 Tile tile = new Tile(label, shape, transform, partShapes);
@@ -224,27 +230,6 @@ namespace EscherTiler
             }
 
             return new Tiling(this, tilingDefinition, tiles, styleManager);
-        }
-    }
-
-    public class ShapeLines : List<ILine>
-    {
-        public static ShapeLines CreateDefault()
-        {
-            return new ShapeLines
-            {
-                new Line(new LineVector(Vector2.Zero, true), new LineVector(new Vector2(1, 0), true))
-            };
-        }
-
-        public bool Replace(ILine line, params ILine[] newLines)
-        {
-            int index = IndexOf(line);
-            if (index < 0) return false;
-
-            RemoveAt(index);
-            InsertRange(index, newLines);
-            return true;
         }
     }
 }

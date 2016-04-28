@@ -114,6 +114,7 @@
     <Compile Include="LineVector.cs" />
     <Compile Include="Numerics\Matrix.cs" />
     <Compile Include="Controllers\ShapeController.cs" />
+    <Compile Include="ShapeLines.cs" />
     <Compile Include="ShapeSet.cs" />
     <Compile Include="Styles\SolidColourStyles.cs">
       <DependentUpon>SolidColourStyles.tt</DependentUpon>

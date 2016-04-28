@@ -1,6 +1,6 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
-using EscherTiler.Graphics.Resources;
 using EscherTiler.Utilities;
 using JetBrains.Annotations;
 
@@ -12,7 +12,28 @@ namespace EscherTiler.Styles
         ///     Initializes a new instance of the <see cref="RandomStyleManager" /> class.
         /// </summary>
         /// <param name="seed">The seed.</param>
-        public RandomStyleManager(int seed)
+        /// <param name="lineStyle">The line style.</param>
+        /// <param name="styles">The styles.</param>
+        public RandomStyleManager(
+            int seed,
+            [NotNull] LineStyle lineStyle,
+            [CanBeNull] IReadOnlyList<TileStyle> styles)
+            : base(lineStyle, styles)
+        {
+            Seed = seed;
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="RandomStyleManager" /> class.
+        /// </summary>
+        /// <param name="seed">The seed.</param>
+        /// <param name="lineStyle">The line style.</param>
+        /// <param name="styles">The styles.</param>
+        public RandomStyleManager(
+            int seed,
+            [NotNull] LineStyle lineStyle,
+            [CanBeNull] params TileStyle[] styles)
+            : base(lineStyle, styles)
         {
             Seed = seed;
         }

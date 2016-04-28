@@ -47,6 +47,9 @@ namespace EscherTiler.Storage
         private static readonly ThreadLocal<Dictionary<string, Shape>> _shapeByName =
             new ThreadLocal<Dictionary<string, Shape>>(() => new Dictionary<string, Shape>());
 
+        [NotNull]
+        private static readonly ThreadLocal<Template> _template = new ThreadLocal<Template>();
+
         /// <summary>
         ///     Saves the given <see cref="Template" /> to a file.
         /// </summary>
@@ -174,7 +177,7 @@ namespace EscherTiler.Storage
                     {
                         Debug.Assert(thumbnailEntry.Length < int.MaxValue);
 
-                        byte[] data = reader.ReadBytes((int)thumbnailEntry.Length);
+                        byte[] data = reader.ReadBytes((int) thumbnailEntry.Length);
 
                         thumbnail = new MemoryImage(data);
                     }
@@ -234,7 +237,9 @@ namespace EscherTiler.Storage
         /// <exception cref="System.ArgumentNullException">
         ///     <paramref name="tiling" /> or <paramref name="stream" /> is <see langword="null" />.
         /// </exception>
-        public static void SaveTiling([NotNull] Tiling tiling, [NotNull] Stream stream,
+        public static void SaveTiling(
+            [NotNull] Tiling tiling,
+            [NotNull] Stream stream,
             [CanBeNull] IImage thumbnail = null)
         {
             if (tiling == null) throw new ArgumentNullException(nameof(tiling));
@@ -325,6 +330,8 @@ namespace EscherTiler.Storage
                         sourceStream.CopyTo(destStream);
                     }
                 }
+
+                fileNameByImage.Clear();
             }
         }
 
@@ -377,7 +384,7 @@ namespace EscherTiler.Storage
                     {
                         Debug.Assert(thumbnailEntry.Length < int.MaxValue);
 
-                        byte[] data = reader.ReadBytes((int)thumbnailEntry.Length);
+                        byte[] data = reader.ReadBytes((int) thumbnailEntry.Length);
 
                         thumbnail = new MemoryImage(data);
                     }
@@ -405,11 +412,11 @@ namespace EscherTiler.Storage
                 // Deal with different versions if needed.
 
                 Template template = DeserializeTemplate(doc.Root);
-
-                Dictionary<string, IImage> imageByFileName = _imageByFileName.Value;
-                Debug.Assert(imageByFileName != null, "imageByFileName != null");
+                _template.Value = template;
 
                 // Load images
+                Dictionary<string, IImage> imageByFileName = _imageByFileName.Value;
+                Debug.Assert(imageByFileName != null, "imageByFileName != null");
                 imageByFileName.Clear();
 
                 foreach (ZipArchiveEntry imgEntry in zip.Entries.Where(e => e.Name.StartsWith("Image")))
@@ -420,7 +427,7 @@ namespace EscherTiler.Storage
                     {
                         Debug.Assert(imgEntry.Length < int.MaxValue);
 
-                        byte[] data = reader.ReadBytes((int)imgEntry.Length);
+                        byte[] data = reader.ReadBytes((int) imgEntry.Length);
 
                         image = new MemoryImage(data);
                     }
@@ -447,7 +454,14 @@ namespace EscherTiler.Storage
                 }
                 // Deal with different versions if needed.
 
-                return DeserializeTiling(doc.Root, template);
+                Tiling tiling = DeserializeTiling(doc.Root, template);
+
+                imageByFileName.Clear();
+                Debug.Assert(_shapeByName.Value != null, "_shapeByName.Value != null");
+                _shapeByName.Value.Clear();
+                _template.Value = null;
+
+                return tiling;
             }
         }
 
@@ -487,7 +501,8 @@ namespace EscherTiler.Storage
                     template.Tilings.Values.Select(Serialize)),
                 new XElement(
                     "ShapeTemplates",
-                    template.ShapeTemplates.Select(Serialize)),
+                    // ReSharper disable once AssignNullToNotNullAttribute
+                    template.ShapeTemplates.Values.Select(Serialize)),
                 new XElement(
                     "ShapeConstraints",
                     template.ShapeConstraints.Select(Serialize)));
@@ -565,7 +580,8 @@ namespace EscherTiler.Storage
             TilingDefinition definition;
             if (!template.Tilings.TryGetValue(definitionId, out definition))
                 throw new InvalidDataException("Tiling definition ID does not exist.");
-            
+            Debug.Assert(definition != null, "definition != null");
+
             XElement tilesElm = element.Element("Tiles");
 
             if (tilesElm == null || tilesElm.IsEmpty)
@@ -576,9 +592,15 @@ namespace EscherTiler.Storage
                 .Select(DeserializeTile)
                 .ToArray();
 
-            _shapeByName.Value.Clear();
+            Dictionary<string, Shape> shapedByName = _shapeByName.Value;
+            Debug.Assert(shapedByName != null, "shapedByName != null");
+
+            shapedByName.Clear();
             foreach (Tile tile in tiles)
-                _shapeByName.Value.Add(tile.Shape.Template.Name, tile.Shape);
+            {
+                Debug.Assert(tile != null, "tile != null");
+                shapedByName.Add(tile.Shape.Template.Name, tile.Shape);
+            }
 
             XElement styleManagerElm = element.Element("StyleManager");
 
@@ -792,6 +814,7 @@ namespace EscherTiler.Storage
             return new XElement(
                 "Part",
                 new XAttribute("id", edgePart.ID.ToString(_culture)),
+                new XAttribute("partShapeId", edgePart.PartShapeID.ToString(_culture)),
                 new XAttribute("clockwise", edgePart.IsClockwise),
                 new XAttribute("amount", edgePart.Amount.ToString("R", _culture)));
         }
@@ -804,17 +827,20 @@ namespace EscherTiler.Storage
         private static EdgePart DeserializeEdgePart([NotNull] XElement element)
         {
             int id;
+            int partShapeID;
             bool clockwise;
             float amount;
 
             if (!int.TryParse(element.Attribute("id")?.Value, NumberStyles.Integer, _culture, out id))
                 throw new InvalidDataException("Edge part ID missing or invalid.");
+            if (!int.TryParse(element.Attribute("partShapeId")?.Value, NumberStyles.Integer, _culture, out partShapeID))
+                throw new InvalidDataException("Edge part shape ID missing or invalid.");
             if (!bool.TryParse(element.Attribute("clockwise")?.Value, out clockwise))
                 throw new InvalidDataException("Edge part clockwise flag missing or invalid.");
             if (!float.TryParse(element.Attribute("amount")?.Value, FloatNumberStyle, _culture, out amount))
                 throw new InvalidDataException("Edge part amount missing or invalid.");
 
-            return new EdgePart(id, amount, clockwise);
+            return new EdgePart(id, partShapeID, amount, clockwise);
         }
 
         /// <summary>
@@ -895,7 +921,7 @@ namespace EscherTiler.Storage
                 new XAttribute("type", styleManager.GetType().Name),
                 new XElement(
                     "LineStyle",
-                    new XAttribute("width", styleManager.LineStyle.Width),
+                    new XAttribute("width", styleManager.LineStyle.Width.ToString("R", _culture)),
                     Serialize(styleManager.LineStyle.Style)),
                 new XElement(
                     "Styles",
@@ -929,8 +955,23 @@ namespace EscherTiler.Storage
             if (string.IsNullOrEmpty(typeName))
                 throw new InvalidDataException("Style manager type missing.");
 
-            LineStyle lineStyle = null;
-            TileStyle[] styles = null;
+            XElement lineStyleElm = element.Element("LineStyle");
+            if (lineStyleElm == null || lineStyleElm.IsEmpty)
+                throw new InvalidDataException("Line style missing");
+
+            float width;
+            if (!float.TryParse(lineStyleElm.Attribute("width")?.Value, FloatNumberStyle, _culture, out width))
+                throw new InvalidDataException("Line width is invalid or missing.");
+
+            LineStyle lineStyle = new LineStyle(
+                width,
+                (SolidColourStyle) DeserializeStyle(lineStyleElm.Elements().Single()));
+
+            XElement stylesElm = element.Element("Styles");
+            if (stylesElm == null || stylesElm.IsEmpty)
+                throw new InvalidDataException("Styles missing");
+
+            TileStyle[] styles = stylesElm.Elements().Select(DeserializeTileStyle).ToArray();
 
             int seed;
 
@@ -938,25 +979,27 @@ namespace EscherTiler.Storage
             {
                 case nameof(RandomStyleManager):
                     if (!int.TryParse(element.Element("Seed")?.Value, out seed))
-                        throw new InvalidDataException("Random seed is invalid or missings.");
+                        throw new InvalidDataException("Random seed is invalid or missing.");
 
                     return new RandomStyleManager(seed, lineStyle, styles);
                 case nameof(RandomGreedyStyleManager):
                     if (!int.TryParse(element.Element("Seed")?.Value, out seed))
-                        throw new InvalidDataException("Random seed is invalid or missings.");
+                        throw new InvalidDataException("Random seed is invalid or missing.");
 
                     return new RandomGreedyStyleManager(seed, lineStyle, styles);
                 case nameof(GreedyStyleManager):
                     int pa, pb, pc;
 
                     if (!int.TryParse(element.Element("ParamA")?.Value, out pa))
-                        throw new InvalidDataException("Style manager parameter A is invalid or missings.");
+                        throw new InvalidDataException("Style manager parameter A is invalid or missing.");
                     if (!int.TryParse(element.Element("ParamB")?.Value, out pb))
-                        throw new InvalidDataException("Style manager parameter B is invalid or missings.");
+                        throw new InvalidDataException("Style manager parameter B is invalid or missing.");
                     if (!int.TryParse(element.Element("ParamC")?.Value, out pc))
-                        throw new InvalidDataException("Style manager parameter C is invalid or missings.");
+                        throw new InvalidDataException("Style manager parameter C is invalid or missing.");
 
                     return new GreedyStyleManager(pa, pb, pc, lineStyle, styles);
+                case nameof(SimpleStyleManager):
+                    return new SimpleStyleManager(lineStyle, styles);
                 default:
                     throw new InvalidDataException($"Unknown style manager type {typeName}.");
             }
@@ -977,6 +1020,31 @@ namespace EscherTiler.Storage
                     "Shapes",
                     tileStyle.Shapes.Select(
                         s => new XElement("Shape", s.Template.Name))));
+        }
+
+        /// <summary>
+        ///     Deserializes a tile style from an XML element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns></returns>
+        [NotNull]
+        private static TileStyle DeserializeTileStyle([NotNull] XElement element)
+        {
+            XElement styleElm = element.Element("Style");
+            if (styleElm == null || styleElm.IsEmpty)
+                throw new InvalidDataException("Tile style missing");
+
+            IStyle style = DeserializeStyle(styleElm);
+
+            XElement shapesElm = element.Element("Shapes");
+            if (shapesElm == null || shapesElm.IsEmpty)
+                throw new InvalidDataException("Tile style shapes missing");
+
+            Dictionary<string, Shape> shapeByName = _shapeByName.Value;
+            Debug.Assert(shapeByName != null);
+            Shape[] shapes = shapesElm.Elements("Shape").Select(e => shapeByName[e.Value]).ToArray();
+
+            return new TileStyle(style, shapes);
         }
 
         /// <summary>
@@ -1025,6 +1093,91 @@ namespace EscherTiler.Storage
         }
 
         /// <summary>
+        ///     Deserializes a style from an XML element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns></returns>
+        [NotNull]
+        private static IStyle DeserializeStyle([NotNull] XElement element)
+        {
+            StyleType type;
+            if (!Enum.TryParse(element.Name.LocalName, out type))
+                throw new InvalidDataException("Shape type is invalid.");
+
+            switch (type)
+            {
+                case StyleType.SolidColour:
+                    XElement colourElm = element.Element("Colour");
+                    if (colourElm == null)
+                        throw new InvalidDataException("Colour missing");
+
+                    return new SolidColourStyle(DeserializeColour(colourElm));
+                case StyleType.RandomColour:
+                    XElement fromElm = element.Element("From");
+                    if (fromElm == null)
+                        throw new InvalidDataException("From colour missing");
+
+                    XElement toElm = element.Element("To");
+                    if (toElm == null)
+                        throw new InvalidDataException("To colour missing");
+
+                    return new RandomColourStyle(DeserializeColour(fromElm), DeserializeColour(toElm));
+                case StyleType.LinearGradient:
+                case StyleType.RadialGradient:
+                    XElement gradStopsElm = element.Element("Start");
+                    if (gradStopsElm == null || gradStopsElm.IsEmpty)
+                        throw new InvalidDataException("Gradient stops missing");
+
+                    GradientStop[] gradientStops = gradStopsElm
+                        .Elements("GradientStop")
+                        .Select(DeserializeGradientStop)
+                        .ToArray();
+
+                    if (type == StyleType.LinearGradient)
+                    {
+                        XElement startElm = element.Element("Start");
+                        if (startElm == null)
+                            throw new InvalidDataException("Start point missing");
+
+                        XElement endElm = element.Element("End");
+                        if (endElm == null)
+                            throw new InvalidDataException("End point missing");
+
+                        return new LinearGradientStyle(
+                            DeserializeVector(startElm),
+                            DeserializeVector(endElm),
+                            gradientStops);
+                    }
+
+                    XElement offsetElm = element.Element("UnitOriginOffset");
+                    if (offsetElm == null)
+                        throw new InvalidDataException("Origin offset point missing");
+
+                    XElement gradTransformElm = element.Element("Transform");
+                    if (gradTransformElm == null)
+                        throw new InvalidDataException("Gradient transform missing");
+
+                    return new RadialGradientStyle(
+                        DeserializeVector(offsetElm),
+                        DeserializeMatrix(gradTransformElm),
+                        gradientStops);
+                case StyleType.Image:
+                    IImage image;
+                    Debug.Assert(_imageByFileName.Value != null, "_imageByFileName.Value != null");
+                    if (!_imageByFileName.Value.TryGetValue(element.Attribute("file")?.Value ?? string.Empty, out image))
+                        throw new InvalidDataException("Image file is missing or invalid");
+
+                    XElement imgTransformElm = element.Element("Transform");
+                    if (imgTransformElm == null)
+                        throw new InvalidDataException("Image transform missing");
+
+                    return new ImageStyle(image, DeserializeMatrix(imgTransformElm));
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        /// <summary>
         ///     Serializes the specified tile to an XML element.
         /// </summary>
         /// <param name="tile">The tile.</param>
@@ -1041,6 +1194,38 @@ namespace EscherTiler.Storage
         }
 
         /// <summary>
+        ///     Deserializes a tile from an XML element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns></returns>
+        [NotNull]
+        private static Tile DeserializeTile([NotNull] XElement element)
+        {
+            string label = element.Attribute("label")?.Value;
+            if (string.IsNullOrEmpty(label))
+                throw new InvalidDataException("Tile label is missing");
+
+            XElement shapeElm = element.Element("Shape");
+            if (shapeElm == null || shapeElm.IsEmpty)
+                throw new InvalidDataException("Tile shape missing");
+
+            XElement transformElm = element.Element("Transform");
+            if (transformElm == null)
+                throw new InvalidDataException("Tile transform missing");
+
+            XElement partShapesElm = element.Element("PartShapes");
+            if (partShapesElm == null || partShapesElm.IsEmpty)
+                throw new InvalidDataException("Part shapes missing");
+
+            Shape shape = DeserializeShape(shapeElm);
+            return new Tile(
+                label,
+                shape,
+                DeserializeMatrix(transformElm),
+                partShapesElm.Elements("EdgePartShape").Select(e => DeserializeEdgePartShape(e, shape)).ToArray());
+        }
+
+        /// <summary>
         ///     Serializes the specified shape to an XML element.
         /// </summary>
         /// <param name="shape">The shape.</param>
@@ -1051,6 +1236,33 @@ namespace EscherTiler.Storage
                 "Shape",
                 new XAttribute("name", shape.Template.Name),
                 new XElement("Vertices", shape.Vertices.Select(v => Serialize(v.Location, "Vertex"))));
+        }
+
+        /// <summary>
+        ///     Deserializes a shape from an XML element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns></returns>
+        [NotNull]
+        private static Shape DeserializeShape([NotNull] XElement element)
+        {
+            string name = element.Attribute("name")?.Value;
+            if (string.IsNullOrEmpty(name))
+                throw new InvalidDataException("Shape name is missing");
+
+            Template template = _template.Value;
+            Debug.Assert(template != null, "template != null");
+
+            ShapeTemplate shapeTemplate;
+            if (!template.ShapeTemplates.TryGetValue(name, out shapeTemplate))
+                throw new InvalidDataException("Shape name invalid");
+            Debug.Assert(shapeTemplate != null, "shapeTemplate != null");
+
+            XElement verticiesElm = element.Element("Vertices");
+            if (verticiesElm == null || verticiesElm.IsEmpty)
+                throw new InvalidDataException("Shape verticies missing");
+
+            return new Shape(shapeTemplate, verticiesElm.Elements("Vertex").Select(DeserializeVector).ToArray());
         }
 
         /// <summary>
@@ -1065,7 +1277,45 @@ namespace EscherTiler.Storage
                 "EdgePartShape",
                 new XAttribute("part", edgePartShape.Part.ID.ToString(_culture)),
                 new XAttribute("edge", edgePartShape.Edge.Name),
-                edgePartShape.Lines.Select(Serialize));
+                edgePartShape.Lines.Select((l, i) => Serialize(l, i == 0)));
+        }
+
+        /// <summary>
+        ///     Deserializes an edge part shape from an XML element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns></returns>
+        [NotNull]
+        private static EdgePartShape DeserializeEdgePartShape([NotNull] XElement element, [NotNull] Shape shape)
+        {
+            int partId;
+            EdgePart part;
+
+            Template template = _template.Value;
+            Debug.Assert(template != null, "template != null");
+            if (!int.TryParse(element.Attribute("part")?.Value, NumberStyles.Integer, _culture, out partId) ||
+                !template.EdgeParts.TryGetValue(partId, out part))
+                throw new InvalidDataException("Edge part ID missing or invalid.");
+            Debug.Assert(part != null, "part != null");
+
+            string edgeName = element.Attribute("edge")?.Value;
+            if (string.IsNullOrEmpty(edgeName))
+                throw new InvalidDataException("Edge name missing or invalid.");
+
+            Edge edge = shape.GetEdge(edgeName);
+
+            ShapeLines lines = new ShapeLines();
+            ILine lastLine = null;
+            foreach (XElement lineElm in element.Elements())
+            {
+                Debug.Assert(lineElm != null, "lineElm != null");
+
+                ILine line = DeserializeLine(lineElm, lastLine);
+                lines.Add(line);
+                lastLine = line;
+            }
+
+            return new EdgePartShape(part, edge, lines);
         }
 
         /// <summary>
@@ -1074,11 +1324,12 @@ namespace EscherTiler.Storage
         /// <param name="line">The line.</param>
         /// <returns></returns>
         [NotNull]
-        private static XElement Serialize([NotNull] ILine line)
+        private static XElement Serialize([NotNull] ILine line, bool firstLine)
         {
             XElement element = new XElement(line.Type.ToString());
 
-            element.Add(Serialize(line.Start, "Start"));
+            if (firstLine)
+                element.Add(Serialize(line.Start, "Start"));
             element.Add(Serialize(line.End, "End"));
 
             switch (line.Type)
@@ -1102,6 +1353,66 @@ namespace EscherTiler.Storage
         }
 
         /// <summary>
+        ///     Deserializes a line from an XML element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <param name="lastLine">The last line.</param>
+        /// <returns></returns>
+        [NotNull]
+        private static ILine DeserializeLine([NotNull] XElement element, [CanBeNull] ILine lastLine)
+        {
+            LineType type;
+            if (!Enum.TryParse(element.Name.LocalName, out type))
+                throw new InvalidDataException("Line type is invalid.");
+
+            LineVector start;
+            if (lastLine != null)
+                start = lastLine.End;
+            else
+            {
+                XElement startElm = element.Element("Start");
+                if (startElm == null)
+                    throw new InvalidDataException("Start point missing");
+
+                start = DeserializeLineVector(startElm);
+            }
+
+            XElement endElm = element.Element("End");
+            if (endElm == null)
+                throw new InvalidDataException("End point missing");
+
+            LineVector end = DeserializeLineVector(endElm);
+
+            switch (type)
+            {
+                case LineType.Line:
+                    return new Line(start, end);
+                case LineType.QuadraticBezierCurve:
+                    XElement ctrlElm = element.Element("ControlPoint");
+                    if (ctrlElm == null)
+                        throw new InvalidDataException("Control point missing");
+
+                    return new QuadraticBezierCurve(start, DeserializeLineVector(ctrlElm), end);
+                case LineType.CubicBezierCurve:
+                    XElement ctrlAElm = element.Element("ControlPointA");
+                    if (ctrlAElm == null)
+                        throw new InvalidDataException("Control point A missing");
+
+                    XElement ctrlBElm = element.Element("ControlPointB");
+                    if (ctrlBElm == null)
+                        throw new InvalidDataException("Control point B missing");
+
+                    return new CubicBezierCurve(
+                        start,
+                        DeserializeLineVector(ctrlAElm),
+                        DeserializeLineVector(ctrlBElm),
+                        end);
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        /// <summary>
         ///     Serializes the specified vector to an XML element.
         /// </summary>
         /// <param name="vector">The vector.</param>
@@ -1115,6 +1426,22 @@ namespace EscherTiler.Storage
                 new XAttribute("x", vector.X.ToString("R", _culture)),
                 new XAttribute("y", vector.Y.ToString("R", _culture)),
                 content);
+        }
+
+        /// <summary>
+        ///     Deserializes a vector from an XML element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns></returns>
+        private static Vector2 DeserializeVector([NotNull] XElement element)
+        {
+            float x, y;
+
+            if (!float.TryParse(element.Attribute("x")?.Value, FloatNumberStyle, _culture, out x) ||
+                !float.TryParse(element.Attribute("y")?.Value, FloatNumberStyle, _culture, out y))
+                throw new InvalidDataException("One or more co-ordinates missing or invalid.");
+
+            return new Vector2(x, y);
         }
 
         /// <summary>
@@ -1133,6 +1460,22 @@ namespace EscherTiler.Storage
         }
 
         /// <summary>
+        ///     Deserializes a line vector from an XML element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns></returns>
+        [NotNull]
+        private static LineVector DeserializeLineVector([NotNull] XElement element)
+        {
+            Vector2 vec = DeserializeVector(element);
+            bool isFixed;
+            if (!bool.TryParse(element.Attribute("fixed")?.Value, out isFixed))
+                throw new InvalidDataException("Is fixed flag missing or invalid.");
+
+            return new LineVector(vec, isFixed);
+        }
+
+        /// <summary>
         ///     Serializes the specified colour to an XML element.
         /// </summary>
         /// <param name="colour">The colour.</param>
@@ -1143,11 +1486,29 @@ namespace EscherTiler.Storage
         {
             return new XElement(
                 name,
-                new XAttribute("alpha", colour.A.ToString("R", _culture)),
                 new XAttribute("red", colour.R.ToString("R", _culture)),
                 new XAttribute("green", colour.G.ToString("R", _culture)),
                 new XAttribute("blue", colour.B.ToString("R", _culture)),
+                new XAttribute("alpha", colour.A.ToString("R", _culture)),
                 content);
+        }
+
+        /// <summary>
+        ///     Deserializes a colour from an XML element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns></returns>
+        private static Colour DeserializeColour([NotNull] XElement element)
+        {
+            float a, r, g, b;
+
+            if (!float.TryParse(element.Attribute("alpha")?.Value, FloatNumberStyle, _culture, out a) ||
+                !float.TryParse(element.Attribute("red")?.Value, FloatNumberStyle, _culture, out r) ||
+                !float.TryParse(element.Attribute("green")?.Value, FloatNumberStyle, _culture, out g) ||
+                !float.TryParse(element.Attribute("blue")?.Value, FloatNumberStyle, _culture, out b))
+                throw new InvalidDataException("One or more colour components missing or invalid.");
+
+            return new Colour(r, g, b, a);
         }
 
         /// <summary>
@@ -1158,6 +1519,21 @@ namespace EscherTiler.Storage
         private static XElement Serialize(GradientStop stop)
         {
             return Serialize(stop.Colour, "GradientStop", stop.Position.ToString("R", _culture));
+        }
+
+        /// <summary>
+        ///     Deserializes a gradient stop from an XML element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns></returns>
+        private static GradientStop DeserializeGradientStop([NotNull] XElement element)
+        {
+            Colour col = DeserializeColour(element);
+            float pos;
+            if (!float.TryParse(element.Value, FloatNumberStyle, _culture, out pos))
+                throw new InvalidDataException("Gradient stop position missing or invalid.");
+
+            return new GradientStop(col, pos);
         }
 
         /// <summary>
@@ -1178,6 +1554,26 @@ namespace EscherTiler.Storage
                 new XAttribute("m31", matrix.M31.ToString("R", _culture)),
                 new XAttribute("m32", matrix.M32.ToString("R", _culture)),
                 content);
+        }
+
+        /// <summary>
+        ///     Deserializes a matrix from an XML element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns></returns>
+        private static Matrix3x2 DeserializeMatrix([NotNull] XElement element)
+        {
+            float m11, m12, m21, m22, m31, m32;
+
+            if (!float.TryParse(element.Attribute("m11")?.Value, FloatNumberStyle, _culture, out m11) ||
+                !float.TryParse(element.Attribute("m12")?.Value, FloatNumberStyle, _culture, out m12) ||
+                !float.TryParse(element.Attribute("m21")?.Value, FloatNumberStyle, _culture, out m21) ||
+                !float.TryParse(element.Attribute("m22")?.Value, FloatNumberStyle, _culture, out m22) ||
+                !float.TryParse(element.Attribute("m31")?.Value, FloatNumberStyle, _culture, out m31) ||
+                !float.TryParse(element.Attribute("m32")?.Value, FloatNumberStyle, _culture, out m32))
+                throw new InvalidDataException("One or more matrix elements missing or invalid.");
+
+            return new Matrix3x2(m11, m12, m21, m22, m31, m32);
         }
 
         /// <summary>

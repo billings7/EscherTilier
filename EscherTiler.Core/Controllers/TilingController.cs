@@ -148,10 +148,7 @@ namespace EscherTiler.Controllers
         {
             base.Dispose(disposing);
             if (disposing)
-            {
                 DependencyManger.ReleaseResourceManager(ref _resourceManager, _styleManager);
-                _styleManager.Dispose();
-            }
         }
 
         private class SelectedLine

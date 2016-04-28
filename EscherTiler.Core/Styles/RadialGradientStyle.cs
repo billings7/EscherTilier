@@ -37,7 +37,7 @@ namespace EscherTiler.Styles
         /// <param name="unitOriginOffset">The unit origin offset.</param>
         /// <param name="transform">The transform.</param>
         /// <param name="gradientStops">The gradient stops.</param>
-        private RadialGradientStyle(
+        public RadialGradientStyle(
             Vector2 unitOriginOffset,
             Matrix3x2 transform,
             [NotNull] IReadOnlyList<GradientStop> gradientStops)

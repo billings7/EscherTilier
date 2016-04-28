@@ -134,6 +134,8 @@ namespace EscherTiler
         /// <value>
         ///     All adjacencies.
         /// </value>
+        [NotNull]
+        [ItemNotNull]
         public IEnumerable<Tuple<Labeled<EdgePart>, Labeled<EdgePart>>> AllAdjacencies
             => _adjacencies.Select(a => Tuple.Create(a.PartA, a.PartB));
 

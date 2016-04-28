@@ -206,7 +206,7 @@ namespace EscherTiler.Graphics.GDI
             Debug.Assert(Tile != null, "Tile != null");
 
             graphics.SetLineStyle(lineStyle);
-            graphics.FillStyle = fillStyle ?? Tile.Style ?? SolidColourStyle.White;
+            graphics.FillStyle = fillStyle ?? Tile.Style ?? SolidColourStyle.Transparent;
 
             using (IGraphicsPath path = graphics.CreatePath())
             {

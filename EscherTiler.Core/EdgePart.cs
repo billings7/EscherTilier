@@ -41,23 +41,33 @@ namespace EscherTiler
         ///     Initializes a new instance of the <see cref="EdgePart" /> class.
         /// </summary>
         /// <param name="id">The part identifier.</param>
+        /// <param name="partShapeID">The part shape identifier.</param>
         /// <param name="amount">The amount.</param>
         /// <param name="isClockwise">If set to <see langword="true" /> the part is clockwise; otherwise counter-clockwise.</param>
-        public EdgePart(int id, float amount, bool isClockwise)
+        public EdgePart(int id, int partShapeID, float amount, bool isClockwise)
         {
             ID = id;
+            PartShapeID = partShapeID;
             Amount = amount;
             IsClockwise = isClockwise;
         }
 
         /// <summary>
         ///     Gets the identifier for the edge part.
-        ///     All parts with the same ID will have the same shape in the final tiling.
         /// </summary>
         /// <value>
         ///     The identifier.
         /// </value>
         public int ID { get; }
+
+        /// <summary>
+        ///     Gets the identifier for the edge part shape.
+        ///     All parts with the same ID will have the same shape in the final tiling.
+        /// </summary>
+        /// <value>
+        ///     The identifier.
+        /// </value>
+        public int PartShapeID { get; }
 
         /// <summary>
         ///     Gets a value indicating whether this part is oriented in a clockwise direction.

@@ -145,7 +145,7 @@ namespace EscherTiler
         ///     The centroid point.
         /// </value>
         public Vector2 Centroid => Vertices.Aggregate(Vector2.Zero, (sum, vert) => sum + vert.Location)
-            / Vertices.Count;
+                                   / Vertices.Count;
 
         /// <summary>
         ///     Gets the bounds of the shape.
