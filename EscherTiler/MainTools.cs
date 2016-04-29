@@ -99,6 +99,14 @@ namespace EscherTiler
                 }
 
                 /// <summary>
+                ///     Gets a value indicating whether this action changes any data that would need to be saved.
+                /// </summary>
+                /// <value>
+                ///     <see langword="true" /> if the action changes data; otherwise, <see langword="false" />.
+                /// </value>
+                public override bool ChangesData => false;
+
+                /// <summary>
                 ///     Updates the location of the action.
                 /// </summary>
                 /// <param name="rawLocation">
@@ -204,7 +212,7 @@ namespace EscherTiler
                 _hoverTile = GetTileOver(rawLocation);
                 TileSelectedTcs.TrySetResult(_hoverTile);
                 Controller.CurrentTool = LastTool;
-                return Action.Instant;
+                return InstantAction.PureInstance;
             }
 
             /// <summary>

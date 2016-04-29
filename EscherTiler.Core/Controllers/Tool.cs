@@ -71,13 +71,13 @@ namespace EscherTiler.Controllers
         }
 
         /// <summary>
-        ///     Gets the controller the tool belongs to.
+        ///     Gets or sets the controller the tool belongs to.
         /// </summary>
         /// <value>
         ///     The controller.
         /// </value>
         [NotNull]
-        public Controller Controller { get; }
+        public Controller Controller { get; set; }
 
         /// <summary>
         ///     Gets the name of the tool.
@@ -186,9 +186,12 @@ namespace EscherTiler.Controllers
     public abstract class Action
     {
         /// <summary>
-        ///     An instance that represents an action that has no extra steps to perform.
+        ///     Gets a value indicating whether this action changes any data that would need to be saved.
         /// </summary>
-        public static readonly InstantAction Instant = InstantAction.Instance;
+        /// <value>
+        ///     <see langword="true" /> if the action changes data; otherwise, <see langword="false" />.
+        /// </value>
+        public abstract bool ChangesData { get; }
     }
 
     /// <summary>
@@ -197,15 +200,33 @@ namespace EscherTiler.Controllers
     public sealed class InstantAction : Action
     {
         /// <summary>
-        ///     The instance of this class.
+        ///     An instance of this class with <see cref="ChangesData"/> equal to <see langword="false"/>.
         /// </summary>
         [NotNull]
-        public static readonly InstantAction Instance = new InstantAction();
+        public static readonly InstantAction PureInstance = new InstantAction(false);
+
+        /// <summary>
+        ///     An instance of this class with <see cref="ChangesData"/> equal to <see langword="true"/>.
+        /// </summary>
+        [NotNull]
+        public static readonly InstantAction DestructiveInstance = new InstantAction(true);
 
         /// <summary>
         ///     Prevents a default instance of the <see cref="InstantAction" /> class from being created.
         /// </summary>
-        private InstantAction() { }
+        /// <param name="changesData">if set to <see langword="true" /> [changes data].</param>
+        private InstantAction(bool changesData)
+        {
+            ChangesData = changesData;
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this action changes any data that would need to be saved.
+        /// </summary>
+        /// <value>
+        /// <see langword="true" /> if the action changes data; otherwise, <see langword="false" />.
+        /// </value>
+        public override bool ChangesData { get; }
     }
 
     /// <summary>

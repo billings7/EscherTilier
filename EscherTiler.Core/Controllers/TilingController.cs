@@ -555,7 +555,7 @@ namespace EscherTiler.Controllers
 
                 ChangeLineOption.Value = _selectedLine.Line.GetType();
                 AddOption(ChangeLineOption);
-                return InstantAction.Instance;
+                return InstantAction.PureInstance;
             }
 
             /// <summary>
@@ -673,6 +673,14 @@ namespace EscherTiler.Controllers
                     _initial = lineVector;
                     _tool = tool;
                 }
+
+                /// <summary>
+                ///     Gets a value indicating whether this action changes any data that would need to be saved.
+                /// </summary>
+                /// <value>
+                ///     <see langword="true" /> if the action changes data; otherwise, <see langword="false" />.
+                /// </value>
+                public override bool ChangesData => true;
 
                 /// <summary>
                 ///     Updates the location of the action.
@@ -857,6 +865,12 @@ namespace EscherTiler.Controllers
                 [NotNull]
                 private readonly SplitLineTool _tool;
 
+                /// <summary>
+                ///     Initializes a new instance of the <see cref="SplitLineAction" /> class.
+                /// </summary>
+                /// <param name="line">The line.</param>
+                /// <param name="point">The point.</param>
+                /// <param name="tool">The tool.</param>
                 public SplitLineAction(SelectedLine line, LinePoint point, [NotNull] SplitLineTool tool)
                 {
                     Debug.Assert(line != null, "line != null");
@@ -867,6 +881,22 @@ namespace EscherTiler.Controllers
                     _tool = tool;
                 }
 
+                /// <summary>
+                ///     Gets a value indicating whether this action changes any data that would need to be saved.
+                /// </summary>
+                /// <value>
+                ///     <see langword="true" /> if the action changes data; otherwise, <see langword="false" />.
+                /// </value>
+                public override bool ChangesData => true;
+
+                /// <summary>
+                ///     Updates the location of the action.
+                /// </summary>
+                /// <param name="rawLocation">
+                ///     The raw location that the action has been dragged to.
+                ///     Should be transformed by the <see cref="IView.InverseViewMatrix" /> for the
+                ///     <see cref="EscherTiler.Controllers.Controller.View" /> to get the location in 1the tiling itself.
+                /// </param>
                 public override void Update(Vector2 rawLocation)
                 {
                     LinePoint hit = _line.Line.HitTest(rawLocation, float.PositiveInfinity, _line.LineTransform);
@@ -881,11 +911,17 @@ namespace EscherTiler.Controllers
                     _tool.SetSplitLineLoc(_line, _point);
                 }
 
+                /// <summary>
+                ///     Cancels this action.
+                /// </summary>
                 public override void Cancel()
                 {
                     _tool._selectedLine = null;
                 }
 
+                /// <summary>
+                ///     Applies this action.
+                /// </summary>
                 public override void Apply()
                 {
                     _tool._selectedLine = null;

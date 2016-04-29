@@ -55,13 +55,12 @@ namespace EscherTiler
         {
             Interlocked.Exchange(ref _directXGraphics, null)?.Dispose();
             Interlocked.Exchange(ref _miskResourceManager, null)?.Dispose();
-            Interlocked.Exchange(ref _controller, null)?.Dispose();
         }
 
         private void renderControl_Render([NotNull] RenderTarget renderTarget, [NotNull] SwapChain swapChain)
         {
             IGraphics graphics = _directXGraphics;
-            Controller controller = _controller;
+            Controller controller = _activeController;
             if (graphics == null || controller == null) throw new ObjectDisposedException(nameof(Main));
 
             renderTarget.BeginDraw();

@@ -77,7 +77,30 @@ namespace EscherTiler
         private Point _lastNormalLocation = new Point(0, 0);
 
         [CanBeNull]
-        private TilingController _controller;
+        private Controller ActiveController
+        {
+            get { return _activeController; }
+            set
+            {
+                if (_activeController == value) return;
+
+                lock (_lock)
+                {
+                    if (_activeController == value) return;
+
+                    _activeController = value;
+                    UpdateTools();
+                    if (value != null)
+                        _panTool.Controller = value;
+                }
+            }
+        }
+
+        [CanBeNull]
+        private Controller _activeController;
+
+        [CanBeNull]
+        private TilingController _tilingController;
 
         [NotNull]
         private PanTool _panTool;
@@ -98,10 +121,7 @@ namespace EscherTiler
         private readonly object _lock = new object();
 
         [NotNull]
-        public string DocumentName
-        {
-            get { return _documentName; }
-        }
+        public string DocumentName => _documentName;
 
         [CanBeNull]
         public string DocumentPath
@@ -113,7 +133,18 @@ namespace EscherTiler
                 _documentName = _documentPath == null
                     ? "Untitled"
                     : Path.GetFileNameWithoutExtension(_documentPath);
-                Text = _documentName + @" - " + Resources.Main_Title;
+                Text = _documentName + (IsDirty ? "*" : string.Empty) + @" - " + Resources.Main_Title;
+            }
+        }
+
+        private bool IsDirty
+        {
+            get { return _isDirty; }
+            set
+            {
+                if (value == _isDirty) return;
+                _isDirty = value;
+                Text = _documentName + (IsDirty ? "*" : string.Empty) + @" - " + Resources.Main_Title;
             }
         }
 
@@ -123,7 +154,7 @@ namespace EscherTiler
         [CanBeNull]
         private string _documentPath;
 
-        private bool _isDirty = false;
+        private bool _isDirty;
 
         private bool _layoutSuspended;
 
@@ -240,10 +271,12 @@ namespace EscherTiler
             tc.EditLine.ChangeLineOption.ValueChanged += v => _changeLineTypeCmb.SelectedItem = v;
             _changeLineTypeCmb.SelectedItem = tc.EditLine.ChangeLineOption.Value;
 
-            _controller = tc;
-            _controller.CurrentToolChanged += controller_CurrentToolChanged;
-            _panTool = new PanTool(_controller, this);
-            _selectTileTool = new SelectTileTool(_controller);
+            _tilingController = tc;
+            _tilingController.CurrentToolChanged += controller_CurrentToolChanged;
+            _panTool = new PanTool(_tilingController, this);
+            _selectTileTool = new SelectTileTool(_tilingController);
+
+            ActiveController = _tilingController;
 
             _toolBtns.Add(_panTool, _panToolBtn);
 
@@ -296,6 +329,9 @@ namespace EscherTiler
             base.OnClosed(e);
 
             UnloadGraphics();
+            _activeController = null;
+            Interlocked.Exchange(ref _tilingController, null)?.Dispose();
+            // TODO Dispose shape controller
         }
 
         /// <summary>
@@ -332,11 +368,11 @@ namespace EscherTiler
         /// </returns>
         private bool PromptSave()
         {
-            if (!_isDirty) return true;
+            if (!IsDirty) return true;
 
             lock (_lock)
             {
-                if (!_isDirty) return true;
+                if (!IsDirty) return true;
 
                 DialogResult dialogResult = MessageBox.Show(
                     this,
@@ -367,14 +403,14 @@ namespace EscherTiler
         /// <returns><see langword="true" /> if the tiling was saved; otherwise <see langword="false" />.</returns>
         private bool Save(bool askForPath = false)
         {
-            if (!_isDirty) return true;
+            if (!IsDirty) return true;
 
             lock (_lock)
             {
-                if (!_isDirty) return true;
+                if (!IsDirty) return true;
 
-                TilingController controller = _controller;
-                if (controller == null) throw new ObjectDisposedException(nameof(Main));
+                TilingController controller = _tilingController;
+                if (controller == null) return false;
 
                 if (DocumentPath == null || askForPath)
                 {
@@ -389,7 +425,7 @@ namespace EscherTiler
 
                 Debug.Assert(DocumentPath != null, "DocumentPath != null");
                 FileStorage.SaveTiling(controller.Tiling, DocumentPath);
-                _isDirty = false;
+                IsDirty = false;
                 return true;
             }
         }
@@ -398,19 +434,19 @@ namespace EscherTiler
         ///     Opens the tiling given for editing.
         /// </summary>
         /// <param name="tiling">The tiling.</param>
-        /// <exception cref="System.ObjectDisposedException">
-        /// </exception>
         private void OpenTiling([NotNull] Tiling tiling)
         {
             Debug.Assert(tiling != null, "tiling != null");
 
-            TilingController controller = _controller;
-            if (controller == null) throw new ObjectDisposedException(nameof(Main));
+            // TODO If the conroller is null, create it
+
+            TilingController controller = _tilingController;
+            if (controller == null) return;
 
             lock (_lock)
             {
-                controller = _controller;
-                if (controller == null) throw new ObjectDisposedException(nameof(Main));
+                controller = _tilingController;
+                if (controller == null) return;
 
                 try
                 {
@@ -423,6 +459,8 @@ namespace EscherTiler
                     UpdateScale();
 
                     controller.SetTiling(tiling);
+
+                    IsDirty = false;
                 }
                 finally
                 {
@@ -462,7 +500,7 @@ namespace EscherTiler
             if (!PromptSave()) return;
 
             throw new NotImplementedException();
-            _isDirty = true;
+            IsDirty = true;
             DocumentPath = null;
         }
 
@@ -471,12 +509,8 @@ namespace EscherTiler
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
-        /// <exception cref="System.ObjectDisposedException"></exception>
         private void openMenuItem_Click(object sender, EventArgs e)
         {
-            TilingController controller = _controller;
-            if (controller == null) throw new ObjectDisposedException(nameof(Main));
-
             if (!PromptSave()) return;
 
             if (_openFileDialog.ShowDialog(this) == DialogResult.OK)
@@ -490,7 +524,6 @@ namespace EscherTiler
                     Tiling tiling = FileStorage.LoadTiling(documentPath, out thumbnail);
 
                     OpenTiling(tiling);
-
                     DocumentPath = documentPath;
                 }
                 catch (InvalidDataException ide)
@@ -551,8 +584,8 @@ namespace EscherTiler
         /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void printMenuItem_Click(object sender, EventArgs e)
         {
-            TilingController controller = _controller;
-            if (controller == null) throw new ObjectDisposedException(nameof(Main));
+            TilingController controller = _tilingController;
+            if (controller == null || controller != ActiveController) return;
 
             _printDocument.DocumentName = DocumentName;
             _printDocument.Tiling = controller?.Tiling;
@@ -570,8 +603,8 @@ namespace EscherTiler
         /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void printPreviewMenuItem_Click(object sender, EventArgs e)
         {
-            TilingController controller = _controller;
-            if (controller == null) throw new ObjectDisposedException(nameof(Main));
+            TilingController controller = _tilingController;
+            if (controller == null || controller != ActiveController) return;
 
             _printDocument.DocumentName = DocumentName;
             if (_printDocument.Tile == null && _printDocument.Tiling == null)
@@ -646,8 +679,8 @@ namespace EscherTiler
         /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void printButton_Click(object sender, EventArgs e)
         {
-            TilingController controller = _controller;
-            if (controller == null) throw new ObjectDisposedException(nameof(Main));
+            TilingController controller = _tilingController;
+            if (controller == null || controller != ActiveController) return;
 
             _printDocument.DocumentName = DocumentName;
             if (_printDocument.Tile == null && _printDocument.Tiling == null)
@@ -795,19 +828,22 @@ namespace EscherTiler
         /// <param name="e">The <see cref="MouseEventArgs" /> instance containing the event data.</param>
         private void renderControl_MouseDown(object sender, [NotNull] MouseEventArgs e)
         {
-            TilingController controller = _controller;
-            if (controller == null) throw new ObjectDisposedException(nameof(Main));
+            Controller controller = ActiveController;
+            if (controller == null) return;
+
+            if (e.Button != MouseButtons.Left) return;
 
             Vector2 loc = new Vector2(e.X, e.Y);
 
             lock (_lock)
             {
-                controller = _controller;
-                if (controller == null) throw new ObjectDisposedException(nameof(Main));
+                controller = ActiveController;
+                if (controller == null) return;
 
                 Action action = controller.CurrentTool?.StartAction(loc);
                 _dragAction = action as DragAction;
-                _isDirty = true;
+                if (action != null && action.ChangesData)
+                    IsDirty = true;
             }
         }
 
@@ -818,20 +854,21 @@ namespace EscherTiler
         /// <param name="e">The <see cref="MouseEventArgs" /> instance containing the event data.</param>
         private void renderControl_MouseMove(object sender, [NotNull] MouseEventArgs e)
         {
-            TilingController controller = _controller;
-            if (controller == null) throw new ObjectDisposedException(nameof(Main));
+            Controller controller = ActiveController;
+            if (controller == null) return;
 
             lock (_lock)
             {
-                controller = _controller;
-                if (controller == null) throw new ObjectDisposedException(nameof(Main));
+                controller = ActiveController;
+                if (controller == null) return;
 
-                controller?.CurrentTool?.UpdateLocation(new Vector2(e.X, e.Y));
+                controller.CurrentTool?.UpdateLocation(new Vector2(e.X, e.Y));
                 DragAction dragAction = _dragAction;
                 if (dragAction != null)
                 {
                     dragAction.Update(new Vector2(e.X, e.Y));
-                    _isDirty = true;
+                    if (dragAction.ChangesData)
+                        IsDirty = true;
                 }
             }
         }
@@ -849,7 +886,8 @@ namespace EscherTiler
                 if (dragAction != null)
                 {
                     dragAction.Apply();
-                    _isDirty = true;
+                    if (dragAction.ChangesData)
+                        IsDirty = true;
                 }
             }
         }
@@ -867,7 +905,8 @@ namespace EscherTiler
                 if (dragAction != null)
                 {
                     dragAction.Apply();
-                    _isDirty = true;
+                    if (dragAction.ChangesData)
+                        IsDirty = true;
                 }
             }
         }
@@ -928,6 +967,8 @@ namespace EscherTiler
         /// <param name="e">The <see cref="CurrentToolChangedEventArgs" /> instance containing the event data.</param>
         private void controller_CurrentToolChanged(object sender, CurrentToolChangedEventArgs e)
         {
+            if (sender != ActiveController) return;
+
             if (e.OldTool != null)
             {
                 ToolStripButton lastBtn;
@@ -957,10 +998,10 @@ namespace EscherTiler
         private void changeLineTypeCmb_SelectedIndexChanged(object sender, EventArgs e)
         {
             ComboBoxValue<Type> val = (ComboBoxValue<Type>) _changeLineTypeCmb.SelectedItem;
-            if (_controller != null)
+            if (_tilingController != null)
             {
-                _controller.EditLine.ChangeLineOption.Value = val.Value;
-                _isDirty = true;
+                _tilingController.EditLine.ChangeLineOption.Value = val.Value;
+                IsDirty = true;
             }
         }
 
@@ -971,8 +1012,8 @@ namespace EscherTiler
         /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void toolBtn_Click(object sender, EventArgs e)
         {
-            TilingController controller = _controller;
-            if (controller == null) throw new ObjectDisposedException(nameof(Main));
+            Controller controller = ActiveController;
+            if (controller == null) return;
 
             Debug.Assert(sender is ToolStripButton);
             ToolStripButton btn = (ToolStripButton) sender;
@@ -1000,8 +1041,7 @@ namespace EscherTiler
         /// </summary>
         private void UpdateTools()
         {
-            TilingController controller = _controller;
-            if (controller == null) throw new ObjectDisposedException(nameof(Main));
+            Controller controller = ActiveController;
 
             _panToolBtn.Tag = _panTool;
 
@@ -1010,14 +1050,15 @@ namespace EscherTiler
                 Debug.Assert(tool != null, "tool != null");
 
                 ToolStripButton btn = _toolBtns[tool];
-                if (!controller.Tools.Contains(tool))
+                if (controller == null || !controller.Tools.Contains(tool))
                     _toolBtns.Remove(tool);
 
                 Debug.Assert(btn != null, "btn != null");
                 _operationToolStrip.Items.Remove(btn);
             }
 
-            foreach (Tool tool in controller.Tools.Except(_toolBtns.Keys))
+            if (controller == null) return;
+            foreach (Tool tool in controller.Tools)
             {
                 Debug.Assert(tool != null, "tool != null");
 
@@ -1052,8 +1093,8 @@ namespace EscherTiler
         /// <exception cref="System.ObjectDisposedException"></exception>
         private Task<TileBase> SelectTileAsync(TileBase initialTile)
         {
-            TilingController controller = _controller;
-            if (controller == null) throw new ObjectDisposedException(nameof(Main));
+            TilingController controller = _tilingController;
+            if (controller == null) return Task.FromResult<TileBase>(null);
 
             _selectTileTool.LastTool = controller.CurrentTool;
             _selectTileTool.TileSelectedTcs = new TaskCompletionSource<TileBase>();
