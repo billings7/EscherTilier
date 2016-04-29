@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using EscherTiler.Utilities;
 using JetBrains.Annotations;
 
 namespace EscherTiler.Styles
@@ -27,9 +30,32 @@ namespace EscherTiler.Styles
         public RandomGreedyStyleManager(int seed, [NotNull] LineStyle lineStyle, [CanBeNull] params TileStyle[] styles)
             : base(seed, lineStyle, styles) { }
 
-        protected override IStyle GetStyle(TileBase tile, IStyle[] styles)
+        /// <summary>
+        ///     Gets the style for the given tile.
+        /// </summary>
+        /// <param name="tile">The tile.</param>
+        /// <param name="styles">The styles to choose from.</param>
+        /// <param name="state">The style state associated with the tile.</param>
+        /// <returns></returns>
+        protected override IStyle GetStyle(TileBase tile, IStyle[] styles, ref object state)
         {
-            throw new NotImplementedException();
+            IStyle[] unusedStyles = styles.Except(tile.AdjacentTiles.Values.Select(t => t.Style)).ToArray();
+
+            if (unusedStyles.Length == 0)
+                return base.GetStyle(tile, styles, ref state);
+
+            if (unusedStyles.Length == 1)
+            {
+                Vector2 coords = tile.Centroid.Round(3);
+
+                float random = TileRandom.Random(Seed, coords.X, coords.Y);
+
+                return random > (1f / styles.Length)
+                    ? unusedStyles[0]
+                    : base.GetStyle(tile, styles, ref state);
+            }
+
+            return base.GetStyle(tile, unusedStyles, ref state);
         }
     }
 }

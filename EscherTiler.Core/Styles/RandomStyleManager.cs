@@ -47,12 +47,13 @@ namespace EscherTiler.Styles
         public int Seed { get; }
 
         /// <summary>
-        ///     Gets the style.
+        ///     Gets the style for the given tile.
         /// </summary>
         /// <param name="tile">The tile.</param>
-        /// <param name="styles">The styles.</param>
+        /// <param name="styles">The styles to choose from.</param>
+        /// <param name="state">The style state associated with the tile.</param>
         /// <returns></returns>
-        protected override IStyle GetStyle(TileBase tile, IStyle[] styles)
+        protected override IStyle GetStyle(TileBase tile, IStyle[] styles, ref object state)
         {
             Debug.Assert(tile != null, "tile != null");
             Debug.Assert(styles != null, "styles != null");

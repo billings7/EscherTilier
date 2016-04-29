@@ -29,6 +29,9 @@ namespace EscherTiler.Graphics.GDI
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 ToVector2(this Size size) => new Vector2(size.Width, size.Height);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RectangleF ToGDIRectangleF(this Numerics.Rectangle rectangle)
         {
             Union u = _union;

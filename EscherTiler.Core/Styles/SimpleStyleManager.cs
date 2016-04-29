@@ -47,8 +47,9 @@ namespace EscherTiler.Styles
         /// </summary>
         /// <param name="tile">The tile.</param>
         /// <param name="styles">The styles to choose from.</param>
+        /// <param name="state">The style state associated with the tile.</param>
         /// <returns></returns>
-        protected override IStyle GetStyle(TileBase tile, IStyle[] styles)
+        protected override IStyle GetStyle(TileBase tile, IStyle[] styles, ref object state)
         {
             Debug.Assert(styles.Length == 1);
             return styles[0];

@@ -18,6 +18,9 @@ namespace EscherTiler
         [NotNull]
         private readonly Dictionary<EdgePart, TileBase> _adjacentTiles = new Dictionary<EdgePart, TileBase>();
 
+        [CanBeNull]
+        internal object StyleState;
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="TileBase" /> class.
         /// </summary>

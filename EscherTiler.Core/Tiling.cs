@@ -152,7 +152,6 @@ namespace EscherTiler
                         (Tile) tile,
                         tile.Label,
                         tile.Transform * Matrix3x2.CreateTranslation(bounds.Center - approximateBounds.Center));
-                    tile.Style = StyleManager.GetStyle(tile);
                 }
 
                 // add initial tile to tiles
@@ -181,6 +180,13 @@ namespace EscherTiler
                         openTiles.Enqueue(newTile);
                     }
                 }
+            }
+
+            // Set the style for the new cells
+            foreach (TileBase tile in tiles.Where(t => t.Style == null))
+            {
+                // set cell style from styleManager
+                tile.Style = StyleManager.GetStyle(tile);
             }
 
             return tiles.ToArray();
@@ -213,9 +219,6 @@ namespace EscherTiler
                 adjacent.Label,
                 adjTile.GetEdgePartPosition(adjacent.Value)
                     .GetTransformTo(tile.GetEdgePartPosition(part)));
-
-            // set cell style from styleManager
-            newTile.Style = StyleManager.GetStyle(newTile);
 
             return newTile;
         }

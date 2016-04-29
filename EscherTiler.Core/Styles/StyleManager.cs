@@ -106,7 +106,7 @@ namespace EscherTiler.Styles
                 return null;
             Debug.Assert(styles != null, "styles != null");
 
-            IStyle style = GetStyle(tile, styles.ToArray());
+            IStyle style = GetStyle(tile, styles.ToArray(), ref tile.StyleState);
             return style?.Transform(tile.Transform);
         }
 
@@ -115,9 +115,24 @@ namespace EscherTiler.Styles
         /// </summary>
         /// <param name="tile">The tile.</param>
         /// <param name="styles">The styles to choose from.</param>
+        /// <param name="state">The style state associated with the tile.</param>
         /// <returns></returns>
         [CanBeNull]
-        protected abstract IStyle GetStyle([NotNull] TileBase tile, [NotNull] IStyle[] styles);
+        protected abstract IStyle GetStyle([NotNull] TileBase tile, [NotNull] IStyle[] styles, ref object state);
+
+        /// <summary>
+        ///     Gets the style state for the given tile.
+        /// </summary>
+        /// <param name="tile">The tile.</param>
+        /// <returns></returns>
+        protected object GetState([NotNull] TileBase tile) => tile.StyleState;
+
+        /// <summary>
+        ///     Sets the style state for the given tile.
+        /// </summary>
+        /// <param name="tile">The tile.</param>
+        /// <param name="state">The state.</param>
+        protected void SetState([NotNull] TileBase tile, object state) => tile.StyleState = state;
 
         /// <summary>
         ///     Returns an enumerator that iterates through the collection.

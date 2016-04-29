@@ -90,7 +90,7 @@ namespace EscherTiler
 
                     _activeController = value;
                     UpdateTools();
-                    if (value != null)
+                    if (value != null && _panTool != null)
                         _panTool.Controller = value;
                 }
             }
@@ -102,7 +102,7 @@ namespace EscherTiler
         [CanBeNull]
         private TilingController _tilingController;
 
-        [NotNull]
+        [CanBeNull]
         private PanTool _panTool;
 
         [NotNull]
@@ -110,6 +110,9 @@ namespace EscherTiler
 
         [CanBeNull]
         private DragAction _dragAction;
+
+        [NotNull]
+        private readonly SelectTemplateDialog _selectTemplateDialog;
 
         [NotNull]
         private readonly Dictionary<Tool, ToolStripButton> _toolBtns = new Dictionary<Tool, ToolStripButton>();
@@ -177,6 +180,8 @@ namespace EscherTiler
 
             _renderControl.MouseWheel += renderControl_MouseWheel;
 
+            _selectTemplateDialog = new SelectTemplateDialog();
+
             _printDocument.GetTranform = GetPrintTransform;
 
             _printPreviewDialog.StartPosition = FormStartPosition.CenterParent;
@@ -217,6 +222,7 @@ namespace EscherTiler
                     break;
             }
 
+            /*
             EdgePart pa, pb, pc, pd;
 
             Template template = new Template(
@@ -256,33 +262,42 @@ namespace EscherTiler
                     })
                 });
 
-            UpdateViewBounds();
 
             ShapeController sc = new ShapeController(template, this);
 
             StyleManager styleManager = CreateDefaultStyleManager(sc.Shapes.ToArray());
 
-            TilingController tc = new TilingController(
-                template.CreateTiling(template.Tilings.Values.First(), sc.Shapes, styleManager),
-                styleManager,
-                this);
+            //*/
+
+            UpdateViewBounds();
+
+            _renderControl.Start();
+        }
+
+        /// <summary>
+        ///     Creates the tiling controller.
+        /// </summary>
+        /// <param name="tiling">The tiling.</param>
+        /// <returns></returns>
+        private TilingController CreateTilingController([NotNull] Tiling tiling)
+        {
+            Debug.Assert(tiling != null, "tiling != null");
+
+            TilingController tc = new TilingController(tiling, this);
 
             tc.EditLine.OptionsChanged += TilingController_EditLineTool_OptionsChanged;
             tc.EditLine.ChangeLineOption.ValueChanged += v => _changeLineTypeCmb.SelectedItem = v;
             _changeLineTypeCmb.SelectedItem = tc.EditLine.ChangeLineOption.Value;
 
-            _tilingController = tc;
-            _tilingController.CurrentToolChanged += controller_CurrentToolChanged;
-            _panTool = new PanTool(_tilingController, this);
-            _selectTileTool = new SelectTileTool(_tilingController);
-
-            ActiveController = _tilingController;
+            tc.CurrentToolChanged += controller_CurrentToolChanged;
+            _panTool = new PanTool(tc, this);
+            _selectTileTool = new SelectTileTool(tc);
 
             _toolBtns.Add(_panTool, _panToolBtn);
 
             UpdateTools();
 
-            _renderControl.Start();
+            return tc;
         }
 
         /// <summary>
@@ -438,16 +453,8 @@ namespace EscherTiler
         {
             Debug.Assert(tiling != null, "tiling != null");
 
-            // TODO If the conroller is null, create it
-
-            TilingController controller = _tilingController;
-            if (controller == null) return;
-
             lock (_lock)
             {
-                controller = _tilingController;
-                if (controller == null) return;
-
                 try
                 {
                     // Dont call the ViewBoundsChanged event handler while changing the tiling
@@ -458,7 +465,12 @@ namespace EscherTiler
                     _zoom = 100f;
                     UpdateScale();
 
-                    controller.SetTiling(tiling);
+                    if (_tilingController == null)
+                        _tilingController = CreateTilingController(tiling);
+                    else
+                        _tilingController.SetTiling(tiling);
+
+                    ActiveController = _tilingController;
 
                     IsDirty = false;
                 }
@@ -479,13 +491,13 @@ namespace EscherTiler
         {
             Debug.Assert(shapes != null, "shapes != null");
 
-            return new RandomStyleManager(
-                0,
+            return new GreedyStyleManager(
+                1,
+                1,
+                1,
                 new LineStyle(0.5f, _blackStyle),
-                new TileStyle(new SolidColourStyle(Colour.Red), shapes),
-                new TileStyle(new SolidColourStyle(Colour.White), shapes),
-                new TileStyle(new SolidColourStyle(Colour.Yellow), shapes),
-                new TileStyle(new SolidColourStyle(Colour.Orange), shapes));
+                new TileStyle(new SolidColourStyle(Colour.ForestGreen), shapes),
+                new TileStyle(new SolidColourStyle(Colour.CornflowerBlue), shapes));
         }
 
         #region File menu
@@ -499,9 +511,23 @@ namespace EscherTiler
         {
             if (!PromptSave()) return;
 
-            throw new NotImplementedException();
-            IsDirty = true;
-            DocumentPath = null;
+            if (_selectTemplateDialog.ShowDialog(this) == DialogResult.OK)
+            {
+                Template template = _selectTemplateDialog.Template;
+                if (template == null) return;
+
+                ShapeSet shapes = template.CreateShapes();
+
+                Tiling tiling = template.CreateTiling(
+                    template.Tilings.Values.First(),
+                    shapes,
+                    CreateDefaultStyleManager(shapes));
+
+                OpenTiling(tiling);
+
+                IsDirty = true;
+                DocumentPath = null;
+            }
         }
 
         /// <summary>

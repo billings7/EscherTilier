@@ -41,19 +41,17 @@ namespace EscherTiler.Controllers
         ///     Initializes a new instance of the <see cref="TilingController" /> class.
         /// </summary>
         /// <param name="tiling">The tiling.</param>
-        /// <param name="styleManager">The style manager.</param>
         /// <param name="view">The view.</param>
         /// <exception cref="System.ArgumentNullException">
         /// </exception>
         /// <exception cref="System.InvalidOperationException"></exception>
-        public TilingController([NotNull] Tiling tiling, [NotNull] StyleManager styleManager, [NotNull] IView view)
+        public TilingController([NotNull] Tiling tiling, [NotNull] IView view)
             : base(view)
         {
             if (tiling == null) throw new ArgumentNullException(nameof(tiling));
-            if (styleManager == null) throw new ArgumentNullException(nameof(styleManager));
 
             _tiling = tiling;
-            _styleManager = styleManager;
+            _styleManager = tiling.StyleManager;
 
             IResourceManager resourceManager = DependencyManger.GetResourceManager(_styleManager);
             _resourceManager = resourceManager;
