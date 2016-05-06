@@ -3,6 +3,9 @@ using JetBrains.Annotations;
 
 namespace EscherTiler.Graphics.Resources
 {
+    /// <summary>
+    ///     Readonly interface to a class that manages resources of a type mapped to keys of another type.
+    /// </summary>
     public interface IReadonlyResourceManager : IDisposable
     {
         /// <summary>
@@ -17,6 +20,7 @@ namespace EscherTiler.Graphics.Resources
         /// <exception cref="System.Collections.Generic.KeyNotFoundException">
         ///     The manager did not contain a resource with the given key.
         /// </exception>
+        [NotNull]
         TResource Get<TKey, TResource>([NotNull] TKey key);
 
         /// <summary>
@@ -47,6 +51,6 @@ namespace EscherTiler.Graphics.Resources
         ///     The manager did not contain a resource with the given key.
         /// </exception>
         [NotNull]
-        TResource Get(TKey key);
+        TResource Get([NotNull] TKey key);
     }
 }

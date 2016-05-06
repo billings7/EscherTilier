@@ -18,7 +18,7 @@ namespace EscherTiler.Styles
         public RandomGreedyStyleManager(
             int seed,
             [NotNull] LineStyle lineStyle,
-            [CanBeNull] IReadOnlyList<TileStyle> styles)
+            [CanBeNull] IReadOnlyCollection<TileStyle> styles)
             : base(seed, lineStyle, styles) { }
 
         /// <summary>

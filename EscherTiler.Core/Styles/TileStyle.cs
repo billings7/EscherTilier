@@ -38,6 +38,6 @@ namespace EscherTiler.Styles
         ///     The style.
         /// </value>
         [NotNull]
-        public IStyle Style { get; }
+        public IStyle Style { get; set; }
     }
 }

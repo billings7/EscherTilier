@@ -31,11 +31,16 @@ namespace EscherTiler.Controllers
         [NotNull]
         private IEnumerable<TileBase> _tiles;
 
-        [NotNull]
-        private StyleManager _styleManager;
-
         [CanBeNull]
         private IResourceManager _resourceManager;
+
+        [NotNull]
+        private EventHandler _styleManagerChangedHandler;
+
+        /// <summary>
+        /// Occurs when the style manager changes.
+        /// </summary>
+        public event EventHandler StyleManagerChanged;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="TilingController" /> class.
@@ -51,9 +56,8 @@ namespace EscherTiler.Controllers
             if (tiling == null) throw new ArgumentNullException(nameof(tiling));
 
             _tiling = tiling;
-            _styleManager = tiling.StyleManager;
 
-            IResourceManager resourceManager = DependencyManger.GetResourceManager(_styleManager);
+            IResourceManager resourceManager = DependencyManger.GetResourceManager(StyleManager);
             _resourceManager = resourceManager;
 
             resourceManager.Add(SolidColourStyle.Transparent);
@@ -65,6 +69,9 @@ namespace EscherTiler.Controllers
 
             _tiles = _tiling.GetTiles(view.ViewBounds, Enumerable.Empty<TileBase>());
 
+            _styleManagerChangedHandler = _styleManager_Changed;
+            StyleManager.StylesChanged += _styleManagerChangedHandler;
+
             Tools = new Tool[]
             {
                 EditLine = new EditLineTool(this, _tolerance),
@@ -72,6 +79,17 @@ namespace EscherTiler.Controllers
             };
 
             view.ViewBoundsChanged += View_ViewBoundsChanged;
+        }
+
+        /// <summary>
+        /// Handles the Changed event of the _styleManager objects.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="args">The <see cref="EventArgs"/> instance containing the event data.</param>
+        private void _styleManager_Changed(object sender, EventArgs args)
+        {
+            _tiling.UpdateStyles(_tiles);
+            StyleManagerChanged?.Invoke(sender, args);
         }
 
         /// <summary>
@@ -118,7 +136,7 @@ namespace EscherTiler.Controllers
         ///     The style manager.
         /// </value>
         [NotNull]
-        public StyleManager StyleManager => _styleManager;
+        public StyleManager StyleManager => _tiling.StyleManager;
 
         /// <summary>
         ///     Sets the tiling.
@@ -132,9 +150,13 @@ namespace EscherTiler.Controllers
 
             if (tiling == _tiling) return;
 
+            StyleManager oldStyleManager = StyleManager;
+            Debug.Assert(oldStyleManager != null, "oldStyleManager != null");
+            oldStyleManager.StylesChanged -= _styleManagerChangedHandler;
+
             _tiling = tiling;
 
-            StyleManager oldStyleManager = Interlocked.Exchange(ref _styleManager, tiling.StyleManager);
+            StyleManager.StylesChanged += _styleManagerChangedHandler;
 
             IResourceManager resourceManager = DependencyManger.GetResourceManager(tiling.StyleManager);
             IResourceManager oldResourceManager = Interlocked.Exchange(ref _resourceManager, resourceManager);
@@ -171,7 +193,7 @@ namespace EscherTiler.Controllers
 
             graphics.ResourceManager = _resourceManager;
 
-            Tiling.DrawTiling(_tiles, graphics, _styleManager.LineStyle);
+            Tiling.DrawTiling(_tiles, graphics, StyleManager.LineStyle);
 
             CurrentTool?.Draw(graphics);
         }
@@ -187,7 +209,10 @@ namespace EscherTiler.Controllers
         {
             base.Dispose(disposing);
             if (disposing)
-                DependencyManger.ReleaseResourceManager(ref _resourceManager, _styleManager);
+            {
+                StyleManager.StylesChanged -= _styleManagerChangedHandler;
+                DependencyManger.ReleaseResourceManager(ref _resourceManager, StyleManager);
+            }
         }
 
         private class SelectedLine
@@ -564,7 +589,7 @@ namespace EscherTiler.Controllers
             {
                 base.Draw(graphics);
 
-                graphics.LineWidth = Controller._styleManager.LineStyle.Width;
+                graphics.LineWidth = Controller.StyleManager.LineStyle.Width;
 
                 SelectedLine selectedLine = _selectedLine;
                 SelectedLine hoverLine = _hoverLine;
@@ -578,7 +603,7 @@ namespace EscherTiler.Controllers
 
                 if (selectedLine != null)
                 {
-                    float radius = Controller._styleManager.LineStyle.Width * 2;
+                    float radius = Controller.StyleManager.LineStyle.Width * 2;
 
                     Matrix3x2 transform = selectedLine.EdgePart.GetLineTransform() * selectedLine.Tile.Transform;
 
@@ -817,7 +842,7 @@ namespace EscherTiler.Controllers
             {
                 base.Draw(graphics);
 
-                float lineWidth = Controller._styleManager.LineStyle.Width;
+                float lineWidth = Controller.StyleManager.LineStyle.Width;
                 graphics.LineStyle = SolidColourStyle.Black;
                 graphics.LineWidth = lineWidth;
 

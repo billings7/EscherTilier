@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -7,6 +8,10 @@ namespace EscherTiler.Styles
 {
     public class GreedyStyleManager : StyleManager
     {
+        private int _paramA;
+        private int _paramB;
+        private int _paramC;
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="GreedyStyleManager" /> class.
         /// </summary>
@@ -20,7 +25,7 @@ namespace EscherTiler.Styles
             int paramB,
             int paramC,
             [NotNull] LineStyle lineStyle,
-            [CanBeNull] IReadOnlyList<TileStyle> styles)
+            [CanBeNull] IReadOnlyCollection<TileStyle> styles)
             : base(lineStyle, styles)
         {
             ParamA = paramA;
@@ -50,28 +55,55 @@ namespace EscherTiler.Styles
         }
 
         /// <summary>
-        ///     Gets the parameter a.
+        /// Gets or sets the parameter a.
         /// </summary>
         /// <value>
-        ///     The parameter a.
+        /// The parameter a.
         /// </value>
-        public int ParamA { get; }
+        public int ParamA
+        {
+            get { return _paramA; }
+            set
+            {
+                if (value == _paramA) return;
+                _paramA = value;
+                OnChanged(EventArgs.Empty);
+            }
+        }
 
         /// <summary>
-        ///     Gets the parameter b.
+        /// Gets or sets the parameter b.
         /// </summary>
         /// <value>
-        ///     The parameter b.
+        /// The parameter b.
         /// </value>
-        public int ParamB { get; }
+        public int ParamB
+        {
+            get { return _paramB; }
+            set
+            {
+                if (value == _paramB) return;
+                _paramB = value;
+                OnChanged(EventArgs.Empty);
+            }
+        }
 
         /// <summary>
-        ///     Gets the parameter c.
+        /// Gets or sets the parameter c.
         /// </summary>
         /// <value>
-        ///     The parameter c.
+        /// The parameter c.
         /// </value>
-        public int ParamC { get; }
+        public int ParamC
+        {
+            get { return _paramC; }
+            set
+            {
+                if (value == _paramC) return;
+                _paramC = value;
+                OnChanged(EventArgs.Empty);
+            }
+        }
 
         /// <summary>
         ///     Gets the style for the given tile.

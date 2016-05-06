@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
@@ -8,6 +9,8 @@ namespace EscherTiler.Styles
 {
     public class RandomStyleManager : StyleManager
     {
+        private int _seed;
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="RandomStyleManager" /> class.
         /// </summary>
@@ -17,7 +20,7 @@ namespace EscherTiler.Styles
         public RandomStyleManager(
             int seed,
             [NotNull] LineStyle lineStyle,
-            [CanBeNull] IReadOnlyList<TileStyle> styles)
+            [CanBeNull] IReadOnlyCollection<TileStyle> styles)
             : base(lineStyle, styles)
         {
             Seed = seed;
@@ -44,7 +47,17 @@ namespace EscherTiler.Styles
         /// <value>
         ///     The seed.
         /// </value>
-        public int Seed { get; }
+        public int Seed
+        {
+            get { return _seed; }
+            set
+            {
+                if (_seed == value) return;
+                _seed = value;
+
+                OnChanged(EventArgs.Empty);
+            }
+        }
 
         /// <summary>
         ///     Gets the style for the given tile.

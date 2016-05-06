@@ -12,13 +12,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using EscherTiler.Controllers;
-using EscherTiler.Expressions;
 using EscherTiler.Graphics;
 using EscherTiler.Graphics.GDI;
 using EscherTiler.Properties;
 using EscherTiler.Storage;
 using EscherTiler.Styles;
-using EscherTiler.Utilities;
 using JetBrains.Annotations;
 using Action = EscherTiler.Controllers.Action;
 using DragAction = EscherTiler.Controllers.DragAction;
@@ -166,6 +164,7 @@ namespace EscherTiler
         {
             InitializeComponent();
             InitializeGraphics();
+            InitializeStyleManager();
 
             _changeLineTypeCmb.Name = TilingController.EditLineTool.ChangeLineTypeName;
             _changeLineTypeCmb.Items.Add(new ComboBoxValue<Type>("Line", typeof(Line)));
@@ -182,7 +181,7 @@ namespace EscherTiler
 
             _selectTemplateDialog = new SelectTemplateDialog();
 
-            _printDocument.GetTranform = GetPrintTransform;
+            _printDocument.SetGetTranformDelegate(GetPrintTransform);
 
             _printPreviewDialog.StartPosition = FormStartPosition.CenterParent;
             _printPreviewDialog.Size = new Size(1000, 800);
@@ -289,6 +288,7 @@ namespace EscherTiler
             tc.EditLine.ChangeLineOption.ValueChanged += v => _changeLineTypeCmb.SelectedItem = v;
             _changeLineTypeCmb.SelectedItem = tc.EditLine.ChangeLineOption.Value;
 
+            tc.StyleManagerChanged += (sender, args) => IsDirty = true;
             tc.CurrentToolChanged += controller_CurrentToolChanged;
             _panTool = new PanTool(tc, this);
             _selectTileTool = new SelectTileTool(tc);
@@ -471,6 +471,8 @@ namespace EscherTiler
                         _tilingController.SetTiling(tiling);
 
                     ActiveController = _tilingController;
+
+                    UpdateStyleManager(tiling.StyleManager);
 
                     IsDirty = false;
                 }
@@ -1175,71 +1177,6 @@ namespace EscherTiler
 
             transform = centerTranslate * translate * scale;
             inverseTransform = invScale * invTranslate * invCenterTranslate;
-        }
-
-        /// <summary>
-        ///     Stores a value for a combo box with the display string that should be shown in the box.
-        /// </summary>
-        /// <typeparam name="T">The type of the value.</typeparam>
-        private class ComboBoxValue<T>
-        {
-            /// <summary>
-            ///     The display string.
-            /// </summary>
-            [NotNull]
-            public readonly string DisplayString;
-
-            /// <summary>
-            ///     The value.
-            /// </summary>
-            [NotNull]
-            public readonly T Value;
-
-            /// <summary>
-            ///     Initializes a new instance of the <see cref="ComboBoxValue{T}" /> class.
-            /// </summary>
-            /// <param name="displayString">The display string.</param>
-            /// <param name="value">The value.</param>
-            /// <exception cref="System.ArgumentNullException">
-            /// </exception>
-            public ComboBoxValue([NotNull] string displayString, [NotNull] T value)
-            {
-                if (displayString == null) throw new ArgumentNullException(nameof(displayString));
-                if (value == null) throw new ArgumentNullException(nameof(value));
-
-                DisplayString = displayString;
-                Value = value;
-            }
-
-            /// <summary>
-            ///     Returns a string that represents the current object.
-            /// </summary>
-            /// <returns>
-            ///     A string that represents the current object.
-            /// </returns>
-            public override string ToString() => DisplayString;
-
-            /// <summary>
-            ///     Determines whether the specified object is equal to the current object.
-            /// </summary>
-            /// <returns>
-            ///     true if the specified object  is equal to the current object; otherwise, false.
-            /// </returns>
-            /// <param name="obj">The object to compare with the current object. </param>
-            public override bool Equals(object obj)
-            {
-                ComboBoxValue<T> val = obj as ComboBoxValue<T>;
-                if (val != null) return Equals(Value, val.Value);
-                return Equals(Value, obj);
-            }
-
-            /// <summary>
-            ///     Serves as the default hash function.
-            /// </summary>
-            /// <returns>
-            ///     A hash code for the current object.
-            /// </returns>
-            public override int GetHashCode() => Value.GetHashCode();
         }
     }
 }

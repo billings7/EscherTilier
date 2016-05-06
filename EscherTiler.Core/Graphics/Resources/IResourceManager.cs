@@ -30,6 +30,28 @@ namespace EscherTiler.Graphics.Resources
             [NotNull] TResource resource);
 
         /// <summary>
+        ///     Updates the specified key in the manager which creates the resource(s) for the key.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <param name="key">The key.</param>
+        /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
+        /// <exception cref="System.ArgumentNullException"><paramref name="key" /> is null.</exception>
+        void Update<TKey>([NotNull] TKey key);
+
+        /// <summary>
+        ///     Updates the specified key and resource value in the manager.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <typeparam name="TResource">The type of the resource.</typeparam>
+        /// <param name="key">The key.</param>
+        /// <param name="resource">The resource.</param>
+        /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
+        /// <exception cref="System.ArgumentNullException"><paramref name="key" /> or <paramref name="resource" /> is null.</exception>
+        void Update<TKey, TResource>(
+            [NotNull] TKey key,
+            [NotNull] TResource resource);
+
+        /// <summary>
         ///     Removes the resource specified by the given key.
         /// </summary>
         /// <typeparam name="TKey">The type of the key.</typeparam>
@@ -53,6 +75,15 @@ namespace EscherTiler.Graphics.Resources
         /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
         /// <exception cref="System.ArgumentNullException"><paramref name="key" /> is null.</exception>
         void Add([NotNull] TKey key);
+
+        /// <summary>
+        ///     Updates the specified key in the manager which creates the resource(s) for the key.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <param name="key">The key.</param>
+        /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
+        /// <exception cref="System.ArgumentNullException"><paramref name="key" /> is null.</exception>
+        void Update([NotNull] TKey key);
     }
 
     /// <summary>
@@ -73,5 +104,16 @@ namespace EscherTiler.Graphics.Resources
         /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
         /// <exception cref="System.ArgumentNullException"><paramref name="key" /> or <paramref name="resource" /> is null.</exception>
         void Add([NotNull] TKey key, [NotNull] TResource resource);
+
+        /// <summary>
+        ///     Updates the specified key and resource value in the manager.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <typeparam name="TResource">The type of the resource.</typeparam>
+        /// <param name="key">The key.</param>
+        /// <param name="resource">The resource.</param>
+        /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
+        /// <exception cref="System.ArgumentNullException"><paramref name="key" /> or <paramref name="resource" /> is null.</exception>
+        void Update([NotNull] TKey key, [NotNull] TResource resource);
     }
 }

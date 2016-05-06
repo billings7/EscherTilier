@@ -78,21 +78,14 @@ namespace EscherTiler.Graphics.GDI
         public TileBase Tile { get; set; }
 
         /// <summary>
-        ///     Gets or sets the get tranform fucntion.
+        /// Sets the get tranform delegate.
         /// </summary>
-        /// <value>
-        ///     The get tranform function.
-        /// </value>
-        [Browsable(false)]
-        [NotNull]
-        public GetTranformDelegate GetTranform
+        /// <param name="delegate">The delegate.</param>
+        /// <exception cref="System.ArgumentNullException"></exception>
+        public void SetGetTranformDelegate([NotNull] GetTranformDelegate @delegate)
         {
-            get { return _getTranform; }
-            set
-            {
-                if (value == null) throw new ArgumentNullException(nameof(value));
-                _getTranform = value;
-            }
+            if (@delegate == null) throw new ArgumentNullException(nameof(@delegate));
+            _getTranform = @delegate;
         }
 
         /// <summary>

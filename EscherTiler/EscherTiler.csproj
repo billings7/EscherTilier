@@ -113,6 +113,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ComboBoxValue.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="Graphics\DirectX\DirectXGraphics.cs" />
     <Compile Include="Graphics\DirectX\DirectXExtensions.cs" />
     <Compile Include="Graphics\DirectX\DirectXResourceManager.cs" />
@@ -133,6 +135,9 @@
       <SubType>Form</SubType>
       <DependentUpon>Main.cs</DependentUpon>
     </Compile>
+    <Compile Include="MainStyleManager.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="MainTools.cs">
       <SubType>Form</SubType>
       <DependentUpon>Main.cs</DependentUpon>
@@ -150,6 +155,18 @@
     <Compile Include="SelectTemplateDialog.Designer.cs">
       <DependentUpon>SelectTemplateDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="StyleControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="StyleControl.Designer.cs">
+      <DependentUpon>StyleControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="StyleListView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="StyleListView.Designer.cs">
+      <DependentUpon>StyleListView.cs</DependentUpon>
+    </Compile>
     <Compile Include="Templates\TemplateManager.cs" />
     <Compile Include="TilingPrintSettingsDialog.cs">
       <SubType>Form</SubType>
@@ -157,8 +174,12 @@
     <Compile Include="TilingPrintSettingsDialog.Designer.cs">
       <DependentUpon>TilingPrintSettingsDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="UpDownButtons.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -172,6 +193,12 @@
     </Compile>
     <EmbeddedResource Include="SelectTemplateDialog.resx">
       <DependentUpon>SelectTemplateDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="StyleControl.resx">
+      <DependentUpon>StyleControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="StyleListView.resx">
+      <DependentUpon>StyleListView.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="TilingPrintSettingsDialog.resx">
       <DependentUpon>TilingPrintSettingsDialog.cs</DependentUpon>
@@ -194,7 +221,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\EscherTiler.Core\EscherTiler.Core.csproj">

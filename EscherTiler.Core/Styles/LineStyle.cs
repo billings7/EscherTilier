@@ -38,5 +38,21 @@ namespace EscherTiler.Styles
         /// </value>
         [NotNull]
         public SolidColourStyle Style { get; }
+
+        /// <summary>
+        ///     Returns a copy of this style with the specified width.
+        /// </summary>
+        /// <param name="width">The width.</param>
+        /// <returns></returns>
+        [NotNull]
+        public LineStyle WithWidth(float width) => new LineStyle(width, Style);
+
+        /// <summary>
+        ///     Returns a copy of this style with the specified style.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        /// <returns></returns>
+        [NotNull]
+        public LineStyle WithStyle([NotNull] SolidColourStyle style) => new LineStyle(Width, style);
     }
 }

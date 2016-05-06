@@ -45,6 +45,43 @@ namespace EscherTiler.Graphics.Resources
         }
 
         /// <summary>
+        ///     Updates the specified key in the manager which creates the resource(s) for the key.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <param name="key">The key.</param>
+        /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
+        /// <exception cref="System.ArgumentNullException"><paramref name="key" /> is null.</exception>
+        public void Update<TKey>(TKey key)
+        {
+            if (key == null) throw new ArgumentNullException(nameof(key));
+
+            IResourceManager<TKey> rm = this as IResourceManager<TKey>;
+            if (rm == null)
+                throw new NotSupportedException(Strings.ResourceManager_TypesNotSupported);
+            rm.Update(key);
+        }
+
+        /// <summary>
+        ///     Updates the specified key and resource value in the manager.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <typeparam name="TResource">The type of the resource.</typeparam>
+        /// <param name="key">The key.</param>
+        /// <param name="resource">The resource.</param>
+        /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
+        /// <exception cref="System.ArgumentNullException"><paramref name="key" /> or <paramref name="resource" /> is null.</exception>
+        public void Update<TKey, TResource>(TKey key, TResource resource)
+        {
+            if (key == null) throw new ArgumentNullException(nameof(key));
+            if (resource == null) throw new ArgumentNullException(nameof(resource));
+
+            IResourceManager<TKey, TResource> rm = this as IResourceManager<TKey, TResource>;
+            if (rm == null)
+                throw new NotSupportedException(Strings.ResourceManager_TypesNotSupported);
+            rm.Update(key, resource);
+        }
+
+        /// <summary>
         ///     Gets the resource value for the specified key.
         /// </summary>
         /// <typeparam name="TKey">The type of the key.</typeparam>

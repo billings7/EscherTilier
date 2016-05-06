@@ -168,6 +168,23 @@ namespace EscherTiler.Graphics.Resources
         }
 
         /// <summary>
+        ///     Updates a resource for a key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="resource">The resource.</param>
+        /// <param name="temp">if set to <see langword="true" /> the resource is only temporary.</param>
+        public void Update([NotNull] TKey key, [NotNull] TResource resource, bool temp)
+        {
+            if (key == null) throw new ArgumentNullException(nameof(key));
+            if (resource == null) throw new ArgumentNullException(nameof(resource));
+
+            if (!_resources.ContainsKey(key))
+                throw new InvalidOperationException("Cannot update a resource that has not yet been added");
+
+            _resources[key] = new Wrapper(resource, temp);
+        }
+
+        /// <summary>
         ///     Attempts to get the resource for the specified key.
         /// </summary>
         /// <param name="key">The key.</param>
@@ -302,7 +319,49 @@ namespace EscherTiler.Graphics.Resources
             }
 
             resource = factory(key);
-            Debug.Assert(resource != null, "resource != null");
+            if (resource == null) throw new InvalidOperationException("The factory returned a null resource");
+
+            Add(key, resource, temp);
+            return resource;
+        }
+
+        /// <summary>
+        ///     Updates the resource for the specified key, adding it if it doesnt yet exist.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="factory">The factory delegate for creating the resource.</param>
+        /// <param name="updater">The updater delegate for updating an existing resource.</param>
+        /// <param name="temp">if set to <see langword="true" /> the resource should only be temporary.</param>
+        /// <returns>The resource.</returns>
+        /// <exception cref="System.InvalidOperationException">
+        /// The updater function returned a null resource
+        /// or
+        /// The factory returned a null resource
+        /// </exception>
+        [NotNull]
+        public TResource AddOrUpdate(
+            [NotNull] TKey key,
+            [NotNull] Func<TKey, TResource> factory,
+            [NotNull] Func<TKey, TResource, TResource> updater,
+            bool temp)
+        {
+            if (key == null) throw new ArgumentNullException(nameof(key));
+            if (factory == null) throw new ArgumentNullException(nameof(factory));
+            if (updater == null) throw new ArgumentNullException(nameof(updater));
+
+            TResource resource;
+            if (TryGetResource(key, out resource))
+            {
+                resource = updater(key, resource);
+                if (resource == null)
+                    throw new InvalidOperationException("The updater function returned a null resource");
+
+                Update(key, resource, temp);
+                return resource;
+            }
+
+            resource = factory(key);
+            if (resource == null) throw new InvalidOperationException("The factory returned a null resource");
 
             Add(key, resource, temp);
             return resource;

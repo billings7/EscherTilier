@@ -225,12 +225,12 @@ namespace EscherTiler.Graphics.GDI
         }
 
         /// <summary>
-        ///     Adds the specified <see cref="IStyle" /> to the manager, creating the brush for it.
+        ///     Adds the specified <see cref="IStyle" /> to the manager, creating the <see cref="Brush" /> for it.
         /// </summary>
         /// <param name="style">The style.</param>
         /// <returns>The created brush.</returns>
         [NotNull]
-        public Brush Add(IStyle style)
+        public Brush Add([NotNull] IStyle style)
         {
             if (style == null) throw new ArgumentNullException(nameof(style));
 
@@ -257,6 +257,53 @@ namespace EscherTiler.Graphics.GDI
             {
                 if (_brushes == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
                 _brushes.Add(style, brush, false);
+            }
+        }
+
+        /// <summary>
+        ///     Updates the specified <see cref="IStyle" /> in the manager, creating the <see cref="Brush" /> for it.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        /// <returns>The updated brush.</returns>
+        [NotNull]
+        public Brush Update([NotNull] IStyle style)
+        {
+            if (style == null) throw new ArgumentNullException(nameof(style));
+
+            lock (_lock)
+            {
+                if (_brushes == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
+                return _brushes.AddOrUpdate(
+                    style,
+                    k => CreateBrush(k, false),
+                    (k, b) =>
+                    {
+                        Resource<Brush> newBrush = CreateBrush(k, false);
+                        b.Dispose();
+                        return newBrush;
+                    },
+                    false).Value;
+            }
+        }
+
+        void IResourceManager<IStyle>.Update(IStyle key) => Update(key);
+
+        /// <summary>
+        ///     Updates the <see cref="Brush" /> for the specified <see cref="IStyle" /> in the manager.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        /// <param name="brush">The brush.</param>
+        /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
+        /// <exception cref="System.ArgumentNullException"><paramref name="style" /> or <paramref name="brush" /> is null.</exception>
+        public void Update(IStyle style, Brush brush)
+        {
+            if (style == null) throw new ArgumentNullException(nameof(style));
+            if (brush == null) throw new ArgumentNullException(nameof(brush));
+
+            lock (_lock)
+            {
+                if (_brushes == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
+                _brushes.Update(style, brush, false);
             }
         }
 
@@ -344,12 +391,12 @@ namespace EscherTiler.Graphics.GDI
         }
 
         /// <summary>
-        ///     Adds the specified <see cref="LineStyle" /> to the manager, creating the pen for it.
+        ///     Adds the specified <see cref="LineStyle" /> to the manager, creating the <see cref="Pen" /> for it.
         /// </summary>
         /// <param name="style">The style.</param>
         /// <returns>The created pen.</returns>
         [NotNull]
-        public Pen Add(LineStyle style)
+        public Pen Add([NotNull] LineStyle style)
         {
             if (style == null) throw new ArgumentNullException(nameof(style));
 
@@ -376,6 +423,53 @@ namespace EscherTiler.Graphics.GDI
             {
                 if (_pens == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
                 _pens.Add(style, pen, false);
+            }
+        }
+
+        /// <summary>
+        ///     Updates the specified <see cref="LineStyle" /> in the manager, creating the <see cref="Pen" /> for it.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        /// <returns>The updated brush.</returns>
+        [NotNull]
+        public Pen Update([NotNull] LineStyle style)
+        {
+            if (style == null) throw new ArgumentNullException(nameof(style));
+
+            lock (_lock)
+            {
+                if (_pens == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
+                return _pens.AddOrUpdate(
+                    style,
+                    k => CreatePen(k, false),
+                    (k, b) =>
+                    {
+                        Resource<Pen> newPen = CreatePen(k, false);
+                        b.Dispose();
+                        return newPen;
+                    },
+                    false).Value;
+            }
+        }
+
+        void IResourceManager<LineStyle>.Update(LineStyle key) => Update(key);
+
+        /// <summary>
+        ///     Updates the <see cref="Pen" /> for the specified <see cref="LineStyle" /> in the manager.
+        /// </summary>
+        /// <param name="style">The key.</param>
+        /// <param name="pen">The pen.</param>
+        /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
+        /// <exception cref="System.ArgumentNullException"><paramref name="style" /> or <paramref name="pen" /> is null.</exception>
+        public void Update(LineStyle style, Pen pen)
+        {
+            if (style == null) throw new ArgumentNullException(nameof(style));
+            if (pen == null) throw new ArgumentNullException(nameof(pen));
+
+            lock (_lock)
+            {
+                if (_pens == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
+                _pens.Update(style, pen, false);
             }
         }
 
@@ -459,12 +553,12 @@ namespace EscherTiler.Graphics.GDI
         }
 
         /// <summary>
-        ///     Adds the specified <see cref="IImage" /> to the manager, creating the bitmap for it.
+        ///     Adds the specified <see cref="IImage" /> to the manager, creating the <see cref="Bitmap" /> for it.
         /// </summary>
         /// <param name="image">The image.</param>
         /// <returns>The created bitmap.</returns>
         [NotNull]
-        public Bitmap Add(IImage image)
+        public Bitmap Add([NotNull] IImage image)
         {
             if (image == null) throw new ArgumentNullException(nameof(image));
 
@@ -491,6 +585,53 @@ namespace EscherTiler.Graphics.GDI
             {
                 if (_bitmaps == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
                 _bitmaps.Add(image, bitmap, false);
+            }
+        }
+
+        /// <summary>
+        ///     Updates the specified <see cref="IImage" /> in the manager, creating the <see cref="Bitmap" /> for it.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <returns>The updated brush.</returns>
+        [NotNull]
+        public Bitmap Update([NotNull] IImage image)
+        {
+            if (image == null) throw new ArgumentNullException(nameof(image));
+
+            lock (_lock)
+            {
+                if (_bitmaps == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
+                return _bitmaps.AddOrUpdate(
+                    image,
+                    CreateBitmap,
+                    (k, b) =>
+                    {
+                        Bitmap newBitmap = CreateBitmap(k);
+                        b.Dispose();
+                        return newBitmap;
+                    },
+                    false);
+            }
+        }
+
+        void IResourceManager<IImage>.Update(IImage key) => Update(key);
+
+        /// <summary>
+        ///     Updates the <see cref="Bitmap" /> for the specified <see cref="IImage" /> in the manager.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="bitmap">The bitmap.</param>
+        /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
+        /// <exception cref="System.ArgumentNullException"><paramref name="image" /> or <paramref name="bitmap" /> is null.</exception>
+        public void Update(IImage image, Bitmap bitmap)
+        {
+            if (image == null) throw new ArgumentNullException(nameof(image));
+            if (bitmap == null) throw new ArgumentNullException(nameof(bitmap));
+
+            lock (_lock)
+            {
+                if (_bitmaps == null) throw new ObjectDisposedException(nameof(GDIResourceManager));
+                _bitmaps.Update(image, bitmap, false);
             }
         }
 

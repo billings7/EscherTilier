@@ -33,8 +33,13 @@ namespace EscherTiler.Styles
         private readonly HashSet<TileStyle> _styles = new HashSet<TileStyle>();
 
         [NotNull]
-        protected readonly Dictionary<Shape, HashSet<IStyle>> StylesByShape =
-            new Dictionary<Shape, HashSet<IStyle>>();
+        protected readonly Dictionary<Shape, HashSet<TileStyle>> StylesByShape =
+            new Dictionary<Shape, HashSet<TileStyle>>();
+
+        /// <summary>
+        /// Occurs when the any of the fill styles have changed.
+        /// </summary>
+        public event EventHandler StylesChanged;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="StyleManager" /> class.
@@ -42,7 +47,7 @@ namespace EscherTiler.Styles
         /// <param name="lineStyle">The line style.</param>
         /// <param name="styles">The styles.</param>
         /// <exception cref="System.ArgumentNullException"></exception>
-        protected StyleManager([NotNull] LineStyle lineStyle, [CanBeNull] [ItemNotNull] IReadOnlyList<TileStyle> styles)
+        protected StyleManager([NotNull] LineStyle lineStyle, [CanBeNull] [ItemNotNull] IReadOnlyCollection<TileStyle> styles)
         {
             if (lineStyle == null) throw new ArgumentNullException(nameof(lineStyle));
 
@@ -69,10 +74,21 @@ namespace EscherTiler.Styles
             {
                 Debug.Assert(shape != null, "shape != null");
 
-                HashSet<IStyle> styles = StylesByShape.GetOrAdd(shape, _ => new HashSet<IStyle>());
+                HashSet<TileStyle> styles = StylesByShape.GetOrAdd(shape, _ => new HashSet<TileStyle>());
                 Debug.Assert(styles != null, "styles != null");
-                styles.Add(style.Style);
+                styles.Add(style);
             }
+
+            OnChanged(EventArgs.Empty);
+        }
+
+        /// <summary>
+        ///     Raises the <see cref="E:Changed" /> event.
+        /// </summary>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        protected virtual void OnChanged(EventArgs e)
+        {
+            StylesChanged?.Invoke(this, e);
         }
 
         /// <summary>
@@ -85,9 +101,9 @@ namespace EscherTiler.Styles
         {
             if (shape == null) throw new ArgumentNullException(nameof(shape));
 
-            HashSet<IStyle> styles;
+            HashSet<TileStyle> styles;
             return StylesByShape.TryGetValue(shape, out styles) && styles.Count > 0
-                ? styles.ToArray()
+                ? styles.Select(s => s.Style).ToArray()
                 : Array.Empty<IStyle>();
         }
 
@@ -101,12 +117,12 @@ namespace EscherTiler.Styles
         {
             if (tile == null) throw new ArgumentNullException(nameof(tile));
 
-            HashSet<IStyle> styles;
+            HashSet<TileStyle> styles;
             if (!StylesByShape.TryGetValue(tile.Shape, out styles))
                 return null;
             Debug.Assert(styles != null, "styles != null");
 
-            IStyle style = GetStyle(tile, styles.ToArray(), ref tile.StyleState);
+            IStyle style = GetStyle(tile, styles.Select(s => s.Style).ToArray(), ref tile.StyleState);
             return style?.Transform(tile.Transform);
         }
 

@@ -1,4 +1,5 @@
 ﻿using System.Windows.Forms;
+using EscherTiler.Graphics.GDI;
 using JetBrains.Annotations;
 
 namespace EscherTiler
@@ -31,15 +32,31 @@ namespace EscherTiler
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.Windows.Forms.ToolStripSeparator sep1;
             System.Windows.Forms.ToolStripSeparator sep2;
             System.Windows.Forms.ToolStripSeparator sep3;
-            System.Windows.Forms.ToolStripMenuItem editMenuItem;
+            System.Windows.Forms.ToolStripMenuItem _editMenuItem;
             System.Windows.Forms.ToolStripSeparator sep4;
             System.Windows.Forms.ToolStripSeparator sep5;
+            System.Windows.Forms.Panel _stylesPanel;
+            System.Windows.Forms.Label _seedLbl;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this._undoMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this._redoMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this._fillStylesGroup = new System.Windows.Forms.GroupBox();
+            this._styleList = new EscherTiler.StyleListView();
+            this._lineStyleGroup = new System.Windows.Forms.GroupBox();
+            this._lineStyleControl = new EscherTiler.StyleControl();
+            this._lineWidthTrack = new System.Windows.Forms.TrackBar();
+            this._greedyStyleManagerPnl = new System.Windows.Forms.Panel();
+            this._greedyParamCTrack = new System.Windows.Forms.TrackBar();
+            this._greedyParamBTrack = new System.Windows.Forms.TrackBar();
+            this._greedyParamATrack = new System.Windows.Forms.TrackBar();
+            this._randomStyleMangerPnl = new System.Windows.Forms.Panel();
+            this._randomSeedBtn = new System.Windows.Forms.Button();
+            this._seedNum = new System.Windows.Forms.NumericUpDown();
+            this._styleManagerTypeCmb = new System.Windows.Forms.ComboBox();
             this._menuStrip = new System.Windows.Forms.MenuStrip();
             this._fileMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this._newMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -70,19 +87,32 @@ namespace EscherTiler
             this._contextToolStrip = new System.Windows.Forms.ToolStrip();
             this._zoomText = new System.Windows.Forms.ToolStripTextBox();
             this._changeLineTypeCmb = new System.Windows.Forms.ToolStripComboBox();
+            this._saveFileDialog = new System.Windows.Forms.SaveFileDialog();
+            this._openFileDialog = new System.Windows.Forms.OpenFileDialog();
+            this._toolTip = new System.Windows.Forms.ToolTip(this.components);
             this._renderControl = new EscherTiler.RenderControl();
             this._pageSetupDialog = new System.Windows.Forms.PageSetupDialog();
             this._printDocument = new EscherTiler.Graphics.GDI.TilerPrintDocument();
             this._printDialog = new System.Windows.Forms.PrintDialog();
             this._printPreviewDialog = new System.Windows.Forms.PrintPreviewDialog();
-            this._saveFileDialog = new System.Windows.Forms.SaveFileDialog();
-            this._openFileDialog = new System.Windows.Forms.OpenFileDialog();
             sep1 = new System.Windows.Forms.ToolStripSeparator();
             sep2 = new System.Windows.Forms.ToolStripSeparator();
             sep3 = new System.Windows.Forms.ToolStripSeparator();
-            editMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            _editMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             sep4 = new System.Windows.Forms.ToolStripSeparator();
             sep5 = new System.Windows.Forms.ToolStripSeparator();
+            _stylesPanel = new System.Windows.Forms.Panel();
+            _seedLbl = new System.Windows.Forms.Label();
+            _stylesPanel.SuspendLayout();
+            this._fillStylesGroup.SuspendLayout();
+            this._lineStyleGroup.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this._lineWidthTrack)).BeginInit();
+            this._greedyStyleManagerPnl.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this._greedyParamCTrack)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this._greedyParamBTrack)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this._greedyParamATrack)).BeginInit();
+            this._randomStyleMangerPnl.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this._seedNum)).BeginInit();
             this._menuStrip.SuspendLayout();
             this._toolStrip.SuspendLayout();
             this._operationToolStrip.SuspendLayout();
@@ -105,15 +135,15 @@ namespace EscherTiler
             sep3.Name = "sep3";
             sep3.Size = new System.Drawing.Size(143, 6);
             //
-            // editMenuItem
+            // _editMenuItem
             //
-            editMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            _editMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._undoMenuItem,
             this._redoMenuItem});
-            editMenuItem.Name = "editMenuItem";
-            editMenuItem.Size = new System.Drawing.Size(39, 20);
-            editMenuItem.Text = "&Edit";
-            editMenuItem.Visible = false;
+            _editMenuItem.Name = "_editMenuItem";
+            _editMenuItem.Size = new System.Drawing.Size(39, 20);
+            _editMenuItem.Text = "&Edit";
+            _editMenuItem.Visible = false;
             //
             // _undoMenuItem
             //
@@ -141,16 +171,197 @@ namespace EscherTiler
             sep5.Name = "sep5";
             sep5.Size = new System.Drawing.Size(6, 25);
             //
+            // _stylesPanel
+            //
+            _stylesPanel.Controls.Add(this._fillStylesGroup);
+            _stylesPanel.Controls.Add(this._lineStyleGroup);
+            _stylesPanel.Controls.Add(this._greedyStyleManagerPnl);
+            _stylesPanel.Controls.Add(this._randomStyleMangerPnl);
+            _stylesPanel.Controls.Add(this._styleManagerTypeCmb);
+            _stylesPanel.Dock = System.Windows.Forms.DockStyle.Right;
+            _stylesPanel.Location = new System.Drawing.Point(789, 49);
+            _stylesPanel.Name = "_stylesPanel";
+            _stylesPanel.Size = new System.Drawing.Size(195, 565);
+            _stylesPanel.TabIndex = 6;
+            _stylesPanel.Visible = true;
+            //
+            // _fillStylesGroup
+            //
+            this._fillStylesGroup.Controls.Add(this._styleList);
+            this._fillStylesGroup.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._fillStylesGroup.Enabled = false;
+            this._fillStylesGroup.Location = new System.Drawing.Point(0, 257);
+            this._fillStylesGroup.Name = "_fillStylesGroup";
+            this._fillStylesGroup.Size = new System.Drawing.Size(195, 308);
+            this._fillStylesGroup.TabIndex = 5;
+            this._fillStylesGroup.TabStop = false;
+            this._fillStylesGroup.Text = "Fill styles";
+            //
+            // _styleList
+            //
+            this._styleList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._styleList.Location = new System.Drawing.Point(3, 16);
+            this._styleList.Name = "_styleList";
+            this._styleList.Size = new System.Drawing.Size(189, 289);
+            this._styleList.TabIndex = 3;
+            this._styleList.StylesChanged += new System.EventHandler(this._styleList_StylesChanged);
+            //
+            // _lineStyleGroup
+            //
+            this._lineStyleGroup.Controls.Add(this._lineStyleControl);
+            this._lineStyleGroup.Controls.Add(this._lineWidthTrack);
+            this._lineStyleGroup.Dock = System.Windows.Forms.DockStyle.Top;
+            this._lineStyleGroup.Enabled = false;
+            this._lineStyleGroup.Location = new System.Drawing.Point(0, 149);
+            this._lineStyleGroup.Name = "_lineStyleGroup";
+            this._lineStyleGroup.Size = new System.Drawing.Size(195, 108);
+            this._lineStyleGroup.TabIndex = 4;
+            this._lineStyleGroup.TabStop = false;
+            this._lineStyleGroup.Text = "Line style";
+            //
+            // _lineStyleControl
+            //
+            this._lineStyleControl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._lineStyleControl.Location = new System.Drawing.Point(3, 49);
+            this._lineStyleControl.Name = "_lineStyleControl";
+            this._lineStyleControl.Size = new System.Drawing.Size(189, 56);
+            this._lineStyleControl.Style = null;
+            this._lineStyleControl.TabIndex = 1;
+            this._lineStyleControl.StyleChanged += new System.EventHandler(this._lineStyleControl_StyleChanged);
+            //
+            // _lineWidthTrack
+            //
+            this._lineWidthTrack.AutoSize = false;
+            this._lineWidthTrack.Dock = System.Windows.Forms.DockStyle.Top;
+            this._lineWidthTrack.Location = new System.Drawing.Point(3, 16);
+            this._lineWidthTrack.Maximum = 100;
+            this._lineWidthTrack.Name = "_lineWidthTrack";
+            this._lineWidthTrack.Size = new System.Drawing.Size(189, 33);
+            this._lineWidthTrack.TabIndex = 0;
+            this._lineWidthTrack.TickFrequency = 10;
+            this._toolTip.SetToolTip(this._lineWidthTrack, "The width of the line");
+            this._lineWidthTrack.Value = 10;
+            this._lineWidthTrack.Scroll += new System.EventHandler(this._lineWidthTrack_ValueChanged);
+            this._lineWidthTrack.ValueChanged += new System.EventHandler(this._lineWidthTrack_ValueChanged);
+            //
+            // _greedyStyleManagerPnl
+            //
+            this._greedyStyleManagerPnl.Controls.Add(this._greedyParamCTrack);
+            this._greedyStyleManagerPnl.Controls.Add(this._greedyParamBTrack);
+            this._greedyStyleManagerPnl.Controls.Add(this._greedyParamATrack);
+            this._greedyStyleManagerPnl.Dock = System.Windows.Forms.DockStyle.Top;
+            this._greedyStyleManagerPnl.Location = new System.Drawing.Point(0, 47);
+            this._greedyStyleManagerPnl.Name = "_greedyStyleManagerPnl";
+            this._greedyStyleManagerPnl.Size = new System.Drawing.Size(195, 102);
+            this._greedyStyleManagerPnl.TabIndex = 2;
+            this._greedyStyleManagerPnl.Visible = false;
+            this._greedyStyleManagerPnl.VisibleChanged += new System.EventHandler(this.StyleManagerPanel_VisibleChanged);
+            //
+            // _greedyParamCTrack
+            //
+            this._greedyParamCTrack.AutoSize = false;
+            this._greedyParamCTrack.Dock = System.Windows.Forms.DockStyle.Top;
+            this._greedyParamCTrack.Location = new System.Drawing.Point(0, 66);
+            this._greedyParamCTrack.Name = "_greedyParamCTrack";
+            this._greedyParamCTrack.Size = new System.Drawing.Size(195, 33);
+            this._greedyParamCTrack.TabIndex = 2;
+            this._greedyParamCTrack.ValueChanged += new System.EventHandler(this._greedyParamCTrack_ValueChanged);
+            //
+            // _greedyParamBTrack
+            //
+            this._greedyParamBTrack.AutoSize = false;
+            this._greedyParamBTrack.Dock = System.Windows.Forms.DockStyle.Top;
+            this._greedyParamBTrack.Location = new System.Drawing.Point(0, 33);
+            this._greedyParamBTrack.Name = "_greedyParamBTrack";
+            this._greedyParamBTrack.Size = new System.Drawing.Size(195, 33);
+            this._greedyParamBTrack.TabIndex = 1;
+            this._greedyParamBTrack.ValueChanged += new System.EventHandler(this._greedyParamBTrack_ValueChanged);
+            //
+            // _greedyParamATrack
+            //
+            this._greedyParamATrack.AutoSize = false;
+            this._greedyParamATrack.Dock = System.Windows.Forms.DockStyle.Top;
+            this._greedyParamATrack.Location = new System.Drawing.Point(0, 0);
+            this._greedyParamATrack.Name = "_greedyParamATrack";
+            this._greedyParamATrack.Size = new System.Drawing.Size(195, 33);
+            this._greedyParamATrack.TabIndex = 0;
+            this._greedyParamATrack.ValueChanged += new System.EventHandler(this._greedyParamATrack_ValueChanged);
+            //
+            // _randomStyleMangerPnl
+            //
+            this._randomStyleMangerPnl.Controls.Add(this._randomSeedBtn);
+            this._randomStyleMangerPnl.Controls.Add(this._seedNum);
+            this._randomStyleMangerPnl.Controls.Add(_seedLbl);
+            this._randomStyleMangerPnl.Dock = System.Windows.Forms.DockStyle.Top;
+            this._randomStyleMangerPnl.Location = new System.Drawing.Point(0, 21);
+            this._randomStyleMangerPnl.Name = "_randomStyleMangerPnl";
+            this._randomStyleMangerPnl.Size = new System.Drawing.Size(195, 26);
+            this._randomStyleMangerPnl.TabIndex = 1;
+            this._randomStyleMangerPnl.Visible = false;
+            this._randomStyleMangerPnl.VisibleChanged += new System.EventHandler(this.StyleManagerPanel_VisibleChanged);
+            //
+            // _randomSeedBtn
+            //
+            this._randomSeedBtn.Location = new System.Drawing.Point(136, 2);
+            this._randomSeedBtn.Name = "_randomSeedBtn";
+            this._randomSeedBtn.Size = new System.Drawing.Size(56, 22);
+            this._randomSeedBtn.TabIndex = 2;
+            this._randomSeedBtn.Text = "&Random";
+            this._toolTip.SetToolTip(this._randomSeedBtn, "Picks a random seed");
+            this._randomSeedBtn.UseVisualStyleBackColor = true;
+            this._randomSeedBtn.Click += new System.EventHandler(this._randomSeedBtn_Click);
+            //
+            // _seedNum
+            //
+            this._seedNum.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this._seedNum.Location = new System.Drawing.Point(44, 3);
+            this._seedNum.Maximum = new decimal(new int[] {
+            2147483647,
+            0,
+            0,
+            0});
+            this._seedNum.Minimum = new decimal(new int[] {
+            -2147483648,
+            0,
+            0,
+            -2147483648});
+            this._seedNum.Name = "_seedNum";
+            this._seedNum.Size = new System.Drawing.Size(86, 20);
+            this._seedNum.TabIndex = 1;
+            this._seedNum.ValueChanged += new System.EventHandler(this._seedNum_ValueChanged);
+            //
+            // _seedLbl
+            //
+            _seedLbl.AutoSize = true;
+            _seedLbl.Location = new System.Drawing.Point(3, 6);
+            _seedLbl.Name = "_seedLbl";
+            _seedLbl.Size = new System.Drawing.Size(35, 13);
+            _seedLbl.TabIndex = 0;
+            _seedLbl.Text = "Seed:";
+            //
+            // _styleManagerTypeCmb
+            //
+            this._styleManagerTypeCmb.Dock = System.Windows.Forms.DockStyle.Top;
+            this._styleManagerTypeCmb.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this._styleManagerTypeCmb.Enabled = false;
+            this._styleManagerTypeCmb.FormattingEnabled = true;
+            this._styleManagerTypeCmb.Location = new System.Drawing.Point(0, 0);
+            this._styleManagerTypeCmb.Name = "_styleManagerTypeCmb";
+            this._styleManagerTypeCmb.Size = new System.Drawing.Size(195, 21);
+            this._styleManagerTypeCmb.TabIndex = 0;
+            this._styleManagerTypeCmb.SelectedIndexChanged += new System.EventHandler(this._styleManagerTypeCmb_SelectedIndexChanged);
+            //
             // _menuStrip
             //
             this._menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._fileMenuItem,
-            editMenuItem,
+            _editMenuItem,
             this._toolsMenuItem,
             this._helpMenuItem});
             this._menuStrip.Location = new System.Drawing.Point(0, 0);
             this._menuStrip.Name = "_menuStrip";
-            this._menuStrip.Size = new System.Drawing.Size(784, 24);
+            this._menuStrip.Size = new System.Drawing.Size(984, 24);
             this._menuStrip.TabIndex = 0;
             this._menuStrip.Text = "Menu";
             //
@@ -308,7 +519,7 @@ namespace EscherTiler
             this._helpButton});
             this._toolStrip.Location = new System.Drawing.Point(0, 24);
             this._toolStrip.Name = "_toolStrip";
-            this._toolStrip.Size = new System.Drawing.Size(784, 25);
+            this._toolStrip.Size = new System.Drawing.Size(984, 25);
             this._toolStrip.TabIndex = 1;
             this._toolStrip.Text = "Tools";
             //
@@ -372,7 +583,7 @@ namespace EscherTiler
             this._operationToolStrip.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Flow;
             this._operationToolStrip.Location = new System.Drawing.Point(0, 49);
             this._operationToolStrip.Name = "_operationToolStrip";
-            this._operationToolStrip.Size = new System.Drawing.Size(41, 490);
+            this._operationToolStrip.Size = new System.Drawing.Size(41, 590);
             this._operationToolStrip.TabIndex = 2;
             this._operationToolStrip.Text = "Operations";
             //
@@ -393,9 +604,9 @@ namespace EscherTiler
             //
             this._statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._statusInfoLabel});
-            this._statusStrip.Location = new System.Drawing.Point(0, 539);
+            this._statusStrip.Location = new System.Drawing.Point(0, 639);
             this._statusStrip.Name = "_statusStrip";
-            this._statusStrip.Size = new System.Drawing.Size(784, 22);
+            this._statusStrip.Size = new System.Drawing.Size(984, 22);
             this._statusStrip.TabIndex = 3;
             this._statusStrip.Text = "Status";
             //
@@ -413,9 +624,9 @@ namespace EscherTiler
             this._contextToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._zoomText,
             this._changeLineTypeCmb});
-            this._contextToolStrip.Location = new System.Drawing.Point(41, 514);
+            this._contextToolStrip.Location = new System.Drawing.Point(41, 614);
             this._contextToolStrip.Name = "_contextToolStrip";
-            this._contextToolStrip.Size = new System.Drawing.Size(743, 25);
+            this._contextToolStrip.Size = new System.Drawing.Size(943, 25);
             this._contextToolStrip.TabIndex = 4;
             this._contextToolStrip.Text = "Context Tools";
             //
@@ -433,10 +644,21 @@ namespace EscherTiler
             //
             // _changeLineTypeCmb
             //
+            this._changeLineTypeCmb.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this._changeLineTypeCmb.Name = "_changeLineTypeCmb";
             this._changeLineTypeCmb.Size = new System.Drawing.Size(121, 25);
             this._changeLineTypeCmb.Visible = false;
             this._changeLineTypeCmb.SelectedIndexChanged += new System.EventHandler(this.changeLineTypeCmb_SelectedIndexChanged);
+            //
+            // _saveFileDialog
+            //
+            this._saveFileDialog.DefaultExt = "esch";
+            this._saveFileDialog.Filter = "Tiling|*.esch";
+            //
+            // _openFileDialog
+            //
+            this._openFileDialog.DefaultExt = "esch";
+            this._openFileDialog.Filter = "Tiling|*.esch";
             //
             // _renderControl
             //
@@ -444,7 +666,7 @@ namespace EscherTiler
             this._renderControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this._renderControl.Location = new System.Drawing.Point(41, 49);
             this._renderControl.Name = "_renderControl";
-            this._renderControl.Size = new System.Drawing.Size(743, 465);
+            this._renderControl.Size = new System.Drawing.Size(748, 565);
             this._renderControl.TabIndex = 5;
             this._renderControl.Render += new EscherTiler.RenderDelegate(this.renderControl_Render);
             this._renderControl.Layout += new System.Windows.Forms.LayoutEventHandler(this.renderControl_Layout);
@@ -482,22 +704,13 @@ namespace EscherTiler
             this._printPreviewDialog.UseAntiAlias = true;
             this._printPreviewDialog.Visible = false;
             //
-            // _saveFileDialog
-            //
-            this._saveFileDialog.DefaultExt = "esch";
-            this._saveFileDialog.Filter = "Tiling|*.esch";
-            //
-            // _openFileDialog
-            //
-            this._openFileDialog.DefaultExt = "esch";
-            this._openFileDialog.Filter = "Tiling|*.esch";
-            //
             // Main
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(784, 561);
+            this.ClientSize = new System.Drawing.Size(984, 661);
             this.Controls.Add(this._renderControl);
+            this.Controls.Add(_stylesPanel);
             this.Controls.Add(this._contextToolStrip);
             this.Controls.Add(this._operationToolStrip);
             this.Controls.Add(this._toolStrip);
@@ -509,6 +722,17 @@ namespace EscherTiler
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "Escher Tiler";
             this.Click += new System.EventHandler(this.toolBtn_Click);
+            _stylesPanel.ResumeLayout(false);
+            this._fillStylesGroup.ResumeLayout(false);
+            this._lineStyleGroup.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this._lineWidthTrack)).EndInit();
+            this._greedyStyleManagerPnl.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this._greedyParamCTrack)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this._greedyParamBTrack)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this._greedyParamATrack)).EndInit();
+            this._randomStyleMangerPnl.ResumeLayout(false);
+            this._randomStyleMangerPnl.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this._seedNum)).EndInit();
             this._menuStrip.ResumeLayout(false);
             this._menuStrip.PerformLayout();
             this._toolStrip.ResumeLayout(false);
@@ -640,6 +864,48 @@ namespace EscherTiler
 
         [NotNull]
         private OpenFileDialog _openFileDialog;
+
+        [NotNull]
+        private ComboBox _styleManagerTypeCmb;
+
+        [NotNull]
+        private Panel _randomStyleMangerPnl;
+
+        [NotNull]
+        private Button _randomSeedBtn;
+
+        [NotNull]
+        private ToolTip _toolTip;
+
+        [NotNull]
+        private NumericUpDown _seedNum;
+
+        [NotNull]
+        private Panel _greedyStyleManagerPnl;
+
+        [NotNull]
+        private TrackBar _greedyParamCTrack;
+
+        [NotNull]
+        private TrackBar _greedyParamBTrack;
+
+        [NotNull]
+        private TrackBar _greedyParamATrack;
+
+        [NotNull]
+        private StyleListView _styleList;
+
+        [NotNull]
+        private StyleControl _lineStyleControl;
+
+        [NotNull]
+        private TrackBar _lineWidthTrack;
+
+        [NotNull]
+        private GroupBox _fillStylesGroup;
+
+        [NotNull]
+        private GroupBox _lineStyleGroup;
 
         #endregion
     }

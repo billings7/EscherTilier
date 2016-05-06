@@ -109,6 +109,16 @@ namespace EscherTiler
         }
 
         /// <summary>
+        ///     Updates the styles on the tiles.
+        /// </summary>
+        /// <param name="tiles">The tiles.</param>
+        public void UpdateStyles([NotNull] [ItemNotNull] IEnumerable<TileBase> tiles)
+        {
+            foreach (TileBase tile in tiles)
+                tile.Style = _styleManager.GetStyle(tile);
+        }
+
+        /// <summary>
         ///     Gets the tiles that fill the bounds given.
         /// </summary>
         /// <param name="bounds">The bounds.</param>

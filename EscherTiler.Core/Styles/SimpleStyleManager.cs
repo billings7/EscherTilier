@@ -13,7 +13,7 @@ namespace EscherTiler.Styles
         /// <param name="lineStyle">The line style.</param>
         /// <param name="styles">The styles.</param>
         /// <exception cref="System.ArgumentNullException"></exception>
-        public SimpleStyleManager([NotNull] LineStyle lineStyle, [CanBeNull] IReadOnlyList<TileStyle> styles)
+        public SimpleStyleManager([NotNull] LineStyle lineStyle, [CanBeNull] IReadOnlyCollection<TileStyle> styles)
             : base(lineStyle, styles) { }
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace EscherTiler.Styles
         {
             foreach (Shape shape in style.Shapes)
             {
-                HashSet<IStyle> styles;
+                HashSet<TileStyle> styles;
                 if (StylesByShape.TryGetValue(shape, out styles) && styles.Count > 0)
                     throw new ArgumentException("A SimpleStyleManager can only contain a single style for each shape.");
             }

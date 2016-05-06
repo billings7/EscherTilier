@@ -349,6 +349,52 @@ namespace EscherTiler.Graphics.DirectX
         }
 
         /// <summary>
+        ///     Updates the specified <see cref="IStyle" /> in the manager, creating the <see cref="Brush" /> for it.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        /// <returns>The updated brush.</returns>
+        public Brush Update(IStyle style)
+        {
+            if (style == null) throw new ArgumentNullException(nameof(style));
+
+            lock (_lock)
+            {
+                if (_brushes == null) throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                return _brushes.AddOrUpdate(
+                    style,
+                    k => CreateBrush(k, false),
+                    (k, b) =>
+                    {
+                        Resource<Brush> newBrush = CreateBrush(k, false);
+                        b.Dispose();
+                        return newBrush;
+                    },
+                    false).Value;
+            }
+        }
+
+        void IResourceManager<IStyle>.Update(IStyle key) => Update(key);
+
+        /// <summary>
+        ///     Updates the <see cref="Brush" /> for the specified <see cref="IStyle" /> in the manager.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        /// <param name="brush">The brush.</param>
+        /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
+        /// <exception cref="System.ArgumentNullException"><paramref name="style" /> or <paramref name="brush" /> is null.</exception>
+        public void Update(IStyle style, Brush brush)
+        {
+            if (style == null) throw new ArgumentNullException(nameof(style));
+            if (brush == null) throw new ArgumentNullException(nameof(brush));
+
+            lock (_lock)
+            {
+                if (_brushes == null) throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                _brushes.Update(style, brush, false);
+            }
+        }
+
+        /// <summary>
         ///     Releases the specified <see cref="Brush" />.
         /// </summary>
         /// <param name="style">The style.</param>
@@ -459,6 +505,52 @@ namespace EscherTiler.Graphics.DirectX
             {
                 if (_bitmaps == null) throw new ObjectDisposedException(nameof(DirectXResourceManager));
                 _bitmaps.Add(image, bitmap, false);
+            }
+        }
+
+        /// <summary>
+        ///     Updates the specified <see cref="IImage" /> in the manager, creating the <see cref="Bitmap" /> for it.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <returns>The updated brush.</returns>
+        public Bitmap Update(IImage image)
+        {
+            if (image == null) throw new ArgumentNullException(nameof(image));
+
+            lock (_lock)
+            {
+                if (_bitmaps == null) throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                return _bitmaps.AddOrUpdate(
+                    image,
+                    CreateBitmap,
+                    (k, b) =>
+                    {
+                        Bitmap newBitmap = CreateBitmap(k);
+                        b.Dispose();
+                        return newBitmap;
+                    },
+                    false);
+            }
+        }
+
+        void IResourceManager<IImage>.Update(IImage key) => Update(key);
+
+        /// <summary>
+        ///     Updates the <see cref="Bitmap" /> for the specified <see cref="IImage" /> in the manager.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="bitmap">The bitmap.</param>
+        /// <exception cref="System.NotSupportedException">The type of the key and/or resource is not supported by this manager.</exception>
+        /// <exception cref="System.ArgumentNullException"><paramref name="image" /> or <paramref name="bitmap" /> is null.</exception>
+        public void Update(IImage image, Bitmap bitmap)
+        {
+            if (image == null) throw new ArgumentNullException(nameof(image));
+            if (bitmap == null) throw new ArgumentNullException(nameof(bitmap));
+
+            lock (_lock)
+            {
+                if (_bitmaps == null) throw new ObjectDisposedException(nameof(DirectXResourceManager));
+                _bitmaps.Update(image, bitmap, false);
             }
         }
 
