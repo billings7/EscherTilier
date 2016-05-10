@@ -23,6 +23,9 @@ using DragAction = EscherTiler.Controllers.DragAction;
 
 namespace EscherTiler
 {
+    /// <summary>
+    ///     The main form for the application.
+    /// </summary>
     public partial class Main : Form, IView
     {
         private float _zoom = 100f;
@@ -54,18 +57,39 @@ namespace EscherTiler
             10f
         };
 
+        /// <summary>
+        ///     Gets the view matrix.
+        /// </summary>
+        /// <value>
+        ///     The view matrix.
+        /// </value>
         public Matrix3x2 ViewMatrix =>
             _centerTranslate
             * _translate
             * _scale;
 
+        /// <summary>
+        ///     Gets the inverse view matrix.
+        /// </summary>
+        /// <value>
+        ///     The inverse view matrix.
+        /// </value>
         public Matrix3x2 InverseViewMatrix =>
             _invScale
             * _invTranslate
             * _invCenterTranslate;
 
+        /// <summary>
+        ///     Gets the view bounds.
+        /// </summary>
+        /// <value>
+        ///     The view bounds.
+        /// </value>
         public Numerics.Rectangle ViewBounds => _bounds;
 
+        /// <summary>
+        ///     Occurs when the value of the <see cref="IView.ViewBounds" /> property changes.
+        /// </summary>
         public event EventHandler ViewBoundsChanged;
 
         private Numerics.Rectangle _bounds;
@@ -74,6 +98,12 @@ namespace EscherTiler
 
         private Point _lastNormalLocation = new Point(0, 0);
 
+        /// <summary>
+        ///     Gets or sets the currently active controller.
+        /// </summary>
+        /// <value>
+        ///     The active controller.
+        /// </value>
         [CanBeNull]
         private Controller ActiveController
         {
@@ -121,9 +151,21 @@ namespace EscherTiler
         [NotNull]
         private readonly object _lock = new object();
 
+        /// <summary>
+        ///     Gets the name of the current document.
+        /// </summary>
+        /// <value>
+        ///     The name of the document.
+        /// </value>
         [NotNull]
         public string DocumentName => _documentName;
 
+        /// <summary>
+        ///     Gets or sets the document path.
+        /// </summary>
+        /// <value>
+        ///     The document path.
+        /// </value>
         [CanBeNull]
         public string DocumentPath
         {
@@ -138,6 +180,12 @@ namespace EscherTiler
             }
         }
 
+        /// <summary>
+        ///     Gets or sets a value indicating whether there are any unsaved changes.
+        /// </summary>
+        /// <value>
+        ///     <see langword="true" /> if there are any unsaved changes; otherwise, <see langword="false" />.
+        /// </value>
         private bool IsDirty
         {
             get { return _isDirty; }
@@ -159,6 +207,9 @@ namespace EscherTiler
 
         private bool _layoutSuspended;
 
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Main" /> class.
+        /// </summary>
         // ReSharper disable once NotNullMemberIsNotInitialized - they are
         public Main()
         {

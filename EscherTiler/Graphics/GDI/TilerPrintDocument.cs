@@ -78,7 +78,7 @@ namespace EscherTiler.Graphics.GDI
         public TileBase Tile { get; set; }
 
         /// <summary>
-        /// Sets the get tranform delegate.
+        ///     Sets the get tranform delegate.
         /// </summary>
         /// <param name="delegate">The delegate.</param>
         /// <exception cref="System.ArgumentNullException"></exception>

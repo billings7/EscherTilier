@@ -137,6 +137,7 @@
     </Compile>
     <Compile Include="MainStyleManager.cs">
       <SubType>Form</SubType>
+      <DependentUpon>Main.cs</DependentUpon>
     </Compile>
     <Compile Include="MainTools.cs">
       <SubType>Form</SubType>

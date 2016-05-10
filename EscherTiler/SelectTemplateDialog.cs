@@ -55,7 +55,7 @@ namespace EscherTiler
                         using (GdiPGraphics g = GdiPGraphics.FromImage(bit))
                         {
                             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                            g.SmoothingMode= SmoothingMode.AntiAlias;
+                            g.SmoothingMode = SmoothingMode.AntiAlias;
                             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
                             g.DrawImage(image, pos.X, pos.Y, size.X, size.Y);

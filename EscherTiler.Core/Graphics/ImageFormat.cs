@@ -1,4 +1,5 @@
 ﻿#region © Copyright Web Applications (UK) Ltd, 2015.  All rights reserved.
+
 // Copyright (c) 2015, Web Applications UK Ltd
 // All rights reserved.
 //
@@ -23,47 +24,48 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #endregion
 
 namespace EscherTiler.Graphics
 {
     /// <summary>
-    /// Supported image formats.
+    ///     Supported image formats.
     /// </summary>
     public enum ImageFormat
     {
         /// <summary>
-        /// The bitmap (BMP) image format
+        ///     The bitmap (BMP) image format
         /// </summary>
         Bmp,
 
         /// <summary>
-        /// The enhanced metafile (EMF) image format.
+        ///     The enhanced metafile (EMF) image format.
         /// </summary>
         Emf,
 
         /// <summary>
-        /// The the Windows metafile (WMF) image format.
+        ///     The the Windows metafile (WMF) image format.
         /// </summary>
         Wmf,
 
         /// <summary>
-        /// The Graphics Interchange Format (GIF) image format.
+        ///     The Graphics Interchange Format (GIF) image format.
         /// </summary>
         Gif,
 
         /// <summary>
-        /// The the Joint Photographic Experts Group (JPEG) image format.
+        ///     The the Joint Photographic Experts Group (JPEG) image format.
         /// </summary>
         Jpeg,
 
         /// <summary>
-        /// The the W3C Portable Network Graphics (PNG) image format.
+        ///     The the W3C Portable Network Graphics (PNG) image format.
         /// </summary>
         Png,
 
         /// <summary>
-        /// The the Tagged Image File Format (TIFF) image format.
+        ///     The the Tagged Image File Format (TIFF) image format.
         /// </summary>
         Tiff,
 
@@ -73,7 +75,7 @@ namespace EscherTiler.Graphics
         // Exif,
 
         /// <summary>
-        /// The the Windows icon image format.
+        ///     The the Windows icon image format.
         /// </summary>
         Icon
     }

@@ -63,11 +63,13 @@ namespace EscherTiler.Controllers
             Name = name;
 
             if (options != null)
+            {
                 foreach (Option option in options)
                 {
                     Debug.Assert(option != null, "option != null");
                     _options.Add(option.Name, option);
                 }
+            }
         }
 
         /// <summary>
@@ -200,13 +202,13 @@ namespace EscherTiler.Controllers
     public sealed class InstantAction : Action
     {
         /// <summary>
-        ///     An instance of this class with <see cref="ChangesData"/> equal to <see langword="false"/>.
+        ///     An instance of this class with <see cref="ChangesData" /> equal to <see langword="false" />.
         /// </summary>
         [NotNull]
         public static readonly InstantAction PureInstance = new InstantAction(false);
 
         /// <summary>
-        ///     An instance of this class with <see cref="ChangesData"/> equal to <see langword="true"/>.
+        ///     An instance of this class with <see cref="ChangesData" /> equal to <see langword="true" />.
         /// </summary>
         [NotNull]
         public static readonly InstantAction DestructiveInstance = new InstantAction(true);
@@ -221,10 +223,10 @@ namespace EscherTiler.Controllers
         }
 
         /// <summary>
-        /// Gets a value indicating whether this action changes any data that would need to be saved.
+        ///     Gets a value indicating whether this action changes any data that would need to be saved.
         /// </summary>
         /// <value>
-        /// <see langword="true" /> if the action changes data; otherwise, <see langword="false" />.
+        ///     <see langword="true" /> if the action changes data; otherwise, <see langword="false" />.
         /// </value>
         public override bool ChangesData { get; }
     }
@@ -263,7 +265,7 @@ namespace EscherTiler.Controllers
         private object _value;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Option"/> class.
+        ///     Initializes a new instance of the <see cref="Option" /> class.
         /// </summary>
         /// <param name="name">The name.</param>
         /// <param name="initialValue">The initial value.</param>
@@ -301,7 +303,7 @@ namespace EscherTiler.Controllers
         }
 
         /// <summary>
-        /// Occurs when the value of the <see cref="Value"/> property changes.
+        ///     Occurs when the value of the <see cref="Value" /> property changes.
         /// </summary>
         public event Action<object> ValueChanged;
     }

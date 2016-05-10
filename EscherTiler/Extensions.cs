@@ -5,8 +5,14 @@ using JetBrains.Annotations;
 
 namespace EscherTiler
 {
+    /// <summary>
+    ///     General extension methods for the UI.
+    /// </summary>
     public static class Extensions
     {
+        /// <summary>
+        ///     Just used to get the actual name for the <see cref="Control.DoubleBuffered" /> property.
+        /// </summary>
         private class Ctrl : Control
         {
             public const string DoubleBufferedName = nameof(DoubleBuffered);

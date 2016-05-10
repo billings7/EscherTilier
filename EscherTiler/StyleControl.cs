@@ -8,7 +8,7 @@ using JetBrains.Annotations;
 namespace EscherTiler
 {
     /// <summary>
-    /// Control for editing a <see cref="IStyle"/>.
+    ///     Control for editing a <see cref="IStyle" />.
     /// </summary>
     /// <seealso cref="System.Windows.Forms.UserControl" />
     public partial class StyleControl : UserControl
@@ -61,6 +61,9 @@ namespace EscherTiler
         [CanBeNull]
         private Brush _brush;
 
+        /// <summary>
+        ///     Occurs when the control style changes.
+        /// </summary>
         public new event EventHandler StyleChanged;
 
         /// <summary>
@@ -104,6 +107,11 @@ namespace EscherTiler
                 e.Graphics.FillRectangle(_brush, 0, 0, _previewPnl.Width, _previewPnl.Height);
         }
 
+        /// <summary>
+        ///     Handles the DoubleClick event of the _previewPnl control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void _previewPnl_DoubleClick(object sender, EventArgs e)
         {
             SolidColourStyle style = Style as SolidColourStyle;
@@ -112,7 +120,7 @@ namespace EscherTiler
 
             if (_colourDialog.ShowDialog(FindForm()) == DialogResult.OK)
             {
-                var col = _colourDialog.Color;
+                Color col = _colourDialog.Color;
                 Style = new SolidColourStyle(col.R, col.G, col.B, col.A);
             }
         }

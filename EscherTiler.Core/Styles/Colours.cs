@@ -4,6 +4,8 @@ using JetBrains.Annotations;
 
 namespace EscherTiler.Styles
 {
+	// This part of the struct contains a number of pre-defined colours,
+	// generated from the colours that the System.Drawing.Color class has
     public partial struct Colour
     {
         /// <summary>
@@ -1003,7 +1005,7 @@ namespace EscherTiler.Styles
         /// </summary>
         /// <value>
         /// The known colours.
-        /// </value> 
+        /// </value>
         [NotNull]
         public static IReadOnlyDictionary<string, Colour> KnownColours => _knownColours;
     }

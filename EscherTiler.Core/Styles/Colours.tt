@@ -14,9 +14,18 @@ using JetBrains.Annotations;
 
 namespace EscherTiler.Styles
 {
+	// This part of the struct contains a number of pre-defined colours,
+	// generated from the colours that the System.Drawing.Color class has
     public partial struct Colour
     {
-<# foreach (Color col in typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Where(p => p.PropertyType == typeof(Color)).Select(p => (Color)p.GetValue(null)))
+<#
+Color[] colors = typeof(Color)
+	.GetProperties(BindingFlags.Static | BindingFlags.Public)
+	.Where(p => p.PropertyType == typeof(Color))
+	.Select(p => (Color)p.GetValue(null))
+	.ToArray();
+
+foreach (Color col in colors)
 {
     var name = col.Name;
     var r = (col.R / 255f).ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "f";
@@ -35,7 +44,7 @@ namespace EscherTiler.Styles
         [NotNull]
         private static readonly Dictionary<string, Colour> _knownColours = new Dictionary<string, Colour>(StringComparer.InvariantCultureIgnoreCase)
         {
-<# foreach (Color col in typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Where(p => p.PropertyType == typeof(Color)).Select(p => (Color)p.GetValue(null)))
+<# foreach (Color col in colors)
 {
     var name = col.Name;
 #>
@@ -48,7 +57,7 @@ namespace EscherTiler.Styles
         /// </summary>
         /// <value>
         /// The known colours.
-        /// </value> 
+        /// </value>
         [NotNull]
         public static IReadOnlyDictionary<string, Colour> KnownColours => _knownColours;
     }

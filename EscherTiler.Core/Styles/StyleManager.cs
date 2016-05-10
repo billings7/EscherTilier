@@ -37,7 +37,7 @@ namespace EscherTiler.Styles
             new Dictionary<Shape, HashSet<TileStyle>>();
 
         /// <summary>
-        /// Occurs when the any of the fill styles have changed.
+        ///     Occurs when the any of the fill styles have changed.
         /// </summary>
         public event EventHandler StylesChanged;
 
@@ -47,7 +47,9 @@ namespace EscherTiler.Styles
         /// <param name="lineStyle">The line style.</param>
         /// <param name="styles">The styles.</param>
         /// <exception cref="System.ArgumentNullException"></exception>
-        protected StyleManager([NotNull] LineStyle lineStyle, [CanBeNull] [ItemNotNull] IReadOnlyCollection<TileStyle> styles)
+        protected StyleManager(
+            [NotNull] LineStyle lineStyle,
+            [CanBeNull] [ItemNotNull] IReadOnlyCollection<TileStyle> styles)
         {
             if (lineStyle == null) throw new ArgumentNullException(nameof(lineStyle));
 

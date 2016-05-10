@@ -241,6 +241,10 @@ namespace EscherTiler.Graphics.GDI
             }
         }
 
+        /// <summary>
+        ///     Adds the specified <see cref="IStyle" /> to the manager, creating the <see cref="Brush" /> for it.
+        /// </summary>
+        /// <param name="style">The style.</param>
         void IResourceManager<IStyle>.Add(IStyle style) => Add(style);
 
         /// <summary>
@@ -286,7 +290,11 @@ namespace EscherTiler.Graphics.GDI
             }
         }
 
-        void IResourceManager<IStyle>.Update(IStyle key) => Update(key);
+        /// <summary>
+        ///     Updates the specified <see cref="IStyle" /> in the manager, creating the <see cref="Brush" /> for it.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        void IResourceManager<IStyle>.Update(IStyle style) => Update(style);
 
         /// <summary>
         ///     Updates the <see cref="Brush" /> for the specified <see cref="IStyle" /> in the manager.
@@ -407,6 +415,10 @@ namespace EscherTiler.Graphics.GDI
             }
         }
 
+        /// <summary>
+        ///     Adds the specified <see cref="LineStyle" /> to the manager, creating the <see cref="Pen" /> for it.
+        /// </summary>
+        /// <param name="style">The style.</param>
         void IResourceManager<LineStyle>.Add(LineStyle style) => Add(style);
 
         /// <summary>
@@ -452,7 +464,11 @@ namespace EscherTiler.Graphics.GDI
             }
         }
 
-        void IResourceManager<LineStyle>.Update(LineStyle key) => Update(key);
+        /// <summary>
+        ///     Updates the specified <see cref="LineStyle" /> in the manager, creating the <see cref="Pen" /> for it.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        void IResourceManager<LineStyle>.Update(LineStyle style) => Update(style);
 
         /// <summary>
         ///     Updates the <see cref="Pen" /> for the specified <see cref="LineStyle" /> in the manager.
@@ -569,6 +585,10 @@ namespace EscherTiler.Graphics.GDI
             }
         }
 
+        /// <summary>
+        ///     Adds the specified <see cref="IImage" /> to the manager, creating the <see cref="Bitmap" /> for it.
+        /// </summary>
+        /// <param name="image">The image.</param>
         void IResourceManager<IImage>.Add(IImage image) => Add(image);
 
         /// <summary>
@@ -614,7 +634,11 @@ namespace EscherTiler.Graphics.GDI
             }
         }
 
-        void IResourceManager<IImage>.Update(IImage key) => Update(key);
+        /// <summary>
+        ///     Updates the specified <see cref="IImage" /> in the manager, creating the <see cref="Bitmap" /> for it.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        void IResourceManager<IImage>.Update(IImage image) => Update(image);
 
         /// <summary>
         ///     Updates the <see cref="Bitmap" /> for the specified <see cref="IImage" /> in the manager.

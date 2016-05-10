@@ -82,7 +82,7 @@ namespace EscherTiler
 
             Size2F dpi = DirectXResourceManager.FactoryD2D.DesktopDpi;
 
-            var renderTarget = new RenderTarget(
+            RenderTarget renderTarget = new RenderTarget(
                 DirectXResourceManager.FactoryD2D,
                 _backBuffer,
                 new RenderTargetProperties
@@ -130,10 +130,10 @@ namespace EscherTiler
         }
 
         /// <summary>
-        /// Gets the render target container.
+        ///     Gets the render target container.
         /// </summary>
         /// <value>
-        /// The render target container.
+        ///     The render target container.
         /// </value>
         [NotNull]
         public RenderTargetContainer RenderTargetContainer
@@ -146,7 +146,7 @@ namespace EscherTiler
         }
 
         /// <summary>
-        /// Occurs when the render target changes.
+        ///     Occurs when the render target changes.
         /// </summary>
         /// <exception cref="System.ObjectDisposedException">
         /// </exception>
@@ -171,7 +171,14 @@ namespace EscherTiler
         ///     The swap chain.
         /// </value>
         [NotNull]
-        public SwapChain SwapChain => _swapChain;
+        public SwapChain SwapChain
+        {
+            get
+            {
+                if (_swapChain == null) throw new ObjectDisposedException(nameof(RenderControl));
+                return _swapChain;
+            }
+        }
 
         /// <summary>
         ///     Gets the device.
@@ -180,7 +187,14 @@ namespace EscherTiler
         ///     The device.
         /// </value>
         [NotNull]
-        public Device Device => _device;
+        public Device Device
+        {
+            get
+            {
+                if (_device == null) throw new ObjectDisposedException(nameof(RenderControl));
+                return _device;
+            }
+        }
 
         /// <summary>
         ///     Occurs when the control needs to render.
@@ -243,7 +257,7 @@ namespace EscherTiler
             }
             Thread.Yield();
         }
-        
+
         /// <summary>
         ///     Forces the control to invalidate its client area and immediately redraw itself and any child controls.
         /// </summary>
@@ -266,7 +280,7 @@ namespace EscherTiler
         }
 
         /// <summary>
-        /// Starts the render loop.
+        ///     Starts the render loop.
         /// </summary>
         public void Start()
         {
@@ -281,7 +295,7 @@ namespace EscherTiler
         }
 
         /// <summary>
-        /// Stops the render loop.
+        ///     Stops the render loop.
         /// </summary>
         public void Stop()
         {
@@ -308,6 +322,7 @@ namespace EscherTiler
         {
             base.Dispose(disposing);
             if (disposing)
+            {
                 lock (_lock)
                 {
                     _running = false;
@@ -317,6 +332,7 @@ namespace EscherTiler
                     Interlocked.Exchange(ref _swapChain, null)?.Dispose();
                     Interlocked.Exchange(ref _device, null)?.Dispose();
                 }
+            }
         }
     }
 }

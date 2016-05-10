@@ -8,8 +8,6 @@ namespace EscherTiler.Controllers
     /// <summary>
     ///     Base class for controllers.
     /// </summary>
-    /// <seealso cref="EscherTiler.Graphics.IDrawable" />
-    /// <seealso cref="System.IDisposable" />
     public abstract class Controller : IDrawable, IDisposable
     {
         [NotNull]
@@ -62,6 +60,9 @@ namespace EscherTiler.Controllers
             }
         }
 
+        /// <summary>
+        ///     Occurs when the value of the <see cref="CurrentTool" /> property changes.
+        /// </summary>
         public event EventHandler<CurrentToolChangedEventArgs> CurrentToolChanged;
 
         /// <summary>
@@ -111,17 +112,5 @@ namespace EscherTiler.Controllers
         ///     <see langword="false" /> to release only unmanaged resources.
         /// </param>
         protected virtual void Dispose(bool disposing) { }
-    }
-
-    public class CurrentToolChangedEventArgs : EventArgs
-    {
-        public readonly Tool OldTool;
-        public readonly Tool NewTool;
-
-        public CurrentToolChangedEventArgs(Tool oldTool, Tool newTool)
-        {
-            OldTool = oldTool;
-            NewTool = newTool;
-        }
     }
 }

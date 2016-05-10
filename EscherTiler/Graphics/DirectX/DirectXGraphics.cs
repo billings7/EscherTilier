@@ -78,10 +78,10 @@ namespace EscherTiler.Graphics.DirectX
         }
 
         /// <summary>
-        /// Gets or sets the render target.
+        ///     Gets or sets the render target.
         /// </summary>
         /// <value>
-        /// The render target.
+        ///     The render target.
         /// </value>
         [NotNull]
         public RenderTarget RenderTarget
@@ -165,7 +165,7 @@ namespace EscherTiler.Graphics.DirectX
         }
 
         /// <summary>
-        /// Draws an arc of an elipse.
+        ///     Draws an arc of an elipse.
         /// </summary>
         /// <param name="from">The start point of the arc.</param>
         /// <param name="to">The end point of the arc.</param>
@@ -510,6 +510,10 @@ namespace EscherTiler.Graphics.DirectX
             [NotNull]
             private readonly DirectXResourceManager ResourceManager;
 
+            /// <summary>
+            ///     Initializes a new instance of the <see cref="State"/> class.
+            /// </summary>
+            /// <param name="graphics">The graphics.</param>
             public State([NotNull] DirectXGraphics graphics)
             {
                 Debug.Assert(graphics != null, "graphics != null");
@@ -520,6 +524,10 @@ namespace EscherTiler.Graphics.DirectX
                 Transform = graphics.Transform;
             }
 
+            /// <summary>
+            ///     Restores the state saved by this instance to the graphics given.
+            /// </summary>
+            /// <param name="graphics">The graphics.</param>
             public void Restore([NotNull] DirectXGraphics graphics)
             {
                 Debug.Assert(graphics != null, "graphics != null");
@@ -622,7 +630,7 @@ namespace EscherTiler.Graphics.DirectX
             }
 
             /// <summary>
-            /// Adds an arc of an elipse to the end of the path.
+            ///     Adds an arc of an elipse to the end of the path.
             /// </summary>
             /// <param name="to">The end point of the arc.</param>
             /// <param name="radius">The radius of the arc.</param>
@@ -630,7 +638,7 @@ namespace EscherTiler.Graphics.DirectX
             /// <param name="clockwise">If set to <see langword="true" /> the arc will be drawn clockwise.</param>
             /// <param name="isLarge">Specifies whether the given arc is larger than 180 degrees</param>
             /// <returns>
-            /// This <see cref="IGraphicsPath" />.
+            ///     This <see cref="IGraphicsPath" />.
             /// </returns>
             public IGraphicsPath AddArc(Vector2 to, Vector2 radius, float angle, bool clockwise, bool isLarge)
             {

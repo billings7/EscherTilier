@@ -7,6 +7,10 @@ using JetBrains.Annotations;
 
 namespace EscherTiler
 {
+    /// <summary>
+    ///     Dialog box for changing settings related to printing a tiling.
+    /// </summary>
+    /// <seealso cref="System.Windows.Forms.Form" />
     public partial class TilingPrintSettingsDialog : Form
     {
         [NotNull]
@@ -58,6 +62,13 @@ namespace EscherTiler
             Tile = _document.Tile;
         }
 
+        /// <summary>
+        ///     Gets or sets the print mode.
+        /// </summary>
+        /// <value>
+        ///     The print mode.
+        /// </value>
+        /// <exception cref="System.ArgumentOutOfRangeException"></exception>
         [Category("Data")]
         [DefaultValue(null)]
         [Description("The TilingPrintMode that determines what gets printed.")]

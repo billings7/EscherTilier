@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 
 namespace EscherTiler.Styles
@@ -9,8 +10,24 @@ namespace EscherTiler.Styles
     /// <summary>
     ///     Defines a colour in an RGBA format.
     /// </summary>
+    [StructLayout(LayoutKind.Explicit)]
     public partial struct Colour : IEquatable<Colour>
     {
+        [FieldOffset(0)]
+        private readonly Vector4 _vector;
+
+        [FieldOffset(0)]
+        private readonly float _r;
+
+        [FieldOffset(1 * sizeof(float))]
+        private readonly float _g;
+
+        [FieldOffset(2 * sizeof(float))]
+        private readonly float _b;
+
+        [FieldOffset(3 * sizeof(float))]
+        private readonly float _a;
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="Colour" /> struct from an existing colour, changing the alpha
         ///     component.
@@ -20,7 +37,7 @@ namespace EscherTiler.Styles
         public Colour(Colour colour, float alpha)
         {
             this = colour;
-            A = alpha;
+            _a = alpha;
         }
 
         /// <summary>
@@ -32,10 +49,11 @@ namespace EscherTiler.Styles
         /// <param name="alpha">The alpha component.</param>
         public Colour(byte red, byte green, byte blue, byte alpha = 255)
         {
-            R = red / 255f;
-            G = green / 255f;
-            B = blue / 255f;
-            A = alpha / 255f;
+            _vector = Vector4.Zero;
+            _r = red / 255f;
+            _g = green / 255f;
+            _b = blue / 255f;
+            _a = alpha / 255f;
         }
 
         /// <summary>
@@ -51,10 +69,11 @@ namespace EscherTiler.Styles
             CheckRange(green);
             CheckRange(blue);
             CheckRange(alpha);
-            R = red;
-            G = green;
-            B = blue;
-            A = alpha;
+            _vector = Vector4.Zero;
+            _r = red;
+            _g = green;
+            _b = blue;
+            _a = alpha;
         }
 
         private static void CheckRange(float val)
@@ -69,7 +88,7 @@ namespace EscherTiler.Styles
         /// <value>
         ///     The red component of this colour.
         /// </value>
-        public float R { get; }
+        public float R => _r;
 
         /// <summary>
         ///     Gets the green component of this colour.
@@ -77,7 +96,7 @@ namespace EscherTiler.Styles
         /// <value>
         ///     The green component of this colour.
         /// </value>
-        public float G { get; }
+        public float G => _g;
 
         /// <summary>
         ///     Gets the blue component of this colour.
@@ -85,7 +104,7 @@ namespace EscherTiler.Styles
         /// <value>
         ///     The blue component of this colour.
         /// </value>
-        public float B { get; }
+        public float B => _b;
 
         /// <summary>
         ///     Gets the alpha component of this colour.
@@ -93,7 +112,7 @@ namespace EscherTiler.Styles
         /// <value>
         ///     The alpha component of this colour.
         /// </value>
-        public float A { get; }
+        public float A => _a;
 
         /// <summary>
         ///     Gets the name of this colour.
@@ -119,10 +138,10 @@ namespace EscherTiler.Styles
         /// <param name="to">The colour to interpolate to.</param>
         /// <param name="amount">The amount.</param>
         /// <returns></returns>
-        public static unsafe Colour Interpolate(Colour from, Colour to, float amount)
+        public static Colour Interpolate(Colour from, Colour to, float amount)
         {
-            Vector4 a = *(Vector4*) &from;
-            Vector4 b = *(Vector4*) &to;
+            Vector4 a = from._vector;
+            Vector4 b = to._vector;
 
             a *= a;
             b *= b;

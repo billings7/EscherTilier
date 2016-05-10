@@ -8,6 +8,7 @@ using JetBrains.Annotations;
 
 namespace EscherTiler
 {
+    // This part of the class deals with editing the tile styles.
     public partial class Main
     {
         [NotNull]
@@ -16,6 +17,9 @@ namespace EscherTiler
         [NotNull]
         private Control[] _styleManagerPanels;
 
+        /// <summary>
+        ///     Initializes the style manager related UI elements.
+        /// </summary>
         private void InitializeStyleManager()
         {
             _styleManagerPanels = new Control[]
@@ -30,6 +34,10 @@ namespace EscherTiler
             _styleManagerTypeCmb.Items.Add(new ComboBoxValue<Type>("Simple", typeof(SimpleStyleManager)));
         }
 
+        /// <summary>
+        ///     Updates the style manager that the UI controls.
+        /// </summary>
+        /// <param name="manager">The manager.</param>
         private void UpdateStyleManager([NotNull] StyleManager manager)
         {
             Debug.Assert(manager != null, "manager != null");
@@ -38,7 +46,7 @@ namespace EscherTiler
             _lineStyleGroup.Enabled = true;
             _fillStylesGroup.Enabled = true;
 
-            _lineWidthTrack.Value = (int)(manager.LineStyle.Width * 10);
+            _lineWidthTrack.Value = (int) (manager.LineStyle.Width * 10);
             _lineStyleControl.Style = manager.LineStyle.Style;
 
             RandomStyleManager randomStyleManager = manager as RandomStyleManager;
@@ -72,6 +80,11 @@ namespace EscherTiler
             _styleList.SetStyles(manager.Styles, _lineStyleControl.ResourceManager);
         }
 
+        /// <summary>
+        ///     Handles the StylesChanged event of the _styleList control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void _styleList_StylesChanged(object sender, EventArgs e)
         {
             TilingController controller = _tilingController;
@@ -85,13 +98,19 @@ namespace EscherTiler
             }
         }
 
+        /// <summary>
+        ///     Handles the SelectedIndexChanged event of the _styleManagerTypeCmb control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
+        /// <exception cref="System.InvalidOperationException"></exception>
         private void _styleManagerTypeCmb_SelectedIndexChanged(object sender, EventArgs e)
         {
-            ComboBoxValue<Type> val = (ComboBoxValue<Type>)_styleManagerTypeCmb.SelectedItem;
+            ComboBoxValue<Type> val = (ComboBoxValue<Type>) _styleManagerTypeCmb.SelectedItem;
 
             TilingController controller = _tilingController;
             if (controller == null) return;
-            lock(_lock)
+            lock (_lock)
             {
                 controller = _tilingController;
                 if (controller == null) return;
@@ -104,7 +123,12 @@ namespace EscherTiler
                 if (val.Value == typeof(RandomStyleManager))
                     newManager = new RandomStyleManager((int) _seedNum.Value, currManager.LineStyle, currManager.Styles);
                 else if (val.Value == typeof(RandomGreedyStyleManager))
-                    newManager = new RandomGreedyStyleManager((int)_seedNum.Value, currManager.LineStyle, currManager.Styles);
+                {
+                    newManager = new RandomGreedyStyleManager(
+                        (int) _seedNum.Value,
+                        currManager.LineStyle,
+                        currManager.Styles);
+                }
                 else if (val.Value == typeof(GreedyStyleManager))
                     newManager = new GreedyStyleManager(1, 1, 1, currManager.LineStyle, currManager.Styles);
                 else if (val.Value == typeof(SimpleStyleManager))
@@ -122,9 +146,14 @@ namespace EscherTiler
             }
         }
 
+        /// <summary>
+        ///     Handles the VisibleChanged event of the manager panel controls.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void StyleManagerPanel_VisibleChanged(object sender, EventArgs e)
         {
-            Control control = (Control)sender;
+            Control control = (Control) sender;
             if (!control.Visible) return;
 
             foreach (Control panel in _styleManagerPanels)
@@ -134,6 +163,11 @@ namespace EscherTiler
             }
         }
 
+        /// <summary>
+        ///     Handles the ValueChanged event of the _seedNum control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void _seedNum_ValueChanged(object sender, EventArgs e)
         {
             RandomStyleManager manager = _tilingController?.StyleManager as RandomStyleManager;
@@ -142,11 +176,21 @@ namespace EscherTiler
             manager.Seed = (int) _seedNum.Value;
         }
 
+        /// <summary>
+        ///     Handles the Click event of the _randomSeedBtn control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void _randomSeedBtn_Click(object sender, EventArgs e)
         {
             _seedNum.Value = _random.Next();
         }
 
+        /// <summary>
+        ///     Handles the ValueChanged event of the _greedyParamATrack control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void _greedyParamATrack_ValueChanged(object sender, EventArgs e)
         {
             GreedyStyleManager manager = _tilingController?.StyleManager as GreedyStyleManager;
@@ -155,6 +199,11 @@ namespace EscherTiler
             manager.ParamA = _greedyParamATrack.Value;
         }
 
+        /// <summary>
+        ///     Handles the ValueChanged event of the _greedyParamBTrack control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void _greedyParamBTrack_ValueChanged(object sender, EventArgs e)
         {
             GreedyStyleManager manager = _tilingController?.StyleManager as GreedyStyleManager;
@@ -163,6 +212,11 @@ namespace EscherTiler
             manager.ParamB = _greedyParamBTrack.Value;
         }
 
+        /// <summary>
+        ///     Handles the ValueChanged event of the _greedyParamCTrack control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void _greedyParamCTrack_ValueChanged(object sender, EventArgs e)
         {
             GreedyStyleManager manager = _tilingController?.StyleManager as GreedyStyleManager;
@@ -171,6 +225,11 @@ namespace EscherTiler
             manager.ParamC = _greedyParamCTrack.Value;
         }
 
+        /// <summary>
+        ///     Handles the StyleChanged event of the _lineStyleControl control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void _lineStyleControl_StyleChanged(object sender, EventArgs e)
         {
             if (_lineStyleControl.Style == null) return;
@@ -187,6 +246,11 @@ namespace EscherTiler
             }
         }
 
+        /// <summary>
+        ///     Handles the ValueChanged event of the _lineWidthTrack control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void _lineWidthTrack_ValueChanged(object sender, EventArgs e)
         {
             if (_lineWidthTrack.Value < 1)

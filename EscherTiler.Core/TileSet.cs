@@ -9,6 +9,9 @@ using JetBrains.Annotations;
 
 namespace EscherTiler
 {
+    /// <summary>
+    ///     Stores a set of <see cref="TileBase">tiles</see> and manages tile adjacencies.
+    /// </summary>
     internal class TileSet : IReadOnlyCollection<TileBase>
     {
         [NotNull]
@@ -35,6 +38,9 @@ namespace EscherTiler
                 Add(tile);
         }
 
+        /// <summary>
+        ///     Gets the number of elements in the collection.
+        /// </summary>
         public int Count => _tiles.Count;
 
         /// <summary>
@@ -79,6 +85,9 @@ namespace EscherTiler
         /// </returns>
         IEnumerator IEnumerable.GetEnumerator() => _tiles.GetEnumerator();
 
+        /// <summary>
+        ///     Stores the position of an edge part, with the coordinates rounded to 3 decimal places.
+        /// </summary>
         private struct EPPos : IEquatable<EPPos>
         {
             /// <summary>
@@ -197,20 +206,40 @@ namespace EscherTiler
             public override string ToString() => $"{Start} - {End}";
         }
 
+        /// <summary>
+        ///     Defines which tiles are adjacent and by which part.
+        /// </summary>
         private class AdjTiles
         {
+            /// <summary>
+            ///     Gets the tile that is adjacent to <see cref="TileB" />.
+            /// </summary>
             [NotNull]
             public TileBase TileA { get; }
 
+            /// <summary>
+            ///     Gets the edge part of <see cref="TileA" /> that is adjacent to <see cref="PartB" /> of <see cref="TileB" />.
+            /// </summary>
             [NotNull]
             public EdgePart PartA { get; }
 
+            /// <summary>
+            ///     Gets the tile that is adjacent to <see cref="TileA" />.
+            /// </summary>
             [CanBeNull]
             public TileBase TileB { get; private set; }
 
+            /// <summary>
+            ///     Gets the edge part of <see cref="TileB" /> that is adjacent to <see cref="PartA" /> of <see cref="TileA" />.
+            /// </summary>
             [CanBeNull]
             public EdgePart PartB { get; private set; }
 
+            /// <summary>
+            ///     Initializes a new instance of the <see cref="AdjTiles" /> class.
+            /// </summary>
+            /// <param name="tileA">The tile a.</param>
+            /// <param name="partA">The part a.</param>
             public AdjTiles([NotNull] TileBase tileA, [NotNull] EdgePart partA)
             {
                 Debug.Assert(tileA != null, "tileA != null");
@@ -220,6 +249,13 @@ namespace EscherTiler
                 PartA = partA;
             }
 
+            /// <summary>
+            ///     Adds the specified tile to the adjacency.
+            /// </summary>
+            /// <param name="tile">The tile.</param>
+            /// <param name="part">The part.</param>
+            /// <returns></returns>
+            /// <exception cref="System.InvalidOperationException">The tile has already been set.</exception>
             [NotNull]
             public AdjTiles Add([NotNull] TileBase tile, [NotNull] EdgePart part)
             {

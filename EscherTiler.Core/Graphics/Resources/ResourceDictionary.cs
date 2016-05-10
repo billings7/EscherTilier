@@ -334,9 +334,9 @@ namespace EscherTiler.Graphics.Resources
         /// <param name="temp">if set to <see langword="true" /> the resource should only be temporary.</param>
         /// <returns>The resource.</returns>
         /// <exception cref="System.InvalidOperationException">
-        /// The updater function returned a null resource
-        /// or
-        /// The factory returned a null resource
+        ///     The updater function returned a null resource
+        ///     or
+        ///     The factory returned a null resource
         /// </exception>
         [NotNull]
         public TResource AddOrUpdate(

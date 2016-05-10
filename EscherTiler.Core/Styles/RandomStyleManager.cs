@@ -7,6 +7,10 @@ using JetBrains.Annotations;
 
 namespace EscherTiler.Styles
 {
+    /// <summary>
+    ///     Style manager that picks a random style for each tile.
+    /// </summary>
+    /// <seealso cref="EscherTiler.Styles.StyleManager" />
     public class RandomStyleManager : StyleManager
     {
         private int _seed;

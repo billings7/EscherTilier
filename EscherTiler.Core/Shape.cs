@@ -24,9 +24,8 @@ namespace EscherTiler
         /// </summary>
         /// <param name="template">The template to create the shape from.</param>
         /// <exception cref="System.ArgumentNullException"><paramref name="template" /> was <see langword="null" /></exception>
-        public Shape([NotNull] ShapeTemplate template) : this(template, template.InitialVertices)
-        {
-        }
+        public Shape([NotNull] ShapeTemplate template)
+            : this(template, template.InitialVertices) { }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Shape" /> class.
@@ -42,7 +41,11 @@ namespace EscherTiler
             if (template == null) throw new ArgumentNullException(nameof(template));
             if (vertexPositions == null) throw new ArgumentNullException(nameof(vertexPositions));
             if (vertexPositions.Count != template.VertexNames.Count)
-                throw new ArgumentOutOfRangeException(nameof(vertexPositions), "Wrong number of vertex positions given.");
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(vertexPositions),
+                    "Wrong number of vertex positions given.");
+            }
 
             Template = template;
 

@@ -6,6 +6,10 @@ using JetBrains.Annotations;
 
 namespace EscherTiler.Styles
 {
+    /// <summary>
+    ///     Style manager that chooses the first style that has not been used by a neighbouring tile.
+    /// </summary>
+    /// <seealso cref="EscherTiler.Styles.StyleManager" />
     public class GreedyStyleManager : StyleManager
     {
         private int _paramA;
@@ -55,10 +59,10 @@ namespace EscherTiler.Styles
         }
 
         /// <summary>
-        /// Gets or sets the parameter a.
+        ///     Gets or sets the parameter a.
         /// </summary>
         /// <value>
-        /// The parameter a.
+        ///     The parameter a.
         /// </value>
         public int ParamA
         {
@@ -72,10 +76,10 @@ namespace EscherTiler.Styles
         }
 
         /// <summary>
-        /// Gets or sets the parameter b.
+        ///     Gets or sets the parameter b.
         /// </summary>
         /// <value>
-        /// The parameter b.
+        ///     The parameter b.
         /// </value>
         public int ParamB
         {
@@ -89,10 +93,10 @@ namespace EscherTiler.Styles
         }
 
         /// <summary>
-        /// Gets or sets the parameter c.
+        ///     Gets or sets the parameter c.
         /// </summary>
         /// <value>
-        /// The parameter c.
+        ///     The parameter c.
         /// </value>
         public int ParamC
         {

@@ -9,10 +9,18 @@ using Vector2 = System.Numerics.Vector2;
 
 namespace EscherTiler.Graphics.DirectX
 {
+    /// <summary>
+    ///     Extension methods for interracting with DirectX related objects and methods.
+    /// </summary>
     public static class DirectXExtensions
     {
         private static readonly Union _union = new Union();
 
+        /// <summary>
+        ///     Initializes the <see cref="DirectXExtensions" /> class.
+        /// </summary>
+        /// <exception cref="System.ApplicationException">
+        /// </exception>
         [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")]
         static DirectXExtensions()
         {
@@ -118,6 +126,10 @@ namespace EscherTiler.Graphics.DirectX
             };
         }
 
+        /// <summary>
+        ///     Struct with a number of fields of different types that occupy the same location in memory, to allow efficient
+        ///     conversion between types.
+        /// </summary>
         [StructLayout(LayoutKind.Explicit)]
         private struct Union
         {

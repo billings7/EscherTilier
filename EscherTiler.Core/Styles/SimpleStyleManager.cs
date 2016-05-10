@@ -5,6 +5,10 @@ using JetBrains.Annotations;
 
 namespace EscherTiler.Styles
 {
+    /// <summary>
+    ///     Style manager that just uses a single style.
+    /// </summary>
+    /// <seealso cref="EscherTiler.Styles.StyleManager" />
     public class SimpleStyleManager : StyleManager
     {
         /// <summary>

@@ -6,13 +6,16 @@ using EscherTiler.Graphics.DirectX;
 
 namespace EscherTiler
 {
-    static class Program
+    /// <summary>
+    ///     Defines the main entry point for the application.
+    /// </summary>
+    public static class Program
     {
         /// <summary>
         ///     The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        public static void Main()
         {
 #if DEBUG
             SharpDX.Configuration.EnableObjectTracking = true;

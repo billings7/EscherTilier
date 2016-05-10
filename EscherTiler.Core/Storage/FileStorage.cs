@@ -568,16 +568,18 @@ namespace EscherTiler.Storage
                         Debug.Assert(g.Distinct().Count() == 1);
                         return new KeyValuePair<int, ShapeLines>(g.Key, g.First());
                     })
-                    .ToArray();
+                .ToArray();
 
             element.Add(
                 new XAttribute("definitionId", tiling.Definition.ID.ToString(_culture)),
                 Serialize(tiling.StyleManager),
-                new XElement("PartShapeLines", partShapes.Select(
-                    kvp => new XElement(
-                        "ShapeLines",
-                        new XAttribute("partShapeId", kvp.Key.ToString(_culture)),
-                        kvp.Value.Select((l, i) => Serialize(l, i == 0))))),
+                new XElement(
+                    "PartShapeLines",
+                    partShapes.Select(
+                        kvp => new XElement(
+                            "ShapeLines",
+                            new XAttribute("partShapeId", kvp.Key.ToString(_culture)),
+                            kvp.Value.Select((l, i) => Serialize(l, i == 0))))),
                 new XElement("Tiles", tiling.Tiles.Select(Serialize)));
         }
 

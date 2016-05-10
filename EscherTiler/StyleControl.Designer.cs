@@ -34,9 +34,9 @@ namespace EscherTiler
             this._previewPnl = new System.Windows.Forms.Panel();
             this._colourDialog = new System.Windows.Forms.ColorDialog();
             this.SuspendLayout();
-            // 
+            //
             // _styleTypeCmb
-            // 
+            //
             this._styleTypeCmb.Dock = System.Windows.Forms.DockStyle.Top;
             this._styleTypeCmb.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this._styleTypeCmb.FormattingEnabled = true;
@@ -45,9 +45,9 @@ namespace EscherTiler
             this._styleTypeCmb.Size = new System.Drawing.Size(256, 21);
             this._styleTypeCmb.TabIndex = 0;
             this._styleTypeCmb.Visible = false;
-            // 
+            //
             // _previewPnl
-            // 
+            //
             this._previewPnl.Dock = System.Windows.Forms.DockStyle.Top;
             this._previewPnl.Location = new System.Drawing.Point(0, 21);
             this._previewPnl.Name = "_previewPnl";
@@ -55,9 +55,9 @@ namespace EscherTiler
             this._previewPnl.TabIndex = 1;
             this._previewPnl.Paint += new System.Windows.Forms.PaintEventHandler(this._previewPnl_Paint);
             this._previewPnl.DoubleClick += new System.EventHandler(this._previewPnl_DoubleClick);
-            // 
+            //
             // StyleControl
-            // 
+            //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this._previewPnl);
@@ -74,8 +74,9 @@ namespace EscherTiler
         [NotNull]
         private System.Windows.Forms.Panel _previewPnl;
 
-        #endregion
-
+        [NotNull]
         private System.Windows.Forms.ColorDialog _colourDialog;
+
+        #endregion
     }
 }

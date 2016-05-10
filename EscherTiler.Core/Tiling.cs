@@ -133,10 +133,14 @@ namespace EscherTiler
             Queue<TileBase> openTiles = new Queue<TileBase>();
             List<TileBase> removeTiles = new List<TileBase>();
 
+            Rectangle tileBounds;
+
             foreach (TileBase tile in existingTiles)
             {
                 // if tile is in bounds
-                if (bounds.IntersectsWith(tile.GetApproximateBounds()))
+                // TODO The width and height must also be >= 1px
+                tileBounds = tile.GetApproximateBounds();
+                if (bounds.IntersectsWith(tileBounds))
                 {
                     tiles.Add(tile);
 
@@ -155,13 +159,14 @@ namespace EscherTiler
                 TileBase tile = Tiles[0];
                 Debug.Assert(tile != null, "tile != null");
 
-                Rectangle approximateBounds = tile.GetApproximateBounds();
-                if (!bounds.IntersectsWith(approximateBounds))
+                // TODO The width and height must also be >= 1px
+                tileBounds = tile.GetApproximateBounds();
+                if (!bounds.IntersectsWith(tileBounds))
                 {
                     tile = new TileInstance(
                         (Tile) tile,
                         tile.Label,
-                        tile.Transform * Matrix3x2.CreateTranslation(bounds.Center - approximateBounds.Center));
+                        tile.Transform * Matrix3x2.CreateTranslation(bounds.Center - tileBounds.Center));
                 }
 
                 // add initial tile to tiles
@@ -184,7 +189,9 @@ namespace EscherTiler
                     tiles.Add(newTile);
 
                     // if newTile is in bounds
-                    if (bounds.IntersectsWith(newTile.GetApproximateBounds()))
+                    // TODO The width and height must also be >= 1px
+                    tileBounds = newTile.GetApproximateBounds();
+                    if (bounds.IntersectsWith(tileBounds))
                     {
                         // add newTile to end of openTiles
                         openTiles.Enqueue(newTile);
@@ -208,6 +215,7 @@ namespace EscherTiler
         /// <param name="tile">The tile.</param>
         /// <param name="part">The part.</param>
         /// <returns></returns>
+        [NotNull]
         private TileBase CreateNewTile([NotNull] TileBase tile, [NotNull] EdgePart part)
         {
             Debug.Assert(tile != null, "tile != null");
@@ -222,15 +230,14 @@ namespace EscherTiler
             Tile adjTile;
             if (!_tileByEdgePart.TryGetValue(adjacent.Value, out adjTile))
                 throw new InvalidOperationException();
+            Debug.Assert(adjTile != null, "adjTile != null");
 
             // Create transformed tile
-            TileInstance newTile = new TileInstance(
+            return new TileInstance(
                 adjTile,
                 adjacent.Label,
                 adjTile.GetEdgePartPosition(adjacent.Value)
                     .GetTransformTo(tile.GetEdgePartPosition(part)));
-
-            return newTile;
         }
 
         /// <summary>

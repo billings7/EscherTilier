@@ -6,6 +6,10 @@ using JetBrains.Annotations;
 
 namespace EscherTiler
 {
+    /// <summary>
+    ///     A pair of buttons for up/down functions.
+    /// </summary>
+    /// <seealso cref="System.Windows.Forms.Control" />
     public class UpDownButtons : Control
     {
         [NotNull]
@@ -74,10 +78,20 @@ namespace EscherTiler
             _downButton.Top = halfHeight;
         }
 
+        /// <summary>
+        /// An up/down button.
+        /// </summary>
+        /// <seealso cref="System.Windows.Forms.Button" />
         private class UpDownButton : Button
         {
             private bool _isUp;
 
+            /// <summary>
+            /// Gets or sets a value indicating whether button is an up or down button.
+            /// </summary>
+            /// <value>
+            /// <see langword="true" /> if this is an up button; otherwise this is a down button.
+            /// </value>
             public bool IsUp
             {
                 get { return _isUp; }

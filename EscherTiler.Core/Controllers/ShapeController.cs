@@ -6,6 +6,10 @@ using JetBrains.Annotations;
 
 namespace EscherTiler.Controllers
 {
+    /// <summary>
+    ///     Controller for editing a <see cref="Shape" />.
+    /// </summary>
+    /// <seealso cref="EscherTiler.Controllers.Controller" />
     public class ShapeController : Controller
     {
         [NotNull]

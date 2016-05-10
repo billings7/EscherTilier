@@ -13,6 +13,7 @@ using SharpDX.DXGI;
 
 namespace EscherTiler
 {
+    // This part is responsible for drawing to the UI.
     public partial class Main
     {
         [CanBeNull]
@@ -30,6 +31,9 @@ namespace EscherTiler
         [NotNull]
         private readonly SolidColourStyle _blackStyle = new SolidColourStyle(Colour.Black);
 
+        /// <summary>
+        ///     Initializes the graphics.
+        /// </summary>
         private void InitializeGraphics()
         {
             DependencyManger.ForTypeUse(() => _renderControl.RenderTargetContainer, DependencyCacheFlags.CacheGlobal);
@@ -51,12 +55,21 @@ namespace EscherTiler
             _directXGraphics = graphics;
         }
 
+        /// <summary>
+        ///     Unloads the graphics.
+        /// </summary>
         private void UnloadGraphics()
         {
             Interlocked.Exchange(ref _directXGraphics, null)?.Dispose();
             Interlocked.Exchange(ref _miskResourceManager, null)?.Dispose();
         }
 
+        /// <summary>
+        ///     Renders teh current controller to the renderControl.
+        /// </summary>
+        /// <param name="renderTarget">The render target.</param>
+        /// <param name="swapChain">The swap chain.</param>
+        /// <exception cref="System.ObjectDisposedException"></exception>
         private void renderControl_Render([NotNull] RenderTarget renderTarget, [NotNull] SwapChain swapChain)
         {
             IGraphics graphics = _directXGraphics;

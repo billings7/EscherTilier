@@ -11,6 +11,7 @@ using DragAction = EscherTiler.Controllers.DragAction;
 
 namespace EscherTiler
 {
+    // This part of the class defines the tools specific to the UI.
     public partial class Main
     {
         /// <summary>

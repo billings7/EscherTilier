@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -7,6 +6,10 @@ using JetBrains.Annotations;
 
 namespace EscherTiler.Styles
 {
+    /// <summary>
+    ///     Style manager that picks a random style from the styles not used by any neighbours of the tile.
+    /// </summary>
+    /// <seealso cref="EscherTiler.Styles.RandomStyleManager" />
     public class RandomGreedyStyleManager : RandomStyleManager
     {
         /// <summary>

@@ -15,6 +15,9 @@ using Rectangle = EscherTiler.Numerics.Rectangle;
 
 namespace EscherTiler.Graphics.GDI
 {
+    /// <summary>
+    ///     GDI+ graphics renderer.
+    /// </summary>
     public class GDIGraphics : IGraphics
     {
         [NotNull]

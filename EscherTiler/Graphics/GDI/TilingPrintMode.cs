@@ -1,7 +1,7 @@
 ﻿namespace EscherTiler.Graphics.GDI
 {
     /// <summary>
-    /// Defines the possible printing modes for a <see cref="TilerPrintDocument"/>.
+    ///     Defines the possible printing modes for a <see cref="TilerPrintDocument" />.
     /// </summary>
     public enum TilingPrintMode
     {

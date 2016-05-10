@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -32,9 +31,6 @@ namespace EscherTiler.Graphics.DirectX
         /// </summary>
         [NotNull]
         public static readonly FactoryD2D FactoryD2D = new FactoryD2D(FactoryType.MultiThreaded);
-
-        [NotNull]
-        private static readonly FactoryWrite _factoryWrite = new FactoryWrite(SharpDX.DirectWrite.FactoryType.Shared);
 
         [NotNull]
         private static readonly ImagingFactory _imagingFactory = new ImagingFactory();
@@ -329,6 +325,10 @@ namespace EscherTiler.Graphics.DirectX
             }
         }
 
+        /// <summary>
+        ///     Adds the specified <see cref="IStyle" /> to the manager, creating the brush for it.
+        /// </summary>
+        /// <param name="style">The style.</param>
         void IResourceManager<IStyle>.Add(IStyle style) => Add(style);
 
         /// <summary>
@@ -373,7 +373,11 @@ namespace EscherTiler.Graphics.DirectX
             }
         }
 
-        void IResourceManager<IStyle>.Update(IStyle key) => Update(key);
+        /// <summary>
+        ///     Updates the specified <see cref="IStyle" /> in the manager, creating the <see cref="Brush" /> for it.
+        /// </summary>
+        /// <param name="style">The style.</param>
+        void IResourceManager<IStyle>.Update(IStyle style) => Update(style);
 
         /// <summary>
         ///     Updates the <see cref="Brush" /> for the specified <see cref="IStyle" /> in the manager.
@@ -489,6 +493,10 @@ namespace EscherTiler.Graphics.DirectX
             }
         }
 
+        /// <summary>
+        ///     Adds the specified <see cref="IImage" /> to the manager, creating the bitmap for it.
+        /// </summary>
+        /// <param name="image">The image.</param>
         void IResourceManager<IImage>.Add(IImage image) => Add(image);
 
         /// <summary>
@@ -533,7 +541,11 @@ namespace EscherTiler.Graphics.DirectX
             }
         }
 
-        void IResourceManager<IImage>.Update(IImage key) => Update(key);
+        /// <summary>
+        ///     Updates the specified <see cref="IImage" /> in the manager, creating the <see cref="Bitmap" /> for it.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        void IResourceManager<IImage>.Update(IImage image) => Update(image);
 
         /// <summary>
         ///     Updates the <see cref="Bitmap" /> for the specified <see cref="IImage" /> in the manager.

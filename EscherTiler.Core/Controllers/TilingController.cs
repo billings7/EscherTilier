@@ -35,10 +35,10 @@ namespace EscherTiler.Controllers
         private IResourceManager _resourceManager;
 
         [NotNull]
-        private EventHandler _styleManagerChangedHandler;
+        private readonly EventHandler _styleManagerChangedHandler;
 
         /// <summary>
-        /// Occurs when the style manager changes.
+        ///     Occurs when the style manager changes.
         /// </summary>
         public event EventHandler StyleManagerChanged;
 
@@ -82,10 +82,10 @@ namespace EscherTiler.Controllers
         }
 
         /// <summary>
-        /// Handles the Changed event of the _styleManager objects.
+        ///     Handles the Changed event of the _styleManager objects.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
-        /// <param name="args">The <see cref="EventArgs"/> instance containing the event data.</param>
+        /// <param name="args">The <see cref="EventArgs" /> instance containing the event data.</param>
         private void _styleManager_Changed(object sender, EventArgs args)
         {
             _tiling.UpdateStyles(_tiles);
@@ -215,19 +215,41 @@ namespace EscherTiler.Controllers
             }
         }
 
+        /// <summary>
+        ///     Represents a line that has been selected, along with the edge part and tile it belonged to.
+        /// </summary>
         private class SelectedLine
         {
+            /// <summary>
+            ///     The tile the line is on.
+            /// </summary>
             [NotNull]
             public readonly TileBase Tile;
 
+            /// <summary>
+            ///     The edge part the line is on.
+            /// </summary>
             [NotNull]
             public readonly EdgePartShape EdgePart;
 
+            /// <summary>
+            ///     The line
+            /// </summary>
             [NotNull]
             public readonly ILine Line;
 
+            /// <summary>
+            ///     The transform applied to the line to display it in the view.
+            /// </summary>
             public readonly Matrix3x2 LineTransform;
 
+            /// <summary>
+            ///     Initializes a new instance of the <see cref="SelectedLine" /> class.
+            /// </summary>
+            /// <param name="tile">The tile.</param>
+            /// <param name="edgePart">The edge part.</param>
+            /// <param name="line">The line.</param>
+            /// <param name="lineTransform">The line transform.</param>
             public SelectedLine(TileBase tile, EdgePartShape edgePart, ILine line, Matrix3x2 lineTransform)
             {
                 Debug.Assert(tile != null, "tile != null");
@@ -459,7 +481,10 @@ namespace EscherTiler.Controllers
                             cubic.End);
                     }
                     else
-                        throw new NotImplementedException();
+                    {
+                        throw new NotSupportedException(
+                            $"Cannot change a line of type '{currLineType.FullName}' to a line of type '{type.FullName}'.");
+                    }
                 }
                 else if (type == typeof(CubicBezierCurve))
                 {
@@ -487,10 +512,16 @@ namespace EscherTiler.Controllers
                             quad.End);
                     }
                     else
-                        throw new NotImplementedException();
+                    {
+                        throw new NotSupportedException(
+                            $"Cannot change a line of type '{currLineType.FullName}' to a line of type '{type.FullName}'.");
+                    }
                 }
                 else
-                    throw new NotImplementedException();
+                {
+                    throw new NotSupportedException(
+                        $"Cannot change a line of type '{currLineType.FullName}' to a line of type '{type.FullName}'.");
+                }
 
                 Debug.Assert(newLine.GetType() == type, "newLine.GetType() == type");
 
@@ -867,6 +898,11 @@ namespace EscherTiler.Controllers
                 }
             }
 
+            /// <summary>
+            ///     Sets the location that the line will be split along, for drwaing the preview.
+            /// </summary>
+            /// <param name="line">The line.</param>
+            /// <param name="point">The point.</param>
             private void SetSplitLineLoc(SelectedLine line, LinePoint point)
             {
                 Vector2 tangent = Vector2.Normalize(line.Line.GetTangent(point.Distance, line.LineTransform)) * 3;
